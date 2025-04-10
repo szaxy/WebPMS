@@ -1,0 +1,16 @@
+FROM alpine:3.16
+
+# 安装Redis
+RUN apk add --no-cache redis
+
+# 创建Redis数据目录
+RUN mkdir -p /data && chown redis:redis /data
+
+# 暴露Redis端口
+EXPOSE 6379
+
+# 切换到redis用户
+USER redis
+
+# 启动Redis服务
+CMD ["redis-server", "--protected-mode", "no"] 

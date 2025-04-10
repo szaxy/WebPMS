@@ -1,0 +1,52 @@
+/* 全局CSS样式 */
+
+/* 重置浏览器默认样式 */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  font-size: 16px;
+  color: #333;
+}
+
+a {
+  text-decoration: none;
+  color: #409EFF;
+}
+
+/* 项目特定样式 */
+.page-container {
+  padding: 20px;
+}
+
+.card {
+  border-radius: 4px;
+  border: 1px solid #EBEEF5;
+  background-color: #FFF;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.text-center {
+  text-align: center;
+}
+
+/* 响应式布局辅助 */
+@media (max-width: 768px) {
+  .hide-on-mobile {
+    display: none !important;
+  }
+}
+
+/* 加载中状态 */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+} 
