@@ -1,193 +1,271 @@
 <template>
   <div class="shot-details">
-    <el-tabs v-model="activeTab">
-      <el-tab-pane label="基本信息" name="info">
-        <div class="details-content">
-          <div v-if="isEditing">
-            <!-- 编辑模式 -->
-            <el-form :model="editForm" label-width="100px" :rules="rules" ref="formRef">
-              <el-form-item label="镜头编号" prop="shot_code">
-                <el-input v-model="editForm.shot_code" placeholder="请输入镜头编号" />
-              </el-form-item>
-              
-              <el-form-item label="状态" prop="status">
-                <el-select v-model="editForm.status" placeholder="请选择状态">
-                  <el-option label="制作中" value="in_progress" />
-                  <el-option label="审核中" value="review" />
-                  <el-option label="已通过" value="approved" />
-                  <el-option label="需修改" value="need_revision" />
-                </el-select>
-              </el-form-item>
-              
-              <el-form-item label="截止日期" prop="deadline">
-                <el-date-picker
-                  v-model="editForm.deadline"
-                  type="date"
-                  placeholder="选择截止日期"
-                  format="YYYY-MM-DD"
-                  value-format="YYYY-MM-DD"
-                />
-              </el-form-item>
-              
-              <el-form-item label="时长(帧)" prop="duration_frame">
-                <el-input-number v-model="editForm.duration_frame" :min="1" />
-              </el-form-item>
-              
-              <el-form-item label="推进阶段" prop="prom_stage">
-                <el-input v-model="editForm.prom_stage" placeholder="请输入推进阶段" />
-              </el-form-item>
-              
-              <el-form-item label="描述" prop="description">
-                <el-input
-                  v-model="editForm.description"
-                  type="textarea"
-                  rows="3"
-                  placeholder="请输入镜头描述"
-                />
-              </el-form-item>
-              
-              <el-form-item>
-                <el-button type="primary" @click="saveShot">保存</el-button>
-                <el-button @click="cancelEdit">取消</el-button>
-              </el-form-item>
-            </el-form>
-          </div>
-          
-          <div v-else>
-            <!-- 查看模式 -->
-            <div class="shot-header">
-              <div class="shot-title">
-                <h2>{{ shot.shot_code }}</h2>
-                <el-tag :type="getStatusType(shot.status)" size="large">
-                  {{ getStatusText(shot.status) }}
+    <!-- 头部 -->
+    <div class="shot-details-header">
+      <h2 class="shot-title">{{ shot.shot_code }}</h2>
+      <el-button type="text" @click="closeDetails">
+        <el-icon><Close /></el-icon>
+      </el-button>
+    </div>
+
+    <!-- 内容区域 -->
+    <el-scrollbar height="calc(100vh - 140px)">
+      <div class="shot-details-content">
+        <!-- 常规信息 -->
+        <el-card class="detail-card">
+          <template #header>
+            <div class="card-header">
+              <span>基本信息</span>
+              <el-button v-if="canEdit" type="primary" size="small" plain @click="editShotInfo">
+                <el-icon><Edit /></el-icon> 编辑
+              </el-button>
+            </div>
+          </template>
+          <div class="shot-info">
+            <div class="info-row">
+              <div class="info-label">项目：</div>
+              <div class="info-value">{{ shot.project_name }}</div>
+            </div>
+            <div class="info-row">
+              <div class="info-label">部门：</div>
+              <div class="info-value">{{ shot.department_display }}</div>
+            </div>
+            <div class="info-row">
+              <div class="info-label">推进阶段：</div>
+              <div class="info-value">
+                <el-tag :type="getStageTagType(shot.prom_stage)">
+                  {{ shot.prom_stage_display }}
                 </el-tag>
               </div>
-              <div class="shot-actions">
-                <el-button type="primary" @click="startEdit">编辑</el-button>
+            </div>
+            <div class="info-row">
+              <div class="info-label">制作状态：</div>
+              <div class="info-value">
+                <el-tag :type="getStatusTagType(shot.status)">
+                  {{ shot.status_display }}
+                </el-tag>
               </div>
             </div>
-            
-            <el-descriptions :column="2" border>
-              <el-descriptions-item label="项目">
-                {{ shot.project_code || '未知项目' }}
-              </el-descriptions-item>
-              
-              <el-descriptions-item label="截止日期">
-                <span :class="{ 'overdue': isOverdue(shot.deadline) }">
-                  {{ formatDate(shot.deadline) || '无' }}
+            <div class="info-row">
+              <div class="info-label">制作者：</div>
+              <div class="info-value">{{ shot.artist_name || '-' }}</div>
+            </div>
+            <div class="info-row">
+              <div class="info-label">帧数：</div>
+              <div class="info-value">{{ shot.duration_frame }}</div>
+            </div>
+            <div class="info-row">
+              <div class="info-label">截止日期：</div>
+              <div class="info-value">
+                <span :class="getDeadlineClass(shot)">
+                  {{ formatDate(shot.deadline) }}
                 </span>
-              </el-descriptions-item>
-              
-              <el-descriptions-item label="时长">
-                {{ shot.duration_frame ? `${shot.duration_frame} 帧` : '未设置' }}
-              </el-descriptions-item>
-              
-              <el-descriptions-item label="推进阶段">
-                {{ shot.prom_stage || '未设置' }}
-              </el-descriptions-item>
-              
-              <el-descriptions-item label="创建时间">
-                {{ formatDateTime(shot.created_at) }}
-              </el-descriptions-item>
-              
-              <el-descriptions-item label="更新时间">
-                {{ formatDateTime(shot.updated_at) }}
-              </el-descriptions-item>
-              
-              <el-descriptions-item label="描述" :span="2">
-                {{ shot.description || '无描述' }}
-              </el-descriptions-item>
-            </el-descriptions>
-          </div>
-        </div>
-      </el-tab-pane>
-      
-      <el-tab-pane label="反馈" name="comments">
-        <div class="comments-section">
-          <div class="comments-list" v-loading="loadingComments">
-            <div v-if="comments.length === 0" class="no-comments">
-              <el-empty description="暂无反馈" />
+              </div>
             </div>
-            
-            <div v-else class="comment-item" v-for="comment in comments" :key="comment.id">
+            <div class="info-row">
+              <div class="info-label">最近提交：</div>
+              <div class="info-value">
+                <span :class="getSubmitDateClass(shot)">
+                  {{ formatDate(shot.last_submit_date) || '尚未提交' }}
+                </span>
+              </div>
+            </div>
+            <div class="info-row">
+              <div class="info-label">描述：</div>
+              <div class="info-value description">{{ shot.description || '无描述' }}</div>
+            </div>
+          </div>
+        </el-card>
+
+        <!-- 状态更新 -->
+        <el-card v-if="canUpdateStatus" class="detail-card">
+          <template #header>
+            <div class="card-header">
+              <span>状态更新</span>
+            </div>
+          </template>
+          <div class="status-update">
+            <el-select 
+              v-model="newStatus" 
+              placeholder="选择新状态" 
+              class="status-select"
+              :disabled="statusUpdating"
+            >
+              <el-option label="等待开始" value="waiting" />
+              <el-option label="正在制作" value="in_progress" />
+              <el-option label="提交内审" value="submit_review" />
+              <el-option label="正在修改" value="revising" />
+              <el-option label="内审通过" value="internal_approved" />
+              <el-option label="客户审核" value="client_review" />
+              <el-option label="客户退回" value="client_rejected" />
+              <el-option label="客户通过" value="client_approved" />
+              <el-option label="客户返修" value="client_revision" />
+              <el-option label="暂停制作" value="suspended" />
+              <el-option label="已完结" value="completed" />
+            </el-select>
+            <el-button 
+              type="primary" 
+              :loading="statusUpdating"
+              :disabled="!newStatus || newStatus === shot.status"
+              @click="updateShotStatus"
+            >
+              更新状态
+            </el-button>
+          </div>
+        </el-card>
+
+        <!-- 镜头反馈 -->
+        <el-card class="detail-card">
+          <template #header>
+            <div class="card-header">
+              <span>镜头反馈</span>
+              <el-button v-if="canAddComment" type="primary" size="small" plain @click="showAddComment = true">
+                <el-icon><Plus /></el-icon> 添加反馈
+              </el-button>
+            </div>
+          </template>
+          
+          <div v-if="commentsLoading" class="loading-placeholder">
+            <el-skeleton :rows="3" animated />
+          </div>
+          
+          <div v-else-if="comments.length === 0" class="empty-placeholder">
+            <el-empty description="暂无反馈" />
+          </div>
+          
+          <div v-else class="comment-list">
+            <div v-for="comment in comments" :key="comment.id" class="comment-item">
               <div class="comment-header">
-                <div class="user-info">
-                  <el-avatar :size="32" :src="comment.user_avatar">
-                    {{ comment.user_username?.charAt(0).toUpperCase() }}
-                  </el-avatar>
-                  <span class="username">{{ comment.user_username }}</span>
-                </div>
-                <div class="comment-time">
-                  {{ formatDateTime(comment.timestamp) }}
-                </div>
+                <div class="comment-user">{{ comment.user_name }}</div>
+                <div class="comment-time">{{ formatDateTime(comment.timestamp) }}</div>
               </div>
-              
-              <div class="comment-content">
-                {{ comment.content }}
+              <div class="comment-content">{{ comment.content }}</div>
+              <div v-if="comment.is_resolved" class="comment-status">
+                <el-tag size="small" type="success">已解决</el-tag>
               </div>
-              
-              <div class="comment-footer" v-if="comment.attachments?.length">
-                <div class="attachments">
-                  <div 
-                    v-for="attachment in comment.attachments" 
-                    :key="attachment.id"
-                    class="attachment-item"
-                  >
-                    <el-link :href="attachment.file_path" target="_blank">
-                      {{ attachment.file_name }}
-                    </el-link>
-                  </div>
-                </div>
+              <div v-if="canResolveComment(comment)" class="comment-actions">
+                <el-button v-if="!comment.is_resolved" type="text" size="small" @click="resolveComment(comment.id)">
+                  标记为已解决
+                </el-button>
               </div>
             </div>
           </div>
           
-          <div class="comment-form">
-            <h3>添加反馈</h3>
-            <el-form :model="commentForm" :rules="commentRules" ref="commentFormRef">
-              <el-form-item prop="content">
+          <!-- 添加反馈对话框 -->
+          <el-dialog
+            v-model="showAddComment"
+            title="添加反馈"
+            width="500px"
+            :close-on-click-modal="false"
+          >
+            <el-form ref="commentForm" :model="commentForm" :rules="commentRules">
+              <el-form-item prop="content" label="反馈内容">
                 <el-input
                   v-model="commentForm.content"
                   type="textarea"
-                  rows="3"
-                  placeholder="请输入反馈内容，可以使用@提及其他用户"
+                  :rows="4"
+                  placeholder="请输入反馈内容"
                 />
               </el-form-item>
-              
-              <el-form-item>
-                <el-upload
-                  action="#"
-                  :auto-upload="false"
-                  :on-change="handleFileChange"
-                  :on-remove="handleFileRemove"
-                  :file-list="fileList"
-                  multiple
-                >
-                  <el-button type="primary">选择附件</el-button>
-                </el-upload>
-              </el-form-item>
-              
-              <el-form-item>
-                <el-button type="primary" @click="submitComment" :loading="submittingComment">
-                  提交反馈
+            </el-form>
+            <template #footer>
+              <el-button @click="showAddComment = false">取消</el-button>
+              <el-button 
+                type="primary" 
+                :loading="commentSubmitting"
+                @click="submitComment"
+              >
+                提交
+              </el-button>
+            </template>
+          </el-dialog>
+        </el-card>
+
+        <!-- 镜头备注 -->
+        <el-card class="detail-card">
+          <template #header>
+            <div class="card-header">
+              <span>镜头备注</span>
+              <el-button type="primary" size="small" plain @click="showAddNote = true">
+                <el-icon><Plus /></el-icon> 添加备注
+              </el-button>
+            </div>
+          </template>
+          
+          <div v-if="notesLoading" class="loading-placeholder">
+            <el-skeleton :rows="3" animated />
+          </div>
+          
+          <div v-else-if="notes.length === 0" class="empty-placeholder">
+            <el-empty description="暂无备注" />
+          </div>
+          
+          <div v-else class="note-list">
+            <div v-for="note in notes" :key="note.id" class="note-item" :class="{'important-note': note.is_important}">
+              <div class="note-header">
+                <div class="note-user">{{ note.user_name }}</div>
+                <div class="note-time">{{ formatDateTime(note.created_at) }}</div>
+              </div>
+              <div class="note-content">
+                <el-tag v-if="note.is_important" type="danger" size="small" class="important-tag">重要提示</el-tag>
+                {{ note.content }}
+              </div>
+              <div v-if="canDeleteNote(note)" class="note-actions">
+                <el-button type="text" size="small" @click="deleteNote(note.id)">
+                  删除
                 </el-button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 添加备注对话框 -->
+          <el-dialog
+            v-model="showAddNote"
+            title="添加备注"
+            width="500px"
+            :close-on-click-modal="false"
+          >
+            <el-form ref="noteForm" :model="noteForm" :rules="noteRules">
+              <el-form-item prop="content" label="备注内容">
+                <el-input
+                  v-model="noteForm.content"
+                  type="textarea"
+                  :rows="4"
+                  placeholder="请输入备注内容"
+                />
+              </el-form-item>
+              <el-form-item>
+                <el-checkbox v-model="noteForm.isImportant">
+                  标记为重要提示 <span class="important-hint">(提交状态变更时将提示确认)</span>
+                </el-checkbox>
               </el-form-item>
             </el-form>
-          </div>
-        </div>
-      </el-tab-pane>
-    </el-tabs>
+            <template #footer>
+              <el-button @click="showAddNote = false">取消</el-button>
+              <el-button 
+                type="primary" 
+                :loading="noteSubmitting"
+                @click="submitNote"
+              >
+                提交
+              </el-button>
+            </template>
+          </el-dialog>
+        </el-card>
+      </div>
+    </el-scrollbar>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
-import { format, isAfter } from 'date-fns'
-import { useShotStore } from '../stores/shotStore'
-import shotService from '../services/shotService'
-import commentService from '../services/commentService'
+import { ref, computed, onMounted, watch } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Close, Edit, Plus } from '@element-plus/icons-vue'
+import { useShotStore } from '@/stores/shotStore'
+import { useAuthStore } from '@/stores/authStore'
+import shotService from '@/services/shotService'
 
+// Props
 const props = defineProps({
   shot: {
     type: Object,
@@ -195,354 +273,509 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:shot', 'close'])
+// Emits
+const emit = defineEmits(['update', 'close'])
 
-// 状态变量
-const activeTab = ref('info')
-const isEditing = ref(false)
-const loadingComments = ref(false)
-const submittingComment = ref(false)
-const comments = ref([])
-const fileList = ref([])
+// Store
 const shotStore = useShotStore()
-const formRef = ref(null)
-const commentFormRef = ref(null)
+const authStore = useAuthStore()
 
-// 表单数据
-const editForm = reactive({
-  shot_code: '',
-  status: '',
-  deadline: null,
-  duration_frame: null,
-  prom_stage: '',
-  description: ''
-})
+// 数据状态
+const comments = ref([])
+const notes = ref([])
+const commentsLoading = ref(false)
+const notesLoading = ref(false)
+const commentSubmitting = ref(false)
+const noteSubmitting = ref(false)
+const statusUpdating = ref(false)
+const showAddComment = ref(false)
+const showAddNote = ref(false)
+const newStatus = ref('')
 
-// 评论表单
-const commentForm = reactive({
+// 表单
+const commentForm = ref({
   content: ''
 })
 
-// 表单验证规则
-const rules = {
-  shot_code: [
-    { required: true, message: '请输入镜头编号', trigger: 'blur' }
-  ],
-  status: [
-    { required: true, message: '请选择状态', trigger: 'change' }
-  ]
-}
+const noteForm = ref({
+  content: '',
+  isImportant: false
+})
 
+// 表单验证规则
 const commentRules = {
   content: [
-    { required: true, message: '请输入反馈内容', trigger: 'blur' }
+    { required: true, message: '请输入反馈内容', trigger: 'blur' },
+    { min: 2, max: 2000, message: '长度在 2 到 2000 个字符', trigger: 'blur' }
   ]
 }
 
-// 计算属性
-const isOverdue = (deadline) => {
-  if (!deadline) return false
-  
+const noteRules = {
+  content: [
+    { required: true, message: '请输入备注内容', trigger: 'blur' },
+    { min: 2, max: 2000, message: '长度在 2 到 2000 个字符', trigger: 'blur' }
+  ]
+}
+
+// 权限控制
+const canEdit = computed(() => {
+  return authStore.isAdmin || authStore.isManager
+})
+
+const canAddComment = computed(() => {
+  return authStore.isAdmin || authStore.isManager
+})
+
+const canUpdateStatus = computed(() => {
+  const isArtist = props.shot.artist === authStore.user?.id
+  return authStore.isAdmin || authStore.isManager || isArtist
+})
+
+const canResolveComment = (comment) => {
+  return authStore.isAdmin || authStore.isManager || comment.user === authStore.user?.id
+}
+
+const canDeleteNote = (note) => {
+  return authStore.isAdmin || authStore.isManager || note.user === authStore.user?.id
+}
+
+// 加载镜头反馈
+const loadComments = async () => {
+  commentsLoading.value = true
   try {
-    const deadlineDate = new Date(deadline)
-    const today = new Date()
+    const response = await shotService.getShotComments(props.shot.id)
+    comments.value = response.data
+  } catch (error) {
+    console.error('加载镜头反馈失败', error)
+    ElMessage.error('加载镜头反馈失败')
+  } finally {
+    commentsLoading.value = false
+  }
+}
+
+// 加载镜头备注
+const loadNotes = async () => {
+  notesLoading.value = true
+  try {
+    const response = await shotService.getShotNotes(props.shot.id)
+    notes.value = response.data
+  } catch (error) {
+    console.error('加载镜头备注失败', error)
+    ElMessage.error('加载镜头备注失败')
+  } finally {
+    notesLoading.value = false
+  }
+}
+
+// 提交反馈
+const submitComment = async () => {
+  // 表单验证
+  try {
+    commentSubmitting.value = true
     
-    return isAfter(today, deadlineDate)
-  } catch (e) {
-    return false
+    const data = {
+      content: commentForm.value.content
+    }
+    
+    await shotService.addShotComment(props.shot.id, data)
+    
+    // 清空表单
+    commentForm.value.content = ''
+    showAddComment.value = false
+    
+    // 重新加载反馈
+    await loadComments()
+    
+    ElMessage.success('反馈添加成功')
+  } catch (error) {
+    console.error('添加反馈失败', error)
+    ElMessage.error('添加反馈失败')
+  } finally {
+    commentSubmitting.value = false
   }
 }
 
-// 获取状态类型
-const getStatusType = (status) => {
-  const typeMap = {
-    'in_progress': '',
-    'review': 'warning',
-    'approved': 'success',
-    'need_revision': 'danger'
+// 解决反馈
+const resolveComment = async (commentId) => {
+  try {
+    await shotService.updateComment(commentId, { is_resolved: true })
+    
+    // 更新本地状态
+    const index = comments.value.findIndex(c => c.id === commentId)
+    if (index !== -1) {
+      comments.value[index].is_resolved = true
+    }
+    
+    ElMessage.success('已将反馈标记为已解决')
+  } catch (error) {
+    console.error('更新反馈状态失败', error)
+    ElMessage.error('更新反馈状态失败')
   }
-  return typeMap[status] || ''
 }
 
-// 获取状态文本
-const getStatusText = (status) => {
-  const textMap = {
-    'in_progress': '制作中',
-    'review': '审核中',
-    'approved': '已通过',
-    'need_revision': '需修改'
+// 提交备注
+const submitNote = async () => {
+  try {
+    noteSubmitting.value = true
+    
+    const data = {
+      content: noteForm.value.content,
+      isImportant: noteForm.value.isImportant
+    }
+    
+    await shotService.addShotNote(props.shot.id, data)
+    
+    // 清空表单
+    noteForm.value.content = ''
+    noteForm.value.isImportant = false
+    showAddNote.value = false
+    
+    // 重新加载备注
+    await loadNotes()
+    
+    // 可能需要刷新镜头数据，更新指示器
+    const updatedShot = await shotStore.fetchShot(props.shot.id)
+    emit('update', updatedShot)
+    
+    ElMessage.success('备注添加成功')
+  } catch (error) {
+    console.error('添加备注失败', error)
+    ElMessage.error('添加备注失败')
+  } finally {
+    noteSubmitting.value = false
   }
-  return textMap[status] || '未知'
+}
+
+// 删除备注
+const deleteNote = async (noteId) => {
+  try {
+    await ElMessageBox.confirm('确定要删除此备注吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    
+    await shotService.deleteShotNote(noteId)
+    
+    // 更新本地状态
+    notes.value = notes.value.filter(n => n.id !== noteId)
+    
+    // 可能需要刷新镜头数据，更新指示器
+    const updatedShot = await shotStore.fetchShot(props.shot.id)
+    emit('update', updatedShot)
+    
+    ElMessage.success('备注删除成功')
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除备注失败', error)
+      ElMessage.error('删除备注失败')
+    }
+  }
+}
+
+// 编辑镜头信息
+const editShotInfo = () => {
+  // TODO: 实现编辑镜头信息的功能
+  ElMessage.info('编辑镜头功能开发中...')
+}
+
+// 更新镜头状态
+const updateShotStatus = async () => {
+  try {
+    statusUpdating.value = true
+    
+    // 如果状态变为提交内审且有重要备注，需要二次确认
+    if (newStatus.value === 'submit_review' && props.shot.has_important_notes) {
+      try {
+        await ElMessageBox.confirm(
+          '该镜头有重要备注提示，请确认是否继续提交？', 
+          '重要提示', 
+          {
+            confirmButtonText: '确认提交',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }
+        )
+      } catch (error) {
+        if (error === 'cancel') {
+          statusUpdating.value = false
+          return
+        }
+      }
+    }
+    
+    const { shot, importantNotes } = await shotStore.updateShotStatus(props.shot.id, newStatus.value)
+    
+    // 显示成功消息
+    ElMessage.success('状态更新成功')
+    
+    // 更新父组件显示
+    emit('update', shot)
+    
+    // 重置状态
+    newStatus.value = ''
+  } catch (error) {
+    console.error('更新状态失败', error)
+    ElMessage.error('更新状态失败')
+  } finally {
+    statusUpdating.value = false
+  }
+}
+
+// 关闭详情面板
+const closeDetails = () => {
+  emit('close')
 }
 
 // 格式化日期
 const formatDate = (dateString) => {
-  if (!dateString) return ''
-  
-  try {
-    const date = new Date(dateString)
-    return format(date, 'yyyy-MM-dd')
-  } catch (e) {
-    return dateString
-  }
+  if (!dateString) return '-'
+  const date = new Date(dateString)
+  return new Intl.DateTimeFormat('zh-CN').format(date)
 }
 
 // 格式化日期时间
-const formatDateTime = (dateString) => {
-  if (!dateString) return ''
+const formatDateTime = (dateTimeString) => {
+  if (!dateTimeString) return '-'
+  const date = new Date(dateTimeString)
+  return new Intl.DateTimeFormat('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(date)
+}
+
+// 获取截止日期样式
+const getDeadlineClass = (shot) => {
+  if (!shot.deadline) return ''
   
-  try {
-    const date = new Date(dateString)
-    return format(date, 'yyyy-MM-dd HH:mm')
-  } catch (e) {
-    return dateString
-  }
-}
-
-// 开始编辑
-const startEdit = () => {
-  // 复制当前数据到表单
-  Object.keys(editForm).forEach(key => {
-    if (props.shot[key] !== undefined) {
-      editForm[key] = props.shot[key]
-    }
-  })
+  const today = new Date()
+  const deadline = new Date(shot.deadline)
+  const diffDays = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24))
   
-  isEditing.value = true
-}
-
-// 取消编辑
-const cancelEdit = () => {
-  isEditing.value = false
-}
-
-// 保存镜头
-const saveShot = async () => {
-  try {
-    if (!formRef.value) return
-    
-    await formRef.value.validate()
-    
-    const shotData = { ...editForm }
-    
-    // 更新镜头
-    const updatedShot = await shotStore.updateShot(props.shot.id, shotData)
-    
-    isEditing.value = false
-    
-    // 通知父组件更新
-    emit('update:shot', updatedShot)
-    
-    ElMessage.success('镜头信息已更新')
-  } catch (err) {
-    console.error('保存镜头失败:', err)
-    ElMessage.error('保存失败，请检查表单')
+  if (diffDays < 0) {
+    return 'text-danger' // 已逾期
+  } else if (diffDays <= 7) {
+    return 'text-warning' // 临近
   }
+  return ''
 }
 
-// 加载评论
-const loadComments = async () => {
-  loadingComments.value = true
+// 获取提交日期样式
+const getSubmitDateClass = (shot) => {
+  if (!shot.deadline || !shot.last_submit_date) return ''
   
-  try {
-    const response = await commentService.getComments({ 
-      shot: props.shot.id,
-      top_level: true
-    })
-    
-    comments.value = response.data
-  } catch (err) {
-    console.error('加载评论失败:', err)
-    ElMessage.error('加载评论失败')
-  } finally {
-    loadingComments.value = false
-  }
-}
-
-// 处理文件上传
-const handleFileChange = (file) => {
-  fileList.value.push(file)
-}
-
-// 处理文件移除
-const handleFileRemove = (file, fileList) => {
-  const index = fileList.value.indexOf(file)
-  if (index > -1) {
-    fileList.value.splice(index, 1)
-  }
-}
-
-// 提交评论
-const submitComment = async () => {
-  try {
-    if (!commentFormRef.value) return
-    
-    await commentFormRef.value.validate()
-    
-    submittingComment.value = true
-    
-    // 创建评论
-    const commentData = {
-      shot: props.shot.id,
-      content: commentForm.content
+  const today = new Date()
+  const deadline = new Date(shot.deadline)
+  const diffDays = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24))
+  
+  if (shot.last_submit_date) {
+    if (diffDays < 0) {
+      return 'text-warning' // 已提交但逾期
     }
-    
-    const response = await commentService.createComment(commentData)
-    const newComment = response.data
-    
-    // 上传附件
-    if (fileList.value.length > 0) {
-      for (const file of fileList.value) {
-        const formData = new FormData()
-        formData.append('comment', newComment.id)
-        formData.append('file_path', file.raw)
-        formData.append('file_name', file.name)
-        formData.append('file_size', file.size)
-        formData.append('mime_type', file.type)
-        
-        await commentService.uploadAttachment(formData)
-      }
-    }
-    
-    // 重新加载评论
-    await loadComments()
-    
-    // 重置表单
-    commentForm.content = ''
-    fileList.value = []
-    
-    ElMessage.success('反馈已提交')
-  } catch (err) {
-    console.error('提交评论失败:', err)
-    ElMessage.error('提交失败，请检查表单')
-  } finally {
-    submittingComment.value = false
+    return ''
   }
+  
+  if (diffDays < 0) {
+    return 'text-danger' // 未提交且逾期
+  }
+  return ''
 }
 
-// 监听标签页切换
-const handleTabChange = (tab) => {
-  if (tab.name === 'comments') {
+// 获取状态标签类型
+const getStatusTagType = (status) => {
+  const statusMap = {
+    'waiting': 'info',
+    'in_progress': 'primary',
+    'submit_review': 'warning',
+    'revising': 'danger',
+    'internal_approved': 'success',
+    'client_review': 'warning',
+    'client_rejected': 'danger',
+    'client_approved': 'success',
+    'client_revision': 'danger',
+    'deleted_merged': 'info',
+    'suspended': 'info',
+    'completed': 'success'
+  }
+  
+  return statusMap[status] || 'info'
+}
+
+// 获取阶段标签类型
+const getStageTagType = (stage) => {
+  const stageMap = {
+    'LAY': 'info',
+    'BLK': 'warning',
+    'ANI': 'primary',
+    'PASS': 'success'
+  }
+  
+  return stageMap[stage] || 'info'
+}
+
+// 监听镜头变化
+watch(() => props.shot, (newShot) => {
+  if (newShot && newShot.id) {
     loadComments()
+    loadNotes()
   }
-}
+}, { immediate: true })
 
-// 组件挂载时加载评论
 onMounted(() => {
-  if (activeTab.value === 'comments') {
+  if (props.shot && props.shot.id) {
     loadComments()
-  }
-})
-
-// 监听标签页变化
-watch(activeTab, (newVal) => {
-  if (newVal === 'comments') {
-    loadComments()
+    loadNotes()
   }
 })
 </script>
 
 <style scoped>
 .shot-details {
-  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border-left: 1px solid #f0f0f0;
+  background-color: #ffffff;
 }
 
-.details-content {
-  margin-top: 20px;
-}
-
-.shot-header {
+.shot-details-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .shot-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.shot-title h2 {
   margin: 0;
+  font-size: 18px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.overdue {
-  color: #f56c6c;
-  font-weight: bold;
-}
-
-.comments-section {
-  margin-top: 20px;
-}
-
-.comments-list {
-  margin-bottom: 30px;
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.no-comments {
+.shot-details-content {
+  padding: 16px;
   display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 200px;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.comment-item {
-  border: 1px solid #ebeef5;
-  border-radius: 4px;
-  padding: 15px;
-  margin-bottom: 15px;
+.detail-card {
+  margin-bottom: 16px;
 }
 
-.comment-header {
+.card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
 }
 
-.user-info {
+.shot-info {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.username {
+.info-row {
+  display: flex;
+  align-items: flex-start;
+}
+
+.info-label {
+  width: 80px;
+  font-weight: bold;
+  color: #606266;
+}
+
+.info-value {
+  flex: 1;
+}
+
+.description {
+  white-space: pre-line;
+}
+
+.status-update {
+  display: flex;
+  gap: 12px;
+}
+
+.status-select {
+  flex: 1;
+}
+
+.text-danger {
+  color: #F56C6C;
+}
+
+.text-warning {
+  color: #E6A23C;
+}
+
+.loading-placeholder,
+.empty-placeholder {
+  padding: 16px 0;
+}
+
+.comment-list,
+.note-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.comment-item,
+.note-item {
+  padding: 12px;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+}
+
+.important-note {
+  background-color: #fef0f0;
+}
+
+.comment-header,
+.note-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.comment-user,
+.note-user {
   font-weight: bold;
 }
 
-.comment-time {
+.comment-time,
+.note-time {
   color: #909399;
   font-size: 12px;
 }
 
-.comment-content {
+.comment-content,
+.note-content {
+  margin-bottom: 8px;
   white-space: pre-line;
-  margin-bottom: 10px;
 }
 
-.comment-footer {
-  border-top: 1px solid #ebeef5;
-  padding-top: 10px;
-}
-
-.attachments {
+.comment-status,
+.comment-actions,
+.note-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  justify-content: flex-end;
 }
 
-.attachment-item {
-  background-color: #f5f7fa;
-  padding: 5px 10px;
-  border-radius: 4px;
+.important-tag {
+  margin-right: 8px;
 }
 
-.comment-form {
-  border-top: 1px solid #ebeef5;
-  padding-top: 20px;
+.important-hint {
+  color: #F56C6C;
+  font-size: 12px;
 }
 </style> 

@@ -1,100 +1,100 @@
 @echo off
+chcp 65001 > nul
 echo =====================================================
 echo   WebPMS Platform - Offline Startup
 echo =====================================================
 
-echo [Step 1] Checking for required packages...
+echo [Step 1] 检查必要的离线资源...
 if not exist "offline-resources\python-packages\py3\tomli-2.0.0-py3-none-any.whl" (
-    echo ERROR: tomli package not found in correct location!
-    echo Please make sure you have the tomli-2.0.0-py3-none-any.whl in your offline-resources\python-packages\py3 directory.
+    echo ERROR: Python离线包不存在!
+    echo 请确保离线资源目录结构正确。
     pause
     exit /b 1
 )
 
-echo [Step 2] Loading Docker images if needed...
-echo Checking PostgreSQL image...
+if not exist "offline-resources\npm-packages\node_modules.tar.gz" (
+    echo WARNING: 前端离线依赖包不存在!
+    echo 将尝试在线安装，可能会失败。
+    echo 建议先运行pack-frontend-deps.bat创建离线包。
+    echo.
+    choice /C YN /M "是否继续?"
+    if errorlevel 2 (
+        exit /b 0
+    )
+) else (
+    echo 前端离线依赖包检查通过。
+)
+
+echo [Step 2] 加载Docker镜像(如需)...
+echo 检查PostgreSQL镜像...
 docker images | findstr postgres:14.15 > nul
 if errorlevel 1 (
-    echo Loading PostgreSQL image...
+    echo 加载PostgreSQL镜像...
     docker load -i docker\images\postgres-14.15.tar
 )
 
-echo Checking Redis image...
+echo 检查Redis镜像...
 docker images | findstr redis:alpine > nul
 if errorlevel 1 (
-    echo Loading Redis image...
+    echo 加载Redis镜像...
     docker load -i docker\images\redis-alpine.tar
 )
 
-echo Checking Python image...
+echo 检查Python镜像...
 docker images | findstr python:3.10-slim > nul
 if errorlevel 1 (
-    echo Loading Python image...
+    echo 加载Python镜像...
     docker load -i docker\images\python-slim.tar
 )
 
-echo Checking Node.js image...
+echo 检查Node.js镜像...
 docker images | findstr node:18-alpine > nul
 if errorlevel 1 (
-    echo Loading Node.js image...
+    echo 加载Node.js镜像...
     docker load -i docker\images\node-alpine.tar
 )
 
-echo [Step 3] Stopping any running containers...
+echo [Step 3] 停止运行中的容器...
 docker-compose -f docker-compose.postgres.yml down 2>nul
 timeout /t 2 /nobreak > nul
 
-echo [Step 4] Starting database container...
-docker-compose -f docker-compose.postgres.yml up -d db redis
-echo Waiting for database to initialize...
+echo [Step 4] 启动后端服务(数据库, redis, 后端)...
+docker-compose -f docker-compose.postgres.yml up -d db redis backend
+echo 等待后端服务初始化...
 timeout /t 15 /nobreak > nul
 
-echo [Step 5] Starting backend container and running migrations...
-docker-compose -f docker-compose.postgres.yml up -d backend
-echo Waiting for backend to start...
-timeout /t 15 /nobreak > nul
-
-echo [Step 6] Running database migrations...
-echo - Checking for conflicting migrations...
-docker exec -it webpms-backend-1 sh -c "cd /app && python manage.py makemigrations --merge --noinput"
-echo - Creating migrations for users app...
-docker exec -it webpms-backend-1 sh -c "cd /app && python manage.py makemigrations users"
-echo - Creating migrations for other apps...
-docker exec -it webpms-backend-1 sh -c "cd /app && python manage.py makemigrations"
-echo - Applying all migrations...
-docker exec -it webpms-backend-1 sh -c "cd /app && python manage.py migrate"
-echo Migrations completed.
-timeout /t 5 /nobreak > nul
-
-echo [Step 7] Starting frontend container...
+echo [Step 5] 启动前端服务...
 docker-compose -f docker-compose.postgres.yml up -d frontend
-echo Waiting for frontend to start...
-timeout /t 30 /nobreak > nul
+echo 等待前端初始化(可能需要1-2分钟)...
+echo 正在解压前端依赖包并启动Vite服务器...
+timeout /t 90 /nobreak > nul
 
-echo [Step 8] Checking container status...
+echo [Step 6] 检查容器状态...
 docker-compose -f docker-compose.postgres.yml ps
 
 echo =====================================================
-echo   WebPMS Platform is now running!
-echo   - Frontend: http://localhost:3000
+echo   WebPMS平台现已启动!
+echo   - 前端: http://localhost:3000
 echo   - API: http://localhost:8000/api
-echo   - Admin: http://localhost:8000/admin
-echo   - Database: localhost:15432 (PostgreSQL)
+echo   - 管理后台: http://localhost:8000/admin
+echo   - 数据库: localhost:15432 (PostgreSQL)
 echo =====================================================
-echo Note: If frontend shows "localhost didn't send any data", please wait
-echo       another 30 seconds and refresh the page. The Vite server needs
-echo       time to start up completely.
+echo 注意: 如果前端显示"localhost未发送任何数据"，Vite服务器
+echo       可能仍在启动中。请再等待30-60秒并刷新页面。
 echo =====================================================
-echo To create an admin user, run:
+echo 查看前端启动进度:
+echo docker logs -f webpms-frontend-1
+echo.
+echo 创建管理员用户:
 echo docker exec -it webpms-backend-1 sh -c "cd /app && python manage.py createsuperuser"
 echo.
-echo To stop services:
+echo 停止所有服务:
 echo docker-compose -f docker-compose.postgres.yml down
 echo.
-echo To view backend logs:
+echo 查看后端日志:
 echo docker-compose -f docker-compose.postgres.yml logs -f backend
 echo.
-echo To view frontend logs:
+echo 查看前端日志:
 echo docker-compose -f docker-compose.postgres.yml logs -f frontend
 
 pause 

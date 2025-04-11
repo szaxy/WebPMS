@@ -27,7 +27,26 @@ apiClient.interceptors.request.use(
 export default {
   // 获取项目列表
   getProjects(params = {}) {
+    console.log('项目API调用，参数:', params)
     return apiClient.get('/projects/', { params })
+      .then(response => {
+        console.log('项目API响应状态:', response.status)
+        console.log('项目API响应数据类型:', typeof response.data, Array.isArray(response.data) ? '是数组' : '不是数组')
+        if (Array.isArray(response.data)) {
+          console.log('项目数据长度:', response.data.length)
+        } else if (response.data && response.data.results) {
+          console.log('项目分页数据 - 总数:', response.data.count, '当前页数量:', response.data.results.length)
+        }
+        return response
+      })
+      .catch(error => {
+        console.error('获取项目API错误:', error.message)
+        if (error.response) {
+          console.error('错误状态:', error.response.status)
+          console.error('错误数据:', error.response.data)
+        }
+        throw error
+      })
   },
   
   // 获取单个项目详情

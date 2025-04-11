@@ -3,6 +3,11 @@ description:
 globs: 
 alwaysApply: true
 ---
+---
+description: 
+globs: 
+alwaysApply: true
+---
 荷和年动画项目管理平台开发文档（初版，后续会构建更多功能）  
 版本: 1.0 (MVP阶段)  
 技术栈: Django 4.x + Vue3 + PostgreSQL + Docker  

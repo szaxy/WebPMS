@@ -3,6 +3,13 @@ description:
 globs: 
 alwaysApply: true
 ---
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+生成所有的bat批处理文件不得含有中文，会引发乱码。或者添加编码设置，确保中文显示正常。
 
 # WebPMS项目开发规则
 

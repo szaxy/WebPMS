@@ -55,11 +55,44 @@ services:
     image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/library/node:18-alpine
     pull_policy: never
     working_dir: /app
-    command: sh /start-frontend.sh
+    command: >
+      sh -c "echo '=== 前端准备工作开始 ===' &&
+             # 解压离线node_modules包
+             if [ ! -d '/app/node_modules' ]; then
+               echo '正在从离线包解压node_modules (可能需要1-2分钟)...' &&
+               tar -xf /npm-packages/node_modules.tar.gz -C /app || exit 1;
+             else
+               echo 'node_modules目录已存在，跳过解压步骤';
+             fi &&
+             
+             # 处理依赖问题
+             cd /app &&
+             echo '检查关键依赖...' &&
+             if [ ! -d '/app/node_modules/element-plus' ] || [ ! -d '/app/node_modules/date-fns' ]; then
+               echo '安装缺少的依赖(优先使用离线包)...' &&
+               if [ -f '/npm-packages/package-lock.json' ]; then
+                 echo '使用离线package-lock.json...' &&
+                 cp /npm-packages/package-lock.json /app/;
+               fi &&
+               npm config set strict-ssl false &&
+               
+               # 尝试离线安装
+               echo '尝试离线模式安装...' &&
+               npm install --no-fund --no-audit --legacy-peer-deps --offline || (
+                 echo '离线安装失败，切换到在线模式...' &&
+                 npm config set registry https://registry.npmjs.org/ &&
+                 npm install element-plus@latest date-fns@latest --no-fund --no-audit --legacy-peer-deps --force
+               );
+             else
+               echo '所有关键依赖已安装，跳过安装步骤';
+             fi &&
+             
+             # 启动开发服务器
+             echo '=== 前端依赖准备完成，正在启动Vite开发服务器 ===' &&
+             npm run dev"
     volumes:
       - ./frontend:/app
-      - ./offline-resources/npm-packages:/npm-packages
-      - ./start-frontend.sh:/start-frontend.sh
+      - ./offline-resources/npm-packages:/npm-packages:ro
     ports:
       - "3000:3000"
       - "3001:3001"

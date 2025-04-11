@@ -1,0 +1,301 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+## 镜头管理页面前端开发对接规范
+
+### 1. API接口调用规范
+
+#### 1.1 基础请求规范
+
+- 所有API请求通过`shotService.js`进行，不在组件中直接使用Axios
+- 请求方法命名遵循动词+名词格式：例如`getShots`、`updateShot`
+- 参数传递统一使用对象形式，便于扩展：
+  ```js
+  // 推荐
+  getShots({ limit, offset, status, department })
+  
+  // 不推荐
+  getShots(limit, offset, status, department)
+  ```
+- 所有请求必须处理错误情况，使用try-catch包装异步请求
+
+#### 1.2 数据筛选与分页
+
+- 分页参数统一使用`limit`和`offset`/`page`
+- 筛选参数根据API要求传递，常用参数包括：
+  - `status`: 镜头状态
+  - `department`: 所属部门
+  - `prom_stage`: 推进阶段
+  - `search`: 搜索关键词
+
+#### 1.3 批量操作规范
+
+- 批量操作统一使用数组ID形式：
+  ```js
+  batchUpdateShots({ ids: [1, 2, 3], status: 'in_progress' })
+  ```
+- 批量重命名操作使用前后缀和计数参数：
+  ```js
+  batchRenameShots({ 
+    ids: [1, 2, 3], 
+    prefix: 'SC_', 
+    suffix: '_v2', 
+    start_num: 10, 
+    step: 10 
+  })
+  ```
+
+### 2. 数据模型与字段规范
+
+#### 2.1 镜头模型字段
+
+- 主要字段：
+  - `id`: 镜头ID（数字）
+  - `project`: 所属项目ID（数字）
+  - `shot_code`: 镜头编号（字符串）
+  - `department`: 所属部门代码（`DH`/`JS`/`HQ`）
+  - `prom_stage`: 推进阶段（`LAY`/`BLK`/`ANI`/`PASS`）
+  - `status`: 状态值（参考下列状态值列表）
+  - `artist`: 制作者ID（数字，可为null）
+  - `duration_frame`: 时长帧数（数字）
+  - `deadline`: 截止日期（日期字符串，ISO格式）
+  - `last_submit_date`: 最近提交日期（日期字符串，可为null）
+  - `description`: 描述文本（字符串）
+
+- 显示字段（只读）：
+  - `project_name`: 项目名称
+  - `project_code`: 项目代号
+  - `artist_name`: 制作者名称（可为null）
+  - `department_display`: 部门显示名称
+  - `prom_stage_display`: 阶段显示名称
+  - `status_display`: 状态显示名称
+
+#### 2.2 状态值列表
+
+状态值应严格使用以下字符串：
+```
+'waiting'          - 等待开始
+'in_progress'      - 正在制作
+'submit_review'    - 提交内审
+'revising'         - 正在修改
+'internal_approved' - 内审通过
+'client_review'    - 客户审核
+'client_rejected'  - 客户退回
+'client_approved'  - 客户通过
+'client_revision'  - 客户返修
+'deleted_merged'   - 已删除或合并
+'suspended'        - 暂停制作
+'completed'        - 已完结
+```
+
+#### 2.3 镜头备注模型字段
+
+- 主要字段：
+  - `id`: 备注ID（数字）
+  - `shot`: 关联镜头ID（数字）
+  - `user`: 创建用户ID（数字）
+  - `content`: 备注内容（字符串）
+  - `is_important`: 是否重要（布尔值）
+  - `created_at`: 创建时间（ISO日期时间）
+  - `updated_at`: 更新时间（ISO日期时间）
+
+- 显示字段：
+  - `user_name`: 用户名称
+
+### 3. 组件开发规范
+
+#### 3.1 数据加载与状态管理
+
+- 所有组件必须处理三种状态：加载中、出错、数据展示
+- 使用Pinia管理全局状态，局部状态使用组合式API管理
+- 组件挂载时异步加载数据，示例：
+  ```js
+  onMounted(async () => {
+    loading.value = true
+    try {
+      const response = await shotService.getShots()
+      shots.value = response.data
+    } catch (err) {
+      error.value = '加载失败'
+    } finally {
+      loading.value = false
+    }
+  })
+  ```
+
+#### 3.2 错误处理标准
+
+- 所有API调用必须使用try-catch处理异常
+- 错误信息应该清晰且对用户友好
+- 捕获的错误应记录到控制台便于调试
+- 对不同类型的错误提供不同的处理方式，例如：
+  - 网络错误：提示重试
+  - 权限错误：提示登录或权限不足
+  - 数据错误：提示数据有误
+
+#### 3.3 数据更新策略
+
+- 采用"乐观更新"策略，即先更新UI再等待API响应
+- 当API失败时回滚UI更新
+- 示例：
+  ```js
+  const updateStatus = async (id, status) => {
+    // 记录原始状态以便回滚
+    const originalStatus = shots.value.find(s => s.id === id)?.status
+    
+    // 乐观更新UI
+    const index = shots.value.findIndex(s => s.id === id)
+    if (index !== -1) {
+      shots.value[index].status = status
+    }
+    
+    try {
+      // 实际API调用
+      await shotService.updateShot(id, { status })
+    } catch (err) {
+      // 失败时回滚
+      if (index !== -1 && originalStatus) {
+        shots.value[index].status = originalStatus
+      }
+      error.value = '更新失败'
+    }
+  }
+  ```
+
+### 4. 数据校验规范
+
+#### 4.1 输入验证
+
+- 所有用户输入必须验证，包括：
+  - 必填字段检查：`if (!value.trim()) {...}`
+  - 长度限制：`if (value.length > MAX_LENGTH) {...}`
+  - 格式验证：使用正则表达式或特定函数
+  
+- 示例：镜头备注验证
+  ```js
+  const validateNote = () => {
+    if (!noteContent.value.trim()) {
+      return '备注内容不能为空'
+    }
+    if (noteContent.value.length > 2000) {
+      return '备注内容不能超过2000个字符'
+    }
+    return null
+  }
+  ```
+
+#### 4.2 提交前验证
+
+- 表单提交前必须进行全面验证
+- 阻止提交无效数据，并提供明确错误提示
+- 示例：
+  ```js
+  const submitForm = async () => {
+    const error = validateForm()
+    if (error) {
+      errorMessage.value = error
+      return
+    }
+    
+    // 提交数据...
+  }
+  ```
+
+### 5. 用户界面规范
+
+#### 5.1 响应式设计
+
+- 所有组件必须适配至少三种屏幕尺寸：
+  - 桌面（>= 1200px）
+  - 平板（768px - 1199px）
+  - 移动设备（< 768px）
+- 使用媒体查询或Element Plus的响应式布局实现
+
+#### 5.2 状态颜色规范
+
+镜头状态使用统一的颜色标识：
+
+```
+'waiting'           - 灰色     #95a5a6
+'in_progress'       - 蓝色     #3498db
+'submit_review'     - 橙色     #f39c12
+'revising'          - 黄色     #f1c40f
+'internal_approved' - 青色     #1abc9c
+'client_review'     - 紫色     #9b59b6
+'client_rejected'   - 红色     #e74c3c
+'client_approved'   - 绿色     #2ecc71
+'client_revision'   - 琥珀色   #e67e22
+'deleted_merged'    - 深灰色   #7f8c8d
+'suspended'         - 棕色     #d35400
+'completed'         - 深绿色   #27ae60
+```
+
+#### 5.3 交互反馈规范
+
+- 所有用户操作必须有视觉反馈
+- 长时间操作必须显示加载指示器
+- 操作成功或失败必须有明确通知
+- 重要操作必须有确认机制
+
+### 6. 实时更新与缓存
+
+#### 6.1 数据缓存策略
+
+- 使用Pinia存储全局数据，避免重复请求
+- 定期刷新数据，建议间隔：
+  - 镜头列表：每5分钟
+  - 镜头详情：每2分钟
+  - 备注列表：每1分钟
+
+#### 6.2 数据一致性维护
+
+- 当一个视图更新数据后，确保其他使用相同数据的视图也得到更新
+- 使用Pinia的全局状态确保数据一致性
+- 示例：更新镜头后刷新列表
+  ```js
+  const updateShot = async (id, data) => {
+    await shotService.updateShot(id, data)
+    // 更新本地存储中的镜头数据
+    shotStore.updateShotInStore(id, data)
+  }
+  ```
+
+### 7. 性能优化规范
+
+#### 7.1 列表优化
+
+- 大量数据使用虚拟滚动：Vue Virtual Scroller
+- 分页加载，默认每页20-50条记录
+- 列表项懒加载详细信息
+
+#### 7.2 资源加载
+
+- 组件和路由使用懒加载：`const Component = () => import('...')`
+- 图片使用延迟加载和适当压缩
+- 使用缓存减少重复请求
+
+### 8. 测试标准
+
+#### 8.1 组件测试要点
+
+- 测试所有组件在三种状态下的渲染：加载、错误、正常
+- 测试用户交互和数据提交
+- 测试错误处理机制
+
+#### 8.2 API集成测试
+
+- 测试所有API请求是否正确发送
+- 测试API响应处理
+- 测试网络错误处理
+
+### 9. 版本兼容性
+
+前端代码需兼容的最低环境：
+- Chrome 90+
+- Firefox 88+
+- Edge 90+
+- Safari 14+
+
+通过遵循以上规范，我们可以确保前端组件与后端API正确对接，减少开发过程中的底层Bug，提高代码质量和一致性。

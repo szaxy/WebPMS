@@ -1,0 +1,217 @@
+组件挂载，当前用户信息: null
+ShotManagement.vue:747 尝试加载用户信息...
+ShotManagement.vue:752  加载用户信息失败: TypeError: authStore.getCurrentUser is not a function
+    at ShotManagement.vue:749:23
+    at runtime-core.esm-bundler.js:2815:40
+    at callWithErrorHandling (runtime-core.esm-bundler.js:199:19)
+    at callWithAsyncErrorHandling (runtime-core.esm-bundler.js:206:17)
+    at hook.__weh.hook.__weh (runtime-core.esm-bundler.js:2795:19)
+    at flushPostFlushCbs (runtime-core.esm-bundler.js:385:28)
+    at flushJobs (runtime-core.esm-bundler.js:427:5)
+(匿名) @ ShotManagement.vue:752
+(匿名) @ runtime-core.esm-bundler.js:2815
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+hook.__weh.hook.__weh @ runtime-core.esm-bundler.js:2795
+flushPostFlushCbs @ runtime-core.esm-bundler.js:385
+flushJobs @ runtime-core.esm-bundler.js:427
+Promise.then
+queueFlush @ runtime-core.esm-bundler.js:322
+queuePostFlushCb @ runtime-core.esm-bundler.js:336
+queueEffectWithSuspense @ runtime-core.esm-bundler.js:7321
+baseWatchOptions.scheduler @ runtime-core.esm-bundler.js:6197
+effect2.scheduler @ reactivity.esm-bundler.js:1830
+trigger @ reactivity.esm-bundler.js:253
+endBatch @ reactivity.esm-bundler.js:311
+notify @ reactivity.esm-bundler.js:597
+trigger @ reactivity.esm-bundler.js:571
+set value @ reactivity.esm-bundler.js:1448
+finalizeNavigation @ vue-router.mjs:3498
+(匿名) @ vue-router.mjs:3363
+Promise.then
+pushWithRedirect @ vue-router.mjs:3330
+push @ vue-router.mjs:3255
+install @ vue-router.mjs:3699
+use @ runtime-core.esm-bundler.js:3863
+(匿名) @ main.js:23
+ShotManagement.vue:376 开始加载项目列表
+projectStore.js:30 正在获取项目列表...
+projectService.js:30 项目API调用，参数: {}
+projectService.js:33 项目API响应状态: 200
+projectService.js:34 项目API响应数据类型: object 不是数组
+projectService.js:38 项目分页数据 - 总数: 5 当前页数量: 5
+projectStore.js:32 项目API响应: {data: {…}, status: 200, statusText: 'OK', headers: AxiosHeaders, config: {…}, …}
+projectStore.js:37 检测到分页响应，共有 5 个项目
+ShotManagement.vue:378 原始项目数据: Proxy(Array) {0: {…}, 1: {…}, 2: {…}, 3: {…}, 4: {…}}
+ShotManagement.vue:383 过滤后的项目列表: Proxy(Array) {0: Proxy(Object), 1: Proxy(Object), 2: Proxy(Object), 3: Proxy(Object), 4: Proxy(Object)}
+ShotManagement.vue:395 自动选择第一个项目: Proxy(Object) {id: 5, name: '荷和年-无垠星辰', code: 'HHY2', status: 'active', start_date: '2025-04-11', …}
+ShotManagement.vue:433 开始加载镜头，项目ID: 5
+ShotManagement.vue:447 请求参数: {project: 5, limit: 50, offset: 0, search: undefined, department: null, …}
+shotStore.js:60 fetchShots开始请求，参数: {project: 5, limit: 50, offset: 0, search: undefined, department: null, …}
+shotService.js:43 获取镜头列表，参数: {project: 5, limit: 50, offset: 0, search: undefined, department: null, …}
+shotService.js:46 
+            
+            
+            GET http://localhost:8000/api/shots/list/?project=5&limit=50&offset=0 404 (Not Found)
+dispatchXhrRequest @ xhr.js:195
+xhr @ xhr.js:15
+dispatchRequest @ dispatchRequest.js:51
+Promise.then
+_request @ Axios.js:163
+request @ Axios.js:40
+Axios.<computed> @ Axios.js:213
+wrap @ bind.js:5
+getShots @ shotService.js:46
+fetchShots @ shotStore.js:61
+wrappedAction @ pinia.mjs:1399
+store.<computed> @ pinia.mjs:932
+loadShots @ ShotManagement.vue:449
+loadProjects @ ShotManagement.vue:397
+await in loadProjects
+(匿名) @ ShotManagement.vue:761
+(匿名) @ runtime-core.esm-bundler.js:2815
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+hook.__weh.hook.__weh @ runtime-core.esm-bundler.js:2795
+flushPostFlushCbs @ runtime-core.esm-bundler.js:385
+flushJobs @ runtime-core.esm-bundler.js:427
+Promise.then
+queueFlush @ runtime-core.esm-bundler.js:322
+queuePostFlushCb @ runtime-core.esm-bundler.js:336
+queueEffectWithSuspense @ runtime-core.esm-bundler.js:7321
+baseWatchOptions.scheduler @ runtime-core.esm-bundler.js:6197
+effect2.scheduler @ reactivity.esm-bundler.js:1830
+trigger @ reactivity.esm-bundler.js:253
+endBatch @ reactivity.esm-bundler.js:311
+notify @ reactivity.esm-bundler.js:597
+trigger @ reactivity.esm-bundler.js:571
+set value @ reactivity.esm-bundler.js:1448
+finalizeNavigation @ vue-router.mjs:3498
+(匿名) @ vue-router.mjs:3363
+Promise.then
+pushWithRedirect @ vue-router.mjs:3330
+push @ vue-router.mjs:3255
+install @ vue-router.mjs:3699
+use @ runtime-core.esm-bundler.js:3863
+(匿名) @ main.js:23
+shotService.js:48  shots/list/端点请求失败，尝试使用shots/端点 Request failed with status code 404
+(匿名) @ shotService.js:48
+Promise.catch
+getShots @ shotService.js:47
+fetchShots @ shotStore.js:61
+wrappedAction @ pinia.mjs:1399
+store.<computed> @ pinia.mjs:932
+loadShots @ ShotManagement.vue:449
+loadProjects @ ShotManagement.vue:397
+await in loadProjects
+(匿名) @ ShotManagement.vue:761
+(匿名) @ runtime-core.esm-bundler.js:2815
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+hook.__weh.hook.__weh @ runtime-core.esm-bundler.js:2795
+flushPostFlushCbs @ runtime-core.esm-bundler.js:385
+flushJobs @ runtime-core.esm-bundler.js:427
+Promise.then
+queueFlush @ runtime-core.esm-bundler.js:322
+queuePostFlushCb @ runtime-core.esm-bundler.js:336
+queueEffectWithSuspense @ runtime-core.esm-bundler.js:7321
+baseWatchOptions.scheduler @ runtime-core.esm-bundler.js:6197
+effect2.scheduler @ reactivity.esm-bundler.js:1830
+trigger @ reactivity.esm-bundler.js:253
+endBatch @ reactivity.esm-bundler.js:311
+notify @ reactivity.esm-bundler.js:597
+trigger @ reactivity.esm-bundler.js:571
+set value @ reactivity.esm-bundler.js:1448
+finalizeNavigation @ vue-router.mjs:3498
+(匿名) @ vue-router.mjs:3363
+Promise.then
+pushWithRedirect @ vue-router.mjs:3330
+push @ vue-router.mjs:3255
+install @ vue-router.mjs:3699
+use @ runtime-core.esm-bundler.js:3863
+(匿名) @ main.js:23
+shotService.js:53 镜头列表响应状态: 200
+shotService.js:54 镜头列表数据类型: object 不是数组
+shotService.js:56 响应对象属性: (2) ['shots', 'shot-notes']
+shotStore.js:62 镜头API响应数据类型: object
+shotStore.js:86 收到API根目录信息，尝试获取真正的镜头数据: http://localhost:8000/api/shots/shots/
+shotStore.js:90 
+            
+            
+            GET http://localhost:8000/api/shots/shots/ 401 (Unauthorized)
+dispatchXhrRequest @ xhr.js:195
+xhr @ xhr.js:15
+dispatchRequest @ dispatchRequest.js:51
+_request @ Axios.js:187
+request @ Axios.js:40
+Axios.<computed> @ Axios.js:213
+wrap @ bind.js:5
+fetchShots @ shotStore.js:90
+await in fetchShots
+wrappedAction @ pinia.mjs:1399
+store.<computed> @ pinia.mjs:932
+loadShots @ ShotManagement.vue:449
+loadProjects @ ShotManagement.vue:397
+await in loadProjects
+(匿名) @ ShotManagement.vue:761
+(匿名) @ runtime-core.esm-bundler.js:2815
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+hook.__weh.hook.__weh @ runtime-core.esm-bundler.js:2795
+flushPostFlushCbs @ runtime-core.esm-bundler.js:385
+flushJobs @ runtime-core.esm-bundler.js:427
+Promise.then
+queueFlush @ runtime-core.esm-bundler.js:322
+queuePostFlushCb @ runtime-core.esm-bundler.js:336
+queueEffectWithSuspense @ runtime-core.esm-bundler.js:7321
+baseWatchOptions.scheduler @ runtime-core.esm-bundler.js:6197
+effect2.scheduler @ reactivity.esm-bundler.js:1830
+trigger @ reactivity.esm-bundler.js:253
+endBatch @ reactivity.esm-bundler.js:311
+notify @ reactivity.esm-bundler.js:597
+trigger @ reactivity.esm-bundler.js:571
+set value @ reactivity.esm-bundler.js:1448
+finalizeNavigation @ vue-router.mjs:3498
+(匿名) @ vue-router.mjs:3363
+Promise.then
+pushWithRedirect @ vue-router.mjs:3330
+push @ vue-router.mjs:3255
+install @ vue-router.mjs:3699
+use @ runtime-core.esm-bundler.js:3863
+(匿名) @ main.js:23
+shotStore.js:104  第二次请求失败: AxiosError {message: 'Request failed with status code 401', name: 'AxiosError', code: 'ERR_BAD_REQUEST', config: {…}, request: XMLHttpRequest, …}
+fetchShots @ shotStore.js:104
+await in fetchShots
+wrappedAction @ pinia.mjs:1399
+store.<computed> @ pinia.mjs:932
+loadShots @ ShotManagement.vue:449
+loadProjects @ ShotManagement.vue:397
+await in loadProjects
+(匿名) @ ShotManagement.vue:761
+(匿名) @ runtime-core.esm-bundler.js:2815
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+hook.__weh.hook.__weh @ runtime-core.esm-bundler.js:2795
+flushPostFlushCbs @ runtime-core.esm-bundler.js:385
+flushJobs @ runtime-core.esm-bundler.js:427
+Promise.then
+queueFlush @ runtime-core.esm-bundler.js:322
+queuePostFlushCb @ runtime-core.esm-bundler.js:336
+queueEffectWithSuspense @ runtime-core.esm-bundler.js:7321
+baseWatchOptions.scheduler @ runtime-core.esm-bundler.js:6197
+effect2.scheduler @ reactivity.esm-bundler.js:1830
+trigger @ reactivity.esm-bundler.js:253
+endBatch @ reactivity.esm-bundler.js:311
+notify @ reactivity.esm-bundler.js:597
+trigger @ reactivity.esm-bundler.js:571
+set value @ reactivity.esm-bundler.js:1448
+finalizeNavigation @ vue-router.mjs:3498
+(匿名) @ vue-router.mjs:3363
+Promise.then
+pushWithRedirect @ vue-router.mjs:3330
+push @ vue-router.mjs:3255
+install @ vue-router.mjs:3699
+use @ runtime-core.esm-bundler.js:3863
+(匿名) @ main.js:23
+ShotManagement.vue:450 API响应: {count: 0, results: Array(0)}
+ShotManagement.vue:455 没有找到镜头，用户角色: undefined 用户部门: null

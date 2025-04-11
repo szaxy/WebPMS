@@ -27,13 +27,41 @@ export const useProjectStore = defineStore('project', () => {
       loading.value = true
       error.value = null
       
+      console.log('正在获取项目列表...')
       const response = await projectService.getProjects()
-      projects.value = response.data
+      console.log('项目API响应:', response)
+      
+      // 处理可能的分页和非分页响应
+      if (response.data && response.data.results && Array.isArray(response.data.results)) {
+        // 处理分页响应
+        console.log('检测到分页响应，共有', response.data.count, '个项目')
+        projects.value = response.data.results
+      } else if (Array.isArray(response.data)) {
+        // 处理非分页响应（数组）
+        console.log('检测到非分页响应，共有', response.data.length, '个项目')
+        projects.value = response.data
+      } else {
+        // 处理意外响应
+        console.error('意外的响应格式:', response.data)
+        projects.value = []
+      }
+      
+      // 检查结果的有效性
+      const validProjects = projects.value.filter(p => p && typeof p === 'object' && p.id)
+      if (validProjects.length !== projects.value.length) {
+        console.warn('存在无效的项目数据，过滤前:', projects.value.length, '过滤后:', validProjects.length)
+        projects.value = validProjects
+      }
       
       return projects.value
     } catch (err) {
       console.error('Error fetching projects:', err)
+      if (err.response) {
+        console.error('错误状态:', err.response.status)
+        console.error('错误数据:', err.response.data)
+      }
       error.value = '获取项目列表失败'
+      projects.value = []
       return []
     } finally {
       loading.value = false

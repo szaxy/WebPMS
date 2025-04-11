@@ -30,7 +30,6 @@ apiClient.interceptors.response.use(
   error => {
     // 401未授权，触发登出
     if (error.response && error.response.status === 401) {
-      // 这里可以调用store的登出方法
       localStorage.removeItem('token')
       window.location.href = '/login'
     }
@@ -41,7 +40,49 @@ apiClient.interceptors.response.use(
 export default {
   // 获取镜头列表
   getShots(params = {}) {
+    console.log('获取镜头列表，参数:', params)
+    
+    // 直接使用标准shots端点获取列表
     return apiClient.get('/shots/', { params })
+      .then(response => {
+        console.log('镜头列表响应状态:', response.status)
+        console.log('镜头列表数据类型:', typeof response.data, Array.isArray(response.data) ? '是数组' : '不是数组')
+        if (typeof response.data === 'object' && !Array.isArray(response.data)) {
+          console.log('响应对象属性:', Object.keys(response.data))
+        }
+        return response
+      })
+      .catch(error => {
+        console.error('获取镜头列表失败:', error.message)
+        if (error.response) {
+          console.error('错误状态:', error.response.status)
+          console.error('错误数据:', error.response.data)
+          console.error('错误头信息:', error.response.headers)
+        } else if (error.request) {
+          console.error('请求未收到响应')
+        }
+        throw error
+      })
+  },
+  
+  // 从完整URL获取镜头列表
+  getShotsFromUrl(url) {
+    console.log('从URL获取镜头列表:', url)
+    
+    // 提取相对路径
+    const relativeUrl = url.replace(/^https?:\/\/[^\/]+\/api/, '');
+    console.log('转换为相对路径:', relativeUrl)
+    
+    return apiClient.get(relativeUrl)
+      .then(response => {
+        console.log('URL请求响应状态:', response.status)
+        console.log('URL请求数据类型:', typeof response.data, Array.isArray(response.data) ? '是数组' : '不是数组')
+        return response
+      })
+      .catch(error => {
+        console.error('从URL获取镜头列表失败:', error.message)
+        throw error
+      })
   },
   
   // 获取单个镜头详情
@@ -59,9 +100,58 @@ export default {
     return apiClient.patch(`/shots/${id}/`, data)
   },
   
+  // 更新镜头状态
+  updateShotStatus(id, status) {
+    return apiClient.patch(`/shots/${id}/update_status/`, { status })
+  },
+  
   // 删除镜头
   deleteShot(id) {
     return apiClient.delete(`/shots/${id}/`)
+  },
+  
+  // 批量更新镜头
+  batchUpdateShots(ids, fields) {
+    return apiClient.post('/shots/batch-update/', { ids, fields })
+  },
+  
+  // 批量重命名镜头
+  batchRenameShots(ids, options) {
+    return apiClient.post('/shots/batch-rename/', { 
+      ids,
+      prefix: options.prefix || '',
+      suffix: options.suffix || '',
+      start_num: options.startNum || 10,
+      step: options.step || 10,
+      digit_count: options.digitCount || 4
+    })
+  },
+  
+  // 获取镜头备注列表
+  getShotNotes(shotId) {
+    return apiClient.get(`/shots/${shotId}/notes/`)
+  },
+  
+  // 添加镜头备注
+  addShotNote(shotId, data) {
+    return apiClient.post('/shot-notes/', {
+      shot: shotId,
+      content: data.content,
+      is_important: data.isImportant || false
+    })
+  },
+  
+  // 更新镜头备注
+  updateShotNote(noteId, data) {
+    return apiClient.patch(`/shot-notes/${noteId}/`, {
+      content: data.content,
+      is_important: data.isImportant
+    })
+  },
+  
+  // 删除镜头备注
+  deleteShotNote(noteId) {
+    return apiClient.delete(`/shot-notes/${noteId}/`)
   },
   
   // 获取镜头历史记录

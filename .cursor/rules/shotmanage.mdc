@@ -1,0 +1,243 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+基于项目现有架构和需求分析，我将为镜头管理功能制定开发规范和步骤。
+
+## 数据库与接口规范
+
+### 数据库模型调整
+
+需要对Shot模型进行扩展：
+
+```python
+class Shot(models.Model):
+    STATUS_CHOICES = [
+        ('waiting', '等待开始'),
+        ('in_progress', '正在制作'),
+        ('submit_review', '提交内审'),
+        ('revising', '正在修改'),
+        ('internal_approved', '内审通过'),
+        ('client_review', '客户审核'),
+        ('client_rejected', '客户退回'),
+        ('client_approved', '客户通过'),
+        ('client_revision', '客户返修'),
+        ('deleted_merged', '已删除或合并'),
+        ('suspended', '暂停制作'),
+        ('completed', '已完结')
+    ]
+    
+    STAGE_CHOICES = [
+        ('LAY', 'Layout'),
+        ('BLK', 'Block'),
+        ('ANI', 'Animation'),
+        ('PASS', 'Pass')
+    ]
+    
+    DEPARTMENT_CHOICES = [
+        ('DH', '动画'),
+        ('JS', '解算'),
+        ('HQ', '后期')
+    ]
+    
+    id = models.AutoField(primary_key=True)
+    project = models.ForeignKey('Project', on_delete=models.CASCADE, related_name='shots')
+    shot_code = models.CharField(max_length=50, verbose_name='镜头编号')
+    department = models.CharField(max_length=2, choices=DEPARTMENT_CHOICES, default='DH', verbose_name='所属部门')
+    prom_stage = models.CharField(max_length=4, choices=STAGE_CHOICES, default='LAY', verbose_name='推进阶段')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='waiting', verbose_name='制作状态')
+    artist = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_shots', verbose_name='制作者')
+    duration_frame = models.IntegerField(default=0, verbose_name='帧数')
+    deadline = models.DateField(null=True, blank=True, verbose_name='截止日期')
+    last_submit_date = models.DateField(null=True, blank=True, verbose_name='最近提交日期')
+    description = models.TextField(blank=True, verbose_name='描述')
+    metadata = models.JSONField(default=dict, blank=True, verbose_name='元数据')
+    cgtw_task_id = models.CharField(max_length=50, blank=True, verbose_name='CGTeamwork任务ID')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+    
+    class Meta:
+        unique_together = ('project', 'shot_code')
+        indexes = [
+            models.Index(fields=['shot_code']),
+            models.Index(fields=['status']),
+            models.Index(fields=['department']),
+            models.Index(fields=['deadline']),
+        ]
+        ordering = ['shot_code']
+    
+    def __str__(self):
+        return f"{self.project.code}_{self.shot_code}"
+```
+
+新增备注模型：
+```python
+class ShotNote(models.Model):
+    shot = models.ForeignKey('Shot', on_delete=models.CASCADE, related_name='notes')
+    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='shot_notes')
+    content = models.TextField(verbose_name='备注内容')
+    is_important = models.BooleanField(default=False, verbose_name='重要提示')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Note for {self.shot.shot_code} by {self.user.username}"
+```
+
+### API接口规范
+
+1. 镜头列表接口
+```
+GET /api/shots/
+参数:
+- project_id: 项目ID筛选
+- department: 部门筛选
+- status: 制作状态筛选
+- prom_stage: 推进阶段筛选
+- artist_id: 制作者筛选
+- search: 关键词搜索
+- page: 分页页码
+- page_size: 每页条数
+- ordering: 排序字段
+```
+
+2. 镜头详情接口
+```
+GET /api/shots/{id}/
+```
+
+3. 镜头创建接口
+```
+POST /api/shots/
+字段: project, shot_code, department, prom_stage, status, artist, duration_frame, deadline, description
+```
+
+4. 镜头更新接口
+```
+PATCH /api/shots/{id}/
+字段: 同创建接口
+```
+
+5. 镜头批量更新接口
+```
+PUT /api/shots/batch_update/
+参数: 
+- ids: 镜头ID列表
+- fields: 要更新的字段字典
+```
+
+6. 镜头批量重命名接口
+```
+POST /api/shots/batch_rename/
+参数:
+- ids: 镜头ID列表
+- prefix: 前缀
+- suffix: 后缀
+- start_num: 起始序号
+- step: 步长
+- digit_count: 数字位数
+```
+
+7. 镜头备注相关接口
+```
+GET /api/shots/{id}/notes/
+POST /api/shots/{id}/notes/
+PATCH /api/notes/{id}/
+DELETE /api/notes/{id}/
+```
+
+### 前端组件与变量命名规范
+
+1. 组件命名
+   - 页面级组件: `ShotManagement.vue`, `ShotDetail.vue`
+   - 子组件: `ShotList.vue`, `ShotInfo.vue`, `ShotNotes.vue`, `ShotComments.vue`
+   - 功能组件: `BatchRenameDialog.vue`, `BatchUpdateDialog.vue`
+
+2. 状态管理
+   - Pinia存储: `shotStore.js`, `noteStore.js`
+   - 全局状态变量: `shots`, `filteredShots`, `selectedShots`, `shotDetail`
+
+3. API服务
+   - `shotService.js`, `noteService.js`, `commentService.js`
+
+## 开发步骤
+
+### 1. 后端开发 (3天)
+
+1. **数据库模型更新**
+   - 扩展Shot模型
+   - 创建ShotNote模型
+   - 应用数据库迁移
+
+2. **API接口实现**
+   - 镜头管理视图集
+   - 批量操作接口
+   - 权限控制（基于部门）
+   - 测试数据生成脚本
+
+### 2. 前端开发 (5天)
+
+1. **基础组件开发**
+   - 镜头列表组件
+   - 镜头详情组件
+   - 筛选和排序组件
+
+2. **功能组件开发**
+   - 批量重命名弹窗
+   - 批量更新弹窗
+   - 镜头备注组件
+   - 镜头信息编辑组件
+
+3. **状态管理实现**
+   - Pinia状态定义
+   - API服务封装
+   - WebSocket实时更新
+
+4. **页面集成与UI优化**
+   - 响应式布局
+   - 表格列定制功能
+   - 条件格式化（日期颜色）
+
+### 3. 测试与优化 (2天)
+
+1. **功能测试**
+   - 基本CRUD操作
+   - 批量操作
+   - 权限控制
+   - 实时更新
+
+2. **性能优化**
+   - 分页加载
+   - 数据缓存
+   - 查询优化
+
+### 4. 部署与文档 (1天)
+
+1. **部署**
+   - 数据库迁移应用
+   - 前端构建与部署
+
+2. **文档**
+   - API文档更新
+   - 用户使用指南
+
+## 建议的开发顺序
+
+基于需求分析和项目现状，建议按以下顺序进行开发：
+
+1. 首先进行数据库模型扩展和迁移
+2. 实现后端API接口
+3. 创建测试数据
+4. 开发前端基础组件
+5. 实现状态管理和API服务
+6. 开发功能组件
+7. 集成完整页面
+8. 测试和优化
+
+这个顺序确保了在开发前端之前，已经有可用的后端API和测试数据，从而使前端开发更加流畅。
+
+请确认这个规范和开发步骤是否符合您的期望，确认后我们将正式开始开发。

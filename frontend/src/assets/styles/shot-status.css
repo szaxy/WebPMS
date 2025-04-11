@@ -1,0 +1,109 @@
+/* 镜头状态颜色规范 */
+
+/* 状态颜色 */
+.status-waiting {
+  color: #95a5a6 !important;
+  background-color: rgba(149, 165, 166, 0.1);
+}
+
+.status-in-progress {
+  color: #3498db !important;
+  background-color: rgba(52, 152, 219, 0.1);
+}
+
+.status-submit-review {
+  color: #f39c12 !important;
+  background-color: rgba(243, 156, 18, 0.1);
+}
+
+.status-revising {
+  color: #f1c40f !important;
+  background-color: rgba(241, 196, 15, 0.1);
+}
+
+.status-internal-approved {
+  color: #1abc9c !important;
+  background-color: rgba(26, 188, 156, 0.1);
+}
+
+.status-client-review {
+  color: #9b59b6 !important;
+  background-color: rgba(155, 89, 182, 0.1);
+}
+
+.status-client-rejected {
+  color: #e74c3c !important;
+  background-color: rgba(231, 76, 60, 0.1);
+}
+
+.status-client-approved {
+  color: #2ecc71 !important;
+  background-color: rgba(46, 204, 113, 0.1);
+}
+
+.status-client-revision {
+  color: #e67e22 !important;
+  background-color: rgba(230, 126, 34, 0.1);
+}
+
+.status-deleted-merged {
+  color: #7f8c8d !important;
+  background-color: rgba(127, 140, 141, 0.1);
+}
+
+.status-suspended {
+  color: #d35400 !important;
+  background-color: rgba(211, 84, 0, 0.1);
+}
+
+.status-completed {
+  color: #27ae60 !important;
+  background-color: rgba(39, 174, 96, 0.1);
+}
+
+/* 提交日期和截止日期颜色 */
+.date-overdue {
+  color: #e74c3c !important;
+}
+
+.date-warning {
+  color: #f39c12 !important;
+}
+
+.date-normal {
+  color: #2ecc71 !important;
+}
+
+/* 推进阶段颜色 */
+.stage-lay {
+  color: #3498db !important;
+  background-color: rgba(52, 152, 219, 0.1);
+}
+
+.stage-blk {
+  color: #f39c12 !important;
+  background-color: rgba(243, 156, 18, 0.1);
+}
+
+.stage-ani {
+  color: #9b59b6 !important;
+  background-color: rgba(155, 89, 182, 0.1);
+}
+
+.stage-pass {
+  color: #2ecc71 !important;
+  background-color: rgba(46, 204, 113, 0.1);
+}
+
+/* 指示器颜色 */
+.indicator-comment {
+  background-color: #3498db;
+}
+
+.indicator-note {
+  background-color: #f39c12;
+}
+
+.indicator-important {
+  background-color: #e74c3c;
+} 

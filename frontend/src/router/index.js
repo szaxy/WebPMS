@@ -5,6 +5,8 @@ import { useAuthStore } from '@/stores/auth'
 const Dashboard = () => import('../views/dashboard/Index.vue')
 const Login = () => import('../views/Login.vue')
 const UserManagement = () => import('../views/settings/UserManagement.vue')
+const ShotTest = () => import('../components/ShotTest.vue')
+const ShotManagement = () => import('../views/shots/ShotManagement.vue')
 
 // 定义路由
 const routes = [
@@ -35,6 +37,22 @@ const routes = [
     meta: {
       requiresAuth: true,
       requiresAdmin: true
+    }
+  },
+  {
+    path: '/shot-test',
+    name: 'shot-test',
+    component: ShotTest,
+    meta: {
+      requiresAuth: true
+    }
+  },
+  {
+    path: '/shots',
+    name: 'shots',
+    component: ShotManagement,
+    meta: {
+      requiresAuth: true
     }
   }
   // 更多路由会在后续添加

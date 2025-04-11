@@ -1,8 +1,8 @@
 #!/bin/sh
-cd /app
+cd /app || { echo "Cannot change to /app directory"; exit 1; }
 
 # 检查node_modules是否已经存在
-if [ ! -d "/app/node_modules" ] || [ ! -f "/app/node_modules/.package-lock.json" ]; then
+if [ ! -d "/app/node_modules" ]; then
   echo "Extracting node_modules..."
   tar -xzf /npm-packages/node_modules.tar.gz -C /app
 else
