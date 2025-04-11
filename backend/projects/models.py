@@ -1,5 +1,8 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class Project(models.Model):
     """项目模型，存储项目基本信息"""
@@ -27,4 +30,33 @@ class Project(models.Model):
         ordering = ['-created_at']
         
     def __str__(self):
-        return f"{self.name} ({self.code})" 
+        return f"{self.name} ({self.code})"
+    
+    def get_departments(self):
+        """获取项目关联的所有部门"""
+        return [dept.department for dept in self.project_departments.all()]
+
+class ProjectDepartment(models.Model):
+    """项目部门关联模型，用于控制项目对哪些部门可见"""
+    
+    DEPARTMENT_CHOICES = User.DEPARTMENT_CHOICES
+    
+    project = models.ForeignKey(
+        Project, 
+        on_delete=models.CASCADE, 
+        related_name='project_departments',
+        verbose_name=_('项目')
+    )
+    department = models.CharField(
+        _('部门'), 
+        max_length=20, 
+        choices=DEPARTMENT_CHOICES
+    )
+    
+    class Meta:
+        verbose_name = _('项目部门关联')
+        verbose_name_plural = _('项目部门关联')
+        unique_together = ['project', 'department']
+        
+    def __str__(self):
+        return f"{self.project.name} - {self.get_department_display()}" 

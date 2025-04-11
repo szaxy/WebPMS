@@ -1,0 +1,72 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Your rule content
+以下是基于您的WebPMS项目代码和架构特点总结的Rules文件，供您在与AI对话时使用：
+
+# WebPMS项目AI交互Rules
+
+## 1. 技术栈理解
+- 前端：Vue3 + Pinia + Vite + Element Plus
+- 后端：Django 4.x + Django REST Framework + Channels + Celery
+- 数据库：PostgreSQL
+- 中间件：Redis (缓存和消息队列)
+- 部署：Docker + Nginx + Gunicorn
+
+## 2. 项目结构
+- 前后端分离架构，通过REST API和WebSocket通信
+- 使用Docker容器化部署，支持离线安装所有依赖
+- 后端模块化设计：users/projects/shots/comments等核心模块
+- 数据持久化存储在PostgreSQL卷中
+
+## 3. 功能咨询
+- 回答功能问题时，始终考虑模块化扩展，不要建议改变核心架构
+- 推荐使用已有技术栈内的解决方案，避免引入不必要的新依赖
+- 优先考虑Django应用和Vue组件形式的功能扩展
+
+## 4. 代码编写
+- 后端代码遵循Django风格指南，使用DRF序列化器处理数据
+- 前端代码使用Vue3组合式API，遵循Element Plus设计规范
+- 数据库操作使用Django ORM，复杂查询考虑性能优化
+- 异步任务通过Celery实现，避免阻塞主线程
+
+## 5. 部署相关
+- 开发环境使用docker-compose.postgres.yml
+- 生产环境建议在Linux服务器上部署，推荐Ubuntu Server
+- 不要建议使用Docker Desktop，服务器端只需Docker Engine
+- 可以建议替代部署方案，但要说明优缺点
+
+## 6. 文件路径
+- 配置文件：根目录下的.env和docker-compose文件
+- 后端代码：backend/目录下按应用划分
+- 前端代码：frontend/src/目录下按功能组织
+- 静态文件：static/目录和media/目录
+
+## 7. 开发流程
+- 修改前端代码时利用Vite热重载，无需重启服务
+- 修改后端代码时自动重载，除非修改数据模型需要迁移
+- 数据模型变更需要生成和应用迁移
+- 使用start-webpms.bat脚本启动系统
+
+## 8. 常见问题
+- 首次启动需要创建超级用户
+- 数据存储在Docker卷中，系统重启不会丢失
+- 模块化开发允许添加新功能而不影响现有功能
+- 系统支持离线环境运行，所有依赖包预先下载
+
+## 9. 优化建议
+- 对查询和API进行缓存优化
+- 使用WebSocket而非轮询实现实时更新
+- 考虑前端资源的懒加载和代码分割
+- 定期备份PostgreSQL数据库
+
+## 10. 安全考虑
+- 生产环境关闭DEBUG模式
+- 使用环境变量存储敏感信息
+- 适当配置CORS和CSP
+- 定期更新依赖包以修复安全漏洞
+
+请在回答我的问题时，始终参考这些规则，确保建议与WebPMS项目的架构和实践保持一致。所有代码示例应当能够无缝集成到现有系统中。

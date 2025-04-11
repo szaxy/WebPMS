@@ -1,0 +1,70 @@
+
+
+这是一个非常好的问题！对于开发工作流程来说非常重要。
+
+## 关于开发工作流程
+
+在WebPMS系统中，您可以**同时运行系统并编写代码**，大多数情况下无需重启整个系统。这是因为：
+
+### 前端开发（Vue/Vite）
+
+1. **热重载支持**：
+   - Vite开发服务器支持热模块替换(HMR)功能
+   - 您修改前端代码后，Vite会自动检测变化并刷新浏览器
+   - 只需保存文件，浏览器会自动更新，无需手动刷新页面
+
+2. **前端开发流程**：
+   - 修改`frontend/src`目录下的Vue组件、CSS或JS文件
+   - 保存文件后，Vite自动重新编译并更新浏览器
+   - 整个过程无需重启服务器或手动刷新页面
+
+### 后端开发（Django）
+
+1. **Django开发服务器**：
+   - Django开发服务器有自动重载功能
+   - 修改Python代码后，服务器会自动重新加载
+   - 不需要手动重启后端服务
+
+2. **后端开发流程**：
+   - 修改`backend`目录下的Python文件
+   - 保存后，Django服务器自动检测并重新加载代码
+   - 刷新浏览器即可看到更改结果
+
+### 特殊情况需要重启
+
+只有以下情况需要手动重启服务：
+
+1. **修改数据库模型**：
+   - 如果您更改了模型定义（models.py文件）
+   - 需要生成并应用迁移：
+     ```
+     docker exec -it webpms-backend-1 sh -c "cd /app && python manage.py makemigrations"
+     docker exec -it webpms-backend-1 sh -c "cd /app && python manage.py migrate"
+     ```
+
+2. **安装新依赖**：
+   - 如果添加了新的Python包到requirements.txt
+   - 或者添加了新的NPM包到package.json
+   - 这时需要重建相应的容器
+
+3. **修改Docker配置**：
+   - 更改docker-compose文件
+   - 更改Dockerfile
+   - 修改环境变量
+   
+4. **前端构建配置变更**：
+   - 修改Vite配置（vite.config.js）
+   - 修改前端项目根目录的配置文件
+
+### 最佳实践
+
+1. 大多数开发工作可以在系统运行的情况下进行
+2. 保持终端窗口打开，监视日志：
+   ```
+   docker-compose -f docker-compose.postgres.yml logs -f frontend backend
+   ```
+3. 当您遇到需要重启的情况，使用以下命令：
+   - 重启单个服务: `docker-compose -f docker-compose.postgres.yml restart [服务名]`
+   - 重启整个系统: `docker-compose -f docker-compose.postgres.yml down && docker-compose -f docker-compose.postgres.yml up -d`
+
+这样您可以获得更高效的开发体验，而不必每次更改代码都重启整个系统。

@@ -1,12 +1,13 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
-
-# 后续会添加项目视图
-# from .views import ProjectViewSet
+from .views import ProjectViewSet
 
 router = DefaultRouter()
-# router.register('', ProjectViewSet, basename='project')
+router.register('', ProjectViewSet, basename='project')
 
-urlpatterns = []
+urlpatterns = [
+    path('<int:pk>/add-department/', ProjectViewSet.as_view({'post': 'add_department'}), name='project-add-department'),
+    path('<int:pk>/remove-department/', ProjectViewSet.as_view({'post': 'remove_department'}), name='project-remove-department'),
+]
 
 urlpatterns += router.urls 

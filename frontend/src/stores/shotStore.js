@@ -1,177 +1,221 @@
 import { defineStore } from 'pinia'
 import shotService from '../services/shotService'
+import { ref, computed } from 'vue'
 
-export const useShotStore = defineStore('shot', {
-  state: () => ({
-    shots: [],
-    loading: false,
-    error: null,
-    currentShot: null
-  }),
+export const useShotStore = defineStore('shot', () => {
+  // 状态
+  const shots = ref([])
+  const currentShot = ref(null)
+  const shotComments = ref([])
+  const loading = ref(false)
+  const error = ref(null)
   
-  getters: {
-    getShotById: (state) => (id) => {
-      return state.shots.find(shot => shot.id === id)
-    },
-    
-    shotsByStatus: (state) => (status) => {
-      return state.shots.filter(shot => shot.status === status)
-    },
-    
-    totalShots: (state) => state.shots.length,
-    
-    statusCounts: (state) => {
-      const counts = {
-        in_progress: 0,
-        review: 0,
-        approved: 0,
-        need_revision: 0
-      }
-      
-      state.shots.forEach(shot => {
-        if (counts[shot.status] !== undefined) {
-          counts[shot.status]++
-        }
-      })
-      
-      return counts
+  // 计算属性
+  const shotsByStatus = computed(() => {
+    const grouped = {
+      'in_progress': [],
+      'review': [],
+      'approved': [],
+      'need_revision': []
     }
-  },
+    
+    shots.value.forEach(shot => {
+      if (grouped[shot.status]) {
+        grouped[shot.status].push(shot)
+      } else {
+        grouped['in_progress'].push(shot)
+      }
+    })
+    
+    return grouped
+  })
   
-  actions: {
-    // 加载镜头列表
-    async fetchShots(params = {}) {
-      this.loading = true
-      this.error = null
+  const inProgressShots = computed(() => 
+    shots.value.filter(s => s.status === 'in_progress')
+  )
+  
+  const reviewShots = computed(() => 
+    shots.value.filter(s => s.status === 'review')
+  )
+  
+  const approvedShots = computed(() => 
+    shots.value.filter(s => s.status === 'approved')
+  )
+  
+  const needRevisionShots = computed(() => 
+    shots.value.filter(s => s.status === 'need_revision')
+  )
+  
+  const shotsCount = computed(() => shots.value.length)
+  
+  // 操作
+  async function fetchShots(params = {}) {
+    try {
+      loading.value = true
+      error.value = null
       
-      try {
-        const response = await shotService.getShots(params)
-        this.shots = response.data.results || response.data
-        return this.shots
-      } catch (error) {
-        this.error = error.message || '加载镜头数据失败'
-        throw error
-      } finally {
-        this.loading = false
-      }
-    },
-    
-    // 加载单个镜头详情
-    async fetchShot(id) {
-      this.loading = true
-      this.error = null
+      const response = await shotService.getShots(params)
+      shots.value = response.data
       
-      try {
-        const response = await shotService.getShot(id)
-        this.currentShot = response.data
-        
-        // 更新列表中的对应镜头
-        const index = this.shots.findIndex(s => s.id === id)
-        if (index > -1) {
-          this.shots[index] = response.data
-        }
-        
-        return this.currentShot
-      } catch (error) {
-        this.error = error.message || '加载镜头详情失败'
-        throw error
-      } finally {
-        this.loading = false
-      }
-    },
-    
-    // 创建新镜头
-    async createShot(shotData) {
-      this.loading = true
-      this.error = null
+      return shots.value
+    } catch (err) {
+      console.error('Error fetching shots:', err)
+      error.value = '获取镜头列表失败'
+      return []
+    } finally {
+      loading.value = false
+    }
+  }
+  
+  async function fetchShot(id) {
+    try {
+      loading.value = true
+      error.value = null
       
-      try {
-        const response = await shotService.createShot(shotData)
-        this.shots.push(response.data)
-        return response.data
-      } catch (error) {
-        this.error = error.message || '创建镜头失败'
-        throw error
-      } finally {
-        this.loading = false
-      }
-    },
-    
-    // 更新镜头
-    async updateShot(updatedShot) {
-      // 如果只有部分数据，仅更新本地状态
-      if (!updatedShot.id) {
-        console.error('更新镜头时缺少ID')
-        return null
-      }
+      const response = await shotService.getShot(id)
+      currentShot.value = response.data
+      
+      return currentShot.value
+    } catch (err) {
+      console.error(`Error fetching shot ${id}:`, err)
+      error.value = '获取镜头详情失败'
+      return null
+    } finally {
+      loading.value = false
+    }
+  }
+  
+  async function createShot(shotData) {
+    try {
+      loading.value = true
+      error.value = null
+      
+      const response = await shotService.createShot(shotData)
+      const newShot = response.data
       
       // 更新本地状态
-      const index = this.shots.findIndex(s => s.id === updatedShot.id)
-      if (index > -1) {
-        this.shots[index] = { ...this.shots[index], ...updatedShot }
-        
-        // 如果是当前镜头，也更新当前镜头
-        if (this.currentShot && this.currentShot.id === updatedShot.id) {
-          this.currentShot = { ...this.currentShot, ...updatedShot }
-        }
-        
-        return this.shots[index]
-      }
+      shots.value.push(newShot)
       
+      return newShot
+    } catch (err) {
+      console.error('Error creating shot:', err)
+      error.value = '创建镜头失败'
       return null
-    },
-    
-    // 发送更新到API
-    async saveShot(id, shotData) {
-      this.loading = true
-      this.error = null
-      
-      try {
-        const response = await shotService.updateShot(id, shotData)
-        
-        // 更新本地状态
-        this.updateShot(response.data)
-        
-        return response.data
-      } catch (error) {
-        this.error = error.message || '更新镜头失败'
-        throw error
-      } finally {
-        this.loading = false
-      }
-    },
-    
-    // 删除镜头
-    async deleteShot(id) {
-      this.loading = true
-      this.error = null
-      
-      try {
-        await shotService.deleteShot(id)
-        
-        // 从列表中移除
-        this.shots = this.shots.filter(shot => shot.id !== id)
-        
-        // 如果是当前镜头，清空当前镜头
-        if (this.currentShot && this.currentShot.id === id) {
-          this.currentShot = null
-        }
-        
-        return true
-      } catch (error) {
-        this.error = error.message || '删除镜头失败'
-        throw error
-      } finally {
-        this.loading = false
-      }
-    },
-    
-    // 重置状态
-    resetState() {
-      this.shots = []
-      this.loading = false
-      this.error = null
-      this.currentShot = null
+    } finally {
+      loading.value = false
     }
+  }
+  
+  async function updateShot(id, shotData) {
+    try {
+      loading.value = true
+      error.value = null
+      
+      const response = await shotService.updateShot(id, shotData)
+      const updatedShot = response.data
+      
+      // 更新本地状态
+      const index = shots.value.findIndex(s => s.id === id)
+      if (index !== -1) {
+        shots.value[index] = updatedShot
+      }
+      
+      if (currentShot.value && currentShot.value.id === id) {
+        currentShot.value = updatedShot
+      }
+      
+      return updatedShot
+    } catch (err) {
+      console.error(`Error updating shot ${id}:`, err)
+      error.value = '更新镜头失败'
+      return null
+    } finally {
+      loading.value = false
+    }
+  }
+  
+  async function updateShotStatus(id, status) {
+    try {
+      const response = await shotService.updateShot(id, { status })
+      const updatedShot = response.data
+      
+      // 更新本地状态
+      const index = shots.value.findIndex(s => s.id === id)
+      if (index !== -1) {
+        shots.value[index] = updatedShot
+      }
+      
+      if (currentShot.value && currentShot.value.id === id) {
+        currentShot.value = updatedShot
+      }
+      
+      return updatedShot
+    } catch (err) {
+      console.error(`Error updating shot status ${id}:`, err)
+      throw err
+    }
+  }
+  
+  async function fetchShotComments(shotId) {
+    try {
+      loading.value = true
+      error.value = null
+      
+      const response = await shotService.getShotComments(shotId)
+      shotComments.value = response.data
+      
+      return shotComments.value
+    } catch (err) {
+      console.error(`Error fetching comments for shot ${shotId}:`, err)
+      error.value = '获取镜头反馈失败'
+      return []
+    } finally {
+      loading.value = false
+    }
+  }
+  
+  async function addShotComment(shotId, commentData) {
+    try {
+      loading.value = true
+      error.value = null
+      
+      const response = await shotService.addShotComment(shotId, commentData)
+      const newComment = response.data
+      
+      // 更新本地状态
+      shotComments.value.push(newComment)
+      
+      return newComment
+    } catch (err) {
+      console.error(`Error adding comment to shot ${shotId}:`, err)
+      error.value = '添加反馈失败'
+      return null
+    } finally {
+      loading.value = false
+    }
+  }
+  
+  return {
+    // 状态
+    shots,
+    currentShot,
+    shotComments,
+    loading,
+    error,
+    // 计算属性
+    shotsByStatus,
+    inProgressShots,
+    reviewShots,
+    approvedShots,
+    needRevisionShots,
+    shotsCount,
+    // 操作
+    fetchShots,
+    fetchShot,
+    createShot,
+    updateShot,
+    updateShotStatus,
+    fetchShotComments,
+    addShotComment
   }
 }) 

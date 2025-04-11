@@ -7,20 +7,32 @@
           class="sidebar-menu"
           router>
           <el-menu-item index="/dashboard">
-            <i class="el-icon-s-home"></i>
+            <el-icon><HomeFilled /></el-icon>
             <span>仪表盘</span>
           </el-menu-item>
           <el-menu-item index="/shots">
-            <i class="el-icon-film"></i>
+            <el-icon><VideoCameraFilled /></el-icon>
             <span>镜头管理</span>
           </el-menu-item>
           <el-menu-item index="/comments">
-            <i class="el-icon-chat-line-round"></i>
+            <el-icon><ChatLineRound /></el-icon>
             <span>反馈系统</span>
           </el-menu-item>
+          
+          <el-sub-menu index="settings" v-if="authStore.isAdmin">
+            <template #title>
+              <el-icon><Setting /></el-icon>
+              <span>管理设置</span>
+            </template>
+            <el-menu-item index="/settings/users">
+              <el-icon><User /></el-icon>
+              <span>用户管理</span>
+            </el-menu-item>
+          </el-sub-menu>
+          
           <el-menu-item index="/settings">
-            <i class="el-icon-setting"></i>
-            <span>设置</span>
+            <el-icon><Tools /></el-icon>
+            <span>个人设置</span>
           </el-menu-item>
         </el-menu>
       </el-aside>
@@ -29,11 +41,19 @@
           <div class="header-wrapper">
             <h2>荷和年动画项目管理平台</h2>
             <div class="user-info">
-              <span>管理员</span>
+              <span v-if="authStore.user">
+                {{ authStore.user.username }} 
+                <el-tag v-if="authStore.isAdmin" type="danger" size="small">管理员</el-tag>
+                <el-tag v-else-if="authStore.isSupervisor" type="warning" size="small">主管</el-tag>
+                <el-tag v-else-if="authStore.isLeader" type="success" size="small">带片</el-tag>
+                <el-tag v-else-if="authStore.user.role === 'producer'" type="info" size="small">制片</el-tag>
+                <el-tag v-else type="primary" size="small">艺术家</el-tag>
+              </span>
               <el-dropdown trigger="click">
-                <span class="el-dropdown-link">
-                  操作<i class="el-icon-arrow-down el-icon--right"></i>
-                </span>
+                <el-button type="primary" size="small">
+                  <el-icon><User /></el-icon>
+                  <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                </el-button>
                 <template #dropdown>
                   <el-dropdown-menu>
                     <el-dropdown-item @click="handleLogout">退出登录</el-dropdown-item>
@@ -48,6 +68,17 @@
             <el-card class="welcome-card">
               <h2>欢迎使用荷和年动画项目管理平台</h2>
               <p>这是一个完整的动画制作项目管理系统，集成了项目管理、镜头跟踪和反馈系统。</p>
+              
+              <div v-if="authStore.isAdmin" class="admin-actions">
+                <h3>管理员快捷操作</h3>
+                <el-button 
+                  type="primary" 
+                  @click="router.push('/settings/users')" 
+                  :loading="pendingCount === null">
+                  用户管理
+                  <el-badge v-if="pendingCount > 0" :value="pendingCount" class="badge" />
+                </el-button>
+              </div>
             </el-card>
             
             <el-row :gutter="20">
@@ -92,16 +123,49 @@
 </template>
 
 <script setup>
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { useAuthStore } from '@/stores/auth'
+import { 
+  HomeFilled, 
+  VideoCameraFilled, 
+  ChatLineRound, 
+  Setting, 
+  Tools, 
+  User,
+  ArrowDown
+} from '@element-plus/icons-vue'
 
 const router = useRouter()
+const authStore = useAuthStore()
+const pendingCount = ref(null)
 
 const handleLogout = () => {
-  localStorage.removeItem('token')
+  authStore.logout()
   ElMessage.success('退出登录成功')
   router.push('/login')
 }
+
+// 获取待审核用户数量
+const fetchPendingCount = async () => {
+  if (authStore.isAdmin) {
+    await authStore.fetchPendingUsers()
+    pendingCount.value = authStore.pendingUsers?.length || 0
+  }
+}
+
+onMounted(async () => {
+  // 如果没有用户信息，获取用户信息
+  if (!authStore.user) {
+    await authStore.fetchUserInfo()
+  }
+  
+  // 如果是管理员，获取待审核用户数量
+  if (authStore.isAdmin) {
+    fetchPendingCount()
+  }
+})
 </script>
 
 <style scoped>
@@ -134,15 +198,7 @@ const handleLogout = () => {
 .user-info {
   display: flex;
   align-items: center;
-}
-
-.user-info span {
-  margin-right: 10px;
-}
-
-.el-dropdown-link {
-  cursor: pointer;
-  color: #409EFF;
+  gap: 10px;
 }
 
 .sidebar-menu {
@@ -170,5 +226,20 @@ const handleLogout = () => {
   font-size: 36px;
   font-weight: bold;
   color: #409EFF;
+}
+
+.admin-actions {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+}
+
+.admin-actions h3 {
+  margin-bottom: 10px;
+}
+
+.badge {
+  margin-top: -2px;
+  margin-left: 8px;
 }
 </style> 
