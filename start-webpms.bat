@@ -40,21 +40,92 @@ if errorlevel 1 (
     docker load -i docker\images\node-alpine.tar
 )
 
-echo [Step 3] Stopping any running containers...
+echo [Step 3] Checking if start-frontend-new.sh exists...
+if not exist "start-frontend-new.sh" (
+    echo Creating enhanced frontend startup script...
+    (
+        echo #!/bin/sh
+        echo # Ensure directory exists
+        echo cd /app
+        echo.
+        echo # Check if node_modules needs to be rebuilt
+        echo if [ ! -d "/app/node_modules" ] ^|^| [ ! -f "/app/node_modules/.package-lock.json" ]; then
+        echo   echo "Setting up node_modules..."
+        echo.  
+        echo   # If offline package exists, use it
+        echo   if [ -f "/npm-packages/node_modules.tar.gz" ]; then
+        echo     echo "Extracting node_modules from offline package..."
+        echo     tar -xzf /npm-packages/node_modules.tar.gz -C /app
+        echo.     
+        echo     # Check if extraction was successful
+        echo     if [ ! -d "/app/node_modules/vite" ]; then
+        echo       echo "Warning: Vite not found in offline package, will try npm install..."
+        echo       npm install
+        echo     fi
+        echo   else
+        echo     echo "Installing dependencies with npm..."
+        echo     npm install
+        echo   fi
+        echo.   
+        echo   # Create marker file
+        echo   touch /app/node_modules/.package-lock.json
+        echo else
+        echo   echo "node_modules already exists, checking dependencies..."
+        echo.   
+        echo   # Check if critical dependencies exist
+        echo   if [ ! -d "/app/node_modules/vite" ]; then
+        echo     echo "Critical dependency 'vite' is missing, reinstalling..."
+        echo     npm install vite
+        echo   fi
+        echo fi
+        echo.
+        echo # Start Vite development server
+        echo echo "Starting Vite development server..."
+        echo if [ -f "/app/node_modules/.bin/vite" ]; then
+        echo   /app/node_modules/.bin/vite --host 0.0.0.0
+        echo else
+        echo   echo "ERROR: Vite executable not found!"
+        echo.   
+        echo   # Show all available bin files
+        echo   echo "Available executables in node_modules/.bin:"
+        echo   ls -la /app/node_modules/.bin ^|^| echo "No .bin directory found"
+        echo.   
+        echo   # Try using npx
+        echo   echo "Trying to start with npx..."
+        echo   npx vite --host 0.0.0.0
+        echo fi
+    ) > start-frontend-new.sh
+    echo Enhanced frontend script created.
+)
+
+echo [Step 4] Updating docker-compose configuration...
+set "COMPOSE_FILE=docker-compose.postgres.yml"
+type "%COMPOSE_FILE%" | findstr "start-frontend-new.sh" > nul
+if errorlevel 1 (
+    echo Backup original docker-compose file...
+    copy "%COMPOSE_FILE%" "%COMPOSE_FILE%.bak" > nul
+    
+    echo Updating frontend command in docker-compose file...
+    powershell -Command "(Get-Content '%COMPOSE_FILE%') -replace 'command: sh /start-frontend.sh', 'command: sh /start-frontend-new.sh' -replace './start-frontend.sh:/start-frontend.sh', './start-frontend-new.sh:/start-frontend-new.sh' | Set-Content '%COMPOSE_FILE%'"
+    
+    echo Docker compose configuration updated.
+)
+
+echo [Step 5] Stopping any running containers...
 docker-compose -f docker-compose.postgres.yml down 2>nul
 timeout /t 2 /nobreak > nul
 
-echo [Step 4] Starting database container...
+echo [Step 6] Starting database container...
 docker-compose -f docker-compose.postgres.yml up -d db redis
 echo Waiting for database to initialize...
 timeout /t 15 /nobreak > nul
 
-echo [Step 5] Starting backend container and running migrations...
+echo [Step 7] Starting backend container and running migrations...
 docker-compose -f docker-compose.postgres.yml up -d backend
 echo Waiting for backend to start...
 timeout /t 15 /nobreak > nul
 
-echo [Step 6] Running database migrations...
+echo [Step 8] Running database migrations...
 echo - Checking for conflicting migrations...
 docker exec -it webpms-backend-1 sh -c "cd /app && python manage.py makemigrations --merge --noinput"
 echo - Creating migrations for users app...
@@ -66,12 +137,12 @@ docker exec -it webpms-backend-1 sh -c "cd /app && python manage.py migrate"
 echo Migrations completed.
 timeout /t 5 /nobreak > nul
 
-echo [Step 7] Starting frontend container...
+echo [Step 9] Starting frontend container...
 docker-compose -f docker-compose.postgres.yml up -d frontend
 echo Waiting for frontend to start...
 timeout /t 30 /nobreak > nul
 
-echo [Step 8] Checking container status...
+echo [Step 10] Checking container status...
 docker-compose -f docker-compose.postgres.yml ps
 
 echo =====================================================
@@ -81,9 +152,8 @@ echo   - API: http://localhost:8000/api
 echo   - Admin: http://localhost:8000/admin
 echo   - Database: localhost:15432 (PostgreSQL)
 echo =====================================================
-echo Note: If frontend shows "localhost didn't send any data", please wait
-echo       another 30 seconds and refresh the page. The Vite server needs
-echo       time to start up completely.
+echo Note: If frontend shows connection issues, check logs with:
+echo       docker-compose -f docker-compose.postgres.yml logs frontend
 echo =====================================================
 echo To create an admin user, run:
 echo docker exec -it webpms-backend-1 sh -c "cd /app && python manage.py createsuperuser"

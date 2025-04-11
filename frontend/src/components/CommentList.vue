@@ -130,7 +130,7 @@
           <el-input
             v-model="commentForm.content"
             type="textarea"
-            rows="3"
+            :rows="3"
             placeholder="请输入反馈内容，可以使用@提及其他用户"
           />
         </el-form-item>

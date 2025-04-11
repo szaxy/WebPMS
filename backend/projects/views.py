@@ -22,8 +22,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
         user = self.request.user
         queryset = Project.objects.all()
         
-        # 系统管理员可以查看所有项目
-        if user.is_admin:
+        # 系统管理员和超级用户可以查看所有项目
+        if user.is_admin or user.is_superuser:
             # 无需过滤，返回所有项目
             pass
         else:
@@ -53,7 +53,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
             
         # 按部门过滤
         department_param = self.request.query_params.get('department', None)
-        if department_param and user.is_admin:  # 只有管理员可以跨部门查看
+        if department_param and (user.is_admin or user.is_superuser):  # 只有管理员可以跨部门查看
             queryset = queryset.filter(
                 project_departments__department=department_param
             ).distinct()

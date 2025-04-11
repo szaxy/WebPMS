@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { useTokenInterceptor } from '@/utils/tokenInterceptor'
 
 // 创建API客户端实例
 const apiClient = axios.create({
@@ -10,19 +11,8 @@ const apiClient = axios.create({
   timeout: 10000
 })
 
-// 请求拦截器 - 添加认证令牌
-apiClient.interceptors.request.use(
-  config => {
-    const token = localStorage.getItem('token')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
-    return config
-  },
-  error => {
-    return Promise.reject(error)
-  }
-)
+// 使用通用的token拦截器
+useTokenInterceptor(apiClient)
 
 export default {
   // 获取项目列表

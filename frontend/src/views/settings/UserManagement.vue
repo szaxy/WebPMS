@@ -259,7 +259,7 @@
               <el-input 
                 v-model="approvalForm.registration_notes" 
                 type="textarea" 
-                rows="3"
+                :rows="3"
                 placeholder="添加审核备注（可选）" />
             </el-form-item>
             <el-form-item>
@@ -321,7 +321,7 @@
             <el-input 
               v-model="editingUser.registration_notes" 
               type="textarea" 
-              rows="3"
+              :rows="3"
               placeholder="用户备注" />
           </el-form-item>
         </el-form>

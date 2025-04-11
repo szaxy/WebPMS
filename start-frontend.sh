@@ -19,4 +19,4 @@ if [ -f "/app/node_modules/vite/bin/vite.js" ]; then
 else
   echo "ERROR: Vite not found in node_modules!"
   exit 1
-fi 
+fi

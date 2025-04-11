@@ -1,17 +1,21 @@
-print("开始修复管理员角色...")
+import os
+import django
 
-from django.contrib.auth import get_user_model
-User = get_user_model()
+# 设置Django环境
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
+django.setup()
 
-# 找到超级管理员用户
-superusers = User.objects.filter(is_superuser=True)
-if superusers.exists():
-    for admin in superusers:
-        # 更新角色为系统管理员
-        admin.role = 'admin'
-        admin.save()
-        print(f"已将用户 {admin.username} 的角色更新为系统管理员")
-else:
-    print("未找到任何超级管理员用户")
+from users.models import User
 
-print("修复完成。") 
+# 获取所有超级用户或管理员
+admin_users = User.objects.filter(is_superuser=True) | User.objects.filter(is_staff=True)
+
+for user in admin_users:
+    # 设置角色为admin
+    user.role = 'admin'
+    # 设置部门为producer (制片部门，通常具有查看所有内容的权限)
+    user.department = 'producer'
+    user.save()
+    print(f"已更新用户 {user.username} 的角色为管理员，部门为制片")
+
+print("管理员用户更新完成") 
