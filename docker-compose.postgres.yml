@@ -28,7 +28,7 @@ services:
     pull_policy: never
     working_dir: /app
     command: >
-      sh -c "cd /app &&
+      sh -c "cd /app && 
              pip install --no-index --find-links=/offline-packages --find-links=/offline-packages/py3 -r requirements.txt &&
              python manage.py makemigrations &&
              python manage.py migrate --noinput || echo 'Migration error, continuing anyway...' &&
@@ -55,11 +55,11 @@ services:
     image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/library/node:18-alpine
     pull_policy: never
     working_dir: /app
-    command: sh /start-frontend-new.sh
+    command: sh /start-frontend.sh
     volumes:
       - ./frontend:/app
       - ./offline-resources/npm-packages:/npm-packages
-      - ./start-frontend-new.sh:/start-frontend-new.sh
+      - ./start-frontend.sh:/start-frontend.sh
     ports:
       - "3000:3000"
       - "3001:3001"

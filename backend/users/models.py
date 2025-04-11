@@ -19,7 +19,6 @@ class User(AbstractUser):
         ('fx', _('解算')),
         ('producer', _('制片')),
         ('model', _('模型')),
-        ('tech', _('技术')),
     )
     
     REGISTRATION_STATUS_CHOICES = (

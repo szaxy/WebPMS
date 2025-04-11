@@ -28,29 +28,13 @@ export const useProjectStore = defineStore('project', () => {
       error.value = null
       
       const response = await projectService.getProjects()
-      
-      // 确保数据格式正确
-      if (response.data && Array.isArray(response.data.results)) {
-        // 分页数据结构
-        projects.value = response.data.results
-      } else if (response.data && Array.isArray(response.data)) {
-        // 直接返回数组
-        projects.value = response.data
-      } else if (response.data) {
-        // 不是预期的数据格式
-        console.error('Projects API returned unexpected format:', response.data)
-        projects.value = []
-      } else {
-        // 无数据
-        projects.value = []
-      }
+      projects.value = response.data
       
       return projects.value
     } catch (err) {
       console.error('Error fetching projects:', err)
       error.value = '获取项目列表失败'
-      projects.value = [] // 确保失败时也设置为空数组
-      throw err
+      return []
     } finally {
       loading.value = false
     }
@@ -169,30 +153,6 @@ export const useProjectStore = defineStore('project', () => {
     }
   }
   
-  async function addProject(projectData) {
-    try {
-      loading.value = true
-      error.value = null
-      
-      const response = await projectService.createProject(projectData)
-      const newProject = response.data
-      
-      // 更新本地状态
-      projects.value.push(newProject)
-      
-      // 重新获取项目列表
-      await fetchProjects()
-      
-      return newProject
-    } catch (err) {
-      console.error('Error adding project:', err)
-      error.value = '添加项目失败'
-      throw err
-    } finally {
-      loading.value = false
-    }
-  }
-  
   return {
     // 状态
     projects,
@@ -210,7 +170,6 @@ export const useProjectStore = defineStore('project', () => {
     createProject,
     updateProject,
     updateProjectStatus,
-    fetchProjectStats,
-    addProject
+    fetchProjectStats
   }
 }) 

@@ -1,107 +1,31 @@
 from rest_framework import serializers
-from django.contrib.auth import get_user_model
-from .models import Shot, ShotNote
-from projects.serializers import ProjectSerializer
-from users.serializers import UserSerializer
+from .models import Shot
+from projects.models import Project
 
-User = get_user_model()
-
-class ShotNoteSerializer(serializers.ModelSerializer):
-    """镜头备注序列化器"""
-    user = UserSerializer(read_only=True)
-    user_id = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(),
-        write_only=True,
-        source='user'
-    )
+class ShotSerializer(serializers.ModelSerializer):
+    """镜头序列化器，用于API数据交换"""
+    
+    project_name = serializers.ReadOnlyField(source='project.name')
+    project_code = serializers.ReadOnlyField(source='project.code')
     
     class Meta:
-        model = ShotNote
+        model = Shot
         fields = [
-            'id', 'shot', 'user', 'user_id', 'content', 
-            'is_important', 'created_at', 'updated_at'
+            'id', 'project', 'project_name', 'project_code', 
+            'shot_code', 'prom_stage', 'status', 'deadline', 
+            'duration_frame', 'description', 'metadata',
+            'cgtw_task_id', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['created_at', 'updated_at']
-        
-    def create(self, validated_data):
-        # 确保当前用户是备注的创建者
-        validated_data['user'] = self.context['request'].user
-        return super().create(validated_data)
+        read_only_fields = ['id', 'created_at', 'updated_at']
 
 class ShotListSerializer(serializers.ModelSerializer):
-    """镜头列表序列化器，用于显示镜头列表"""
-    project_name = serializers.CharField(source='project.name', read_only=True)
-    artist_name = serializers.CharField(source='artist.username', read_only=True)
+    """镜头列表序列化器，用于列表显示，包含较少字段"""
+    
+    project_code = serializers.ReadOnlyField(source='project.code')
     
     class Meta:
         model = Shot
         fields = [
-            'id', 'project', 'project_name', 'shot_code', 
-            'prom_stage', 'status', 'artist', 'artist_name',
-            'deadline', 'last_submit_date', 'duration_frame'
-        ]
-
-class ShotDetailSerializer(serializers.ModelSerializer):
-    """镜头详情序列化器，用于显示镜头详情"""
-    project = ProjectSerializer(read_only=True)
-    artist = UserSerializer(read_only=True)
-    artist_id = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(),
-        write_only=True,
-        source='artist',
-        required=False,
-        allow_null=True
-    )
-    notes = ShotNoteSerializer(many=True, read_only=True)
-    
-    class Meta:
-        model = Shot
-        fields = [
-            'id', 'project', 'shot_code', 'prom_stage', 'status',
-            'deadline', 'last_submit_date', 'duration_frame', 
-            'description', 'metadata', 'artist', 'artist_id',
-            'notes', 'created_at', 'updated_at'
-        ]
-        read_only_fields = ['created_at', 'updated_at']
-
-class ShotBulkUpdateSerializer(serializers.Serializer):
-    """批量更新镜头序列化器"""
-    shot_ids = serializers.ListField(
-        child=serializers.IntegerField(),
-        required=True
-    )
-    prom_stage = serializers.CharField(required=False, allow_null=True, allow_blank=True)
-    status = serializers.ChoiceField(
-        choices=Shot.STATUS_CHOICES,
-        required=False,
-        allow_null=True,
-        allow_blank=True
-    )
-    artist_id = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(),
-        required=False,
-        allow_null=True
-    )
-
-class ShotRenameRuleSerializer(serializers.Serializer):
-    """镜头重命名规则序列化器"""
-    shot_ids = serializers.ListField(
-        child=serializers.IntegerField(),
-        required=True
-    )
-    prefix = serializers.CharField(required=True)
-    suffix = serializers.CharField(required=False, allow_blank=True, default='')
-    start_number = serializers.IntegerField(required=True, min_value=1)
-    # 下面两个字段二选一
-    end_number = serializers.IntegerField(required=False, allow_null=True)
-    count = serializers.IntegerField(required=False, allow_null=True)
-    # 步长
-    step = serializers.IntegerField(required=False, default=10, min_value=1)
-    # 数字位数
-    digits = serializers.IntegerField(required=False, default=4, min_value=1)
-    
-    def validate(self, data):
-        """验证end_number和count至少提供一个"""
-        if not data.get('end_number') and not data.get('count'):
-            raise serializers.ValidationError("必须提供end_number或count其中之一")
-        return data 
+            'id', 'project', 'project_code', 'shot_code',
+            'status', 'deadline', 'updated_at'
+        ] 

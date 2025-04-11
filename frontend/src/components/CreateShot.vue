@@ -58,7 +58,7 @@
         <el-input
           v-model="shotForm.description"
           type="textarea"
-          :rows="3"
+          rows="3"
           placeholder="请输入镜头描述"
         />
       </el-form-item>

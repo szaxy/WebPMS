@@ -5,7 +5,6 @@ import { useAuthStore } from '@/stores/auth'
 const Dashboard = () => import('../views/dashboard/Index.vue')
 const Login = () => import('../views/Login.vue')
 const UserManagement = () => import('../views/settings/UserManagement.vue')
-const ShotManagement = () => import('../views/ShotManagementView.vue')
 
 // 定义路由
 const routes = [
@@ -25,14 +24,6 @@ const routes = [
     path: '/dashboard',
     name: 'dashboard',
     component: Dashboard,
-    meta: {
-      requiresAuth: true
-    }
-  },
-  {
-    path: '/shots',
-    name: 'shots',
-    component: ShotManagement,
     meta: {
       requiresAuth: true
     }
