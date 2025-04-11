@@ -25,6 +25,14 @@
                 prefix-icon="Lock"
                 @keyup.enter="handleLogin" />
             </el-form-item>
+            <el-alert
+              v-if="loginError"
+              :title="loginError"
+              type="error"
+              show-icon
+              :closable="false"
+              class="login-alert"
+            />
             <el-form-item>
               <el-button 
                 type="primary" 
@@ -49,11 +57,12 @@
                 placeholder="用户名" 
                 prefix-icon="User" />
             </el-form-item>
-            <el-form-item prop="email">
+            <el-form-item prop="device_code">
               <el-input 
-                v-model="registerForm.email" 
-                placeholder="邮箱" 
-                prefix-icon="Message" />
+                v-model="registerForm.device_code" 
+                placeholder="设备代号" 
+                prefix-icon="Monitor" />
+              <span class="form-help-text">设备代号是您的工作站标识，格式为5-10位大写字母和数字（如：FTDHDH05）</span>
             </el-form-item>
             <el-form-item prop="password">
               <el-input 
@@ -120,7 +129,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { User, Lock, Message } from '@element-plus/icons-vue'
@@ -133,6 +142,7 @@ const registerFormRef = ref(null)
 const activeTab = ref('login')
 const registerMessage = ref('')
 const registerSuccess = ref(false)
+const loginError = ref('')
 
 const loginForm = reactive({
   username: '',
@@ -141,7 +151,7 @@ const loginForm = reactive({
 
 const registerForm = reactive({
   username: '',
-  email: '',
+  device_code: '',
   password: '',
   password2: '',
   role: 'artist',
@@ -163,9 +173,9 @@ const registerRules = {
     { required: true, message: '请输入用户名', trigger: 'blur' },
     { min: 3, max: 20, message: '用户名长度应为3-20个字符', trigger: 'blur' }
   ],
-  email: [
-    { required: true, message: '请输入邮箱', trigger: 'blur' },
-    { type: 'email', message: '请输入有效的邮箱地址', trigger: 'blur' }
+  device_code: [
+    { required: true, message: '请输入设备代号', trigger: 'blur' },
+    { pattern: /^[A-Z0-9]{5,10}$/, message: '设备代号格式不正确，应为5-10位大写字母和数字', trigger: 'blur' }
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
@@ -192,10 +202,28 @@ const registerRules = {
   ]
 }
 
+// 监听authStore的错误信息
+watch(() => authStore.error, (newError) => {
+  // 如果有错误信息，赋值给对应表单的错误提示
+  if (activeTab.value === 'login') {
+    loginError.value = newError
+  } else if (activeTab.value === 'register') {
+    registerMessage.value = newError
+    registerSuccess.value = false
+  }
+})
+
+// 切换标签页时清除错误
+watch(activeTab, () => {
+  loginError.value = ''
+  registerMessage.value = ''
+})
+
 const handleLogin = async () => {
   if (!loginFormRef.value) return
   
   try {
+    loginError.value = ''
     await loginFormRef.value.validate()
     const result = await authStore.login(loginForm)
     
@@ -203,7 +231,7 @@ const handleLogin = async () => {
       ElMessage.success('登录成功')
       router.push('/dashboard')
     } else {
-      ElMessage.error(result.error || '登录失败')
+      loginError.value = result.error || '登录失败，请检查用户名和密码'
     }
   } catch (error) {
     console.error('登录表单验证失败:', error)
@@ -214,11 +242,14 @@ const handleRegister = async () => {
   if (!registerFormRef.value) return
   
   try {
+    registerMessage.value = ''
+    registerSuccess.value = false
     await registerFormRef.value.validate()
     
     // 确认密码匹配
     if (registerForm.password !== registerForm.password2) {
-      ElMessage.error('两次输入的密码不一致')
+      registerMessage.value = '两次输入的密码不一致'
+      registerSuccess.value = false
       return
     }
     
@@ -230,7 +261,7 @@ const handleRegister = async () => {
       
       // 清空表单
       registerForm.username = ''
-      registerForm.email = ''
+      registerForm.device_code = ''
       registerForm.password = ''
       registerForm.password2 = ''
       registerForm.registration_notes = ''
@@ -296,7 +327,14 @@ const handleRegister = async () => {
   margin-top: 10px;
 }
 
-.register-alert {
+.register-alert, .login-alert {
   margin: 10px 0;
+}
+
+.form-help-text {
+  font-size: 12px;
+  color: #909399;
+  display: block;
+  margin-top: 5px;
 }
 </style> 

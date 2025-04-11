@@ -11,7 +11,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'id', 'username', 'email', 'first_name', 'last_name',
+            'id', 'username', 'email', 'device_code', 'first_name', 'last_name',
             'role', 'department', 'cgtw_id', 'avatar',
             'is_active', 'date_joined', 'last_login',
             'registration_status', 'approval_date', 'registration_notes'
@@ -27,7 +27,7 @@ class UserListSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'id', 'username', 'email', 'role', 
+            'id', 'username', 'device_code', 'role', 
             'department', 'avatar', 'is_active',
             'registration_status'
         ]
@@ -40,7 +40,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'username', 'email', 'password', 'password2', 
+            'username', 'device_code', 'password', 'password2', 
             'first_name', 'last_name', 'role', 'department',
             'registration_notes'
         ]
@@ -56,7 +56,8 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = User.objects.create_user(
             username=validated_data['username'],
-            email=validated_data['email'],
+            email=validated_data.get('email', ''),
+            device_code=validated_data.get('device_code', ''),
             password=validated_data['password'],
             first_name=validated_data.get('first_name', ''),
             last_name=validated_data.get('last_name', ''),
@@ -93,7 +94,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         
         # 添加自定义声明
         token['username'] = user.username
-        token['email'] = user.email
+        token['device_code'] = user.device_code
         token['role'] = user.role
         token['department'] = user.department
         token['is_approved'] = user.is_approved

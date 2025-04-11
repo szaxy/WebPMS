@@ -19,6 +19,21 @@ authClient.interceptors.request.use(config => {
   return config
 })
 
+// API响应拦截器：处理常见错误
+authClient.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.code === 'ECONNABORTED') {
+      console.error('API请求超时:', error)
+      error.message = '请求超时，请检查网络连接'
+    } else if (!error.response) {
+      console.error('API网络错误:', error)
+      error.message = '网络连接错误，请检查网络连接'
+    }
+    return Promise.reject(error)
+  }
+)
+
 export default {
   // 用户登录
   login(credentials) {
@@ -48,6 +63,17 @@ export default {
   // 获取用户列表
   getUsers(params = {}) {
     return authClient.get('/users/', { params })
+      .then(response => {
+        // 处理分页数据格式
+        if (response.data && typeof response.data === 'object' && Array.isArray(response.data.results)) {
+          // 返回results数组
+          response.data = response.data.results
+        } else if (!Array.isArray(response.data)) {
+          console.warn('API返回的用户列表数据格式不正确:', response.data)
+          response.data = []
+        }
+        return response
+      })
   },
   
   // 获取待审核用户
@@ -68,6 +94,11 @@ export default {
   // 更新用户
   updateUser(userId, data) {
     return authClient.patch(`/users/${userId}/`, data)
+  },
+  
+  // 删除用户
+  deleteUser(userId) {
+    return authClient.delete(`/users/${userId}/`)
   },
   
   // 注销

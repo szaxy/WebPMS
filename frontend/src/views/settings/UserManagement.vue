@@ -4,7 +4,10 @@
       <template #header>
         <div class="card-header">
           <h3>用户管理</h3>
-          <el-button type="primary" size="small" @click="refreshData">刷新</el-button>
+          <div class="header-actions">
+            <el-button type="primary" size="small" @click="goToDashboard">返回主页</el-button>
+            <el-button type="success" size="small" @click="refreshData">刷新</el-button>
+          </div>
         </div>
       </template>
       
@@ -18,7 +21,7 @@
               border
               stripe>
               <el-table-column prop="username" label="用户名" min-width="120" />
-              <el-table-column prop="email" label="邮箱" min-width="180" />
+              <el-table-column prop="device_code" label="设备代号" min-width="180" />
               <el-table-column prop="role" label="申请角色" min-width="100">
                 <template #default="scope">
                   <el-tag v-if="scope.row.role === 'admin'" type="danger">系统管理员</el-tag>
@@ -75,7 +78,7 @@
           <div class="filters">
             <el-input
               v-model="filters.search"
-              placeholder="搜索用户名或邮箱"
+              placeholder="搜索用户名或设备代号"
               clearable
               class="filter-item"
               @input="handleSearch"
@@ -119,7 +122,17 @@
             </el-select>
           </div>
           
-          <div class="table-container">
+          <div v-if="loadingError" class="error-message">
+            <el-alert
+              type="error"
+              :title="loadingError"
+              :closable="false"
+              show-icon
+            />
+            <el-button type="primary" @click="refreshData" class="retry-button">重试</el-button>
+          </div>
+          
+          <div v-else class="table-container">
             <el-table
               v-loading="authStore.loading"
               :data="filteredUsers"
@@ -127,7 +140,7 @@
               border
               stripe>
               <el-table-column prop="username" label="用户名" min-width="120" />
-              <el-table-column prop="email" label="邮箱" min-width="180" />
+              <el-table-column prop="device_code" label="设备代号" min-width="180" />
               <el-table-column prop="role" label="角色" min-width="100">
                 <template #default="scope">
                   <el-tag v-if="scope.row.role === 'admin'" type="danger">系统管理员</el-tag>
@@ -156,7 +169,7 @@
                   <span v-else>{{ scope.row.registration_status }}</span>
                 </template>
               </el-table-column>
-              <el-table-column label="操作" width="120">
+              <el-table-column label="操作" width="220">
                 <template #default="scope">
                   <el-button 
                     type="primary" 
@@ -164,9 +177,25 @@
                     @click="viewUserDetails(scope.row)">
                     详情
                   </el-button>
+                  <el-button 
+                    type="warning" 
+                    size="small"
+                    @click="editUser(scope.row)">
+                    编辑
+                  </el-button>
+                  <el-button 
+                    type="danger" 
+                    size="small"
+                    @click="confirmDeleteUser(scope.row)">
+                    删除
+                  </el-button>
                 </template>
               </el-table-column>
             </el-table>
+            
+            <div v-if="filteredUsers.length === 0 && !authStore.loading" class="empty-data">
+              <el-empty description="没有找到符合条件的用户" />
+            </div>
           </div>
         </el-tab-pane>
       </el-tabs>
@@ -183,8 +212,8 @@
           <span class="value">{{ selectedUser.username }}</span>
         </div>
         <div class="user-detail-item">
-          <span class="label">邮箱：</span>
-          <span class="value">{{ selectedUser.email }}</span>
+          <span class="label">设备代号：</span>
+          <span class="value">{{ selectedUser.device_code }}</span>
         </div>
         <div class="user-detail-item">
           <span class="label">角色：</span>
@@ -249,19 +278,78 @@
         </div>
       </div>
     </el-dialog>
+    
+    <!-- 编辑用户对话框 -->
+    <el-dialog
+      v-model="userEditVisible"
+      title="编辑用户"
+      width="500px">
+      <div v-if="editingUser" class="user-edit">
+        <el-form :model="editingUser" :rules="userEditRules" ref="userEditFormRef" label-width="100px">
+          <el-form-item label="用户名" prop="username">
+            <el-input v-model="editingUser.username" disabled></el-input>
+          </el-form-item>
+          <el-form-item label="设备代号" prop="device_code">
+            <el-input v-model="editingUser.device_code"></el-input>
+          </el-form-item>
+          <el-form-item label="角色" prop="role">
+            <el-select v-model="editingUser.role" style="width: 100%">
+              <el-option label="系统管理员" value="admin" />
+              <el-option label="主管" value="supervisor" />
+              <el-option label="带片" value="leader" />
+              <el-option label="制片" value="producer" />
+              <el-option label="艺术家" value="artist" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="部门" prop="department">
+            <el-select v-model="editingUser.department" style="width: 100%">
+              <el-option label="动画" value="animation" />
+              <el-option label="后期" value="post" />
+              <el-option label="解算" value="fx" />
+              <el-option label="制片" value="producer" />
+              <el-option label="模型" value="model" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="状态" prop="registration_status">
+            <el-select v-model="editingUser.registration_status" style="width: 100%">
+              <el-option label="已批准" value="approved" />
+              <el-option label="待审核" value="pending" />
+              <el-option label="已拒绝" value="rejected" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="备注" prop="registration_notes">
+            <el-input 
+              v-model="editingUser.registration_notes" 
+              type="textarea" 
+              rows="3"
+              placeholder="用户备注" />
+          </el-form-item>
+        </el-form>
+        <div class="dialog-footer">
+          <el-button @click="userEditVisible = false">取消</el-button>
+          <el-button type="primary" @click="saveUserEdit" :loading="authStore.loading">保存</el-button>
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, reactive } from 'vue'
+import { ref, computed, onMounted, reactive, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const authStore = useAuthStore()
 const activeTab = ref('pending')
 const userDetailVisible = ref(false)
 const selectedUser = ref(null)
 const searchTimeout = ref(null)
+const loadingError = ref(null)
+const userEditVisible = ref(false)
+const editingUser = ref(null)
+const userEditFormRef = ref(null)
 
 const approvalForm = reactive({
   registration_notes: ''
@@ -281,14 +369,17 @@ const pendingUsers = computed(() => {
 
 // 计算属性：过滤后的所有用户
 const filteredUsers = computed(() => {
-  let result = authStore.users || []
+  if (!authStore.users || !Array.isArray(authStore.users)) return []
+  
+  console.log('过滤用户数据，总数:', authStore.users.length)
+  let result = [...authStore.users]
   
   // 搜索过滤
   if (filters.search) {
     const searchLower = filters.search.toLowerCase()
     result = result.filter(user => 
       user.username.toLowerCase().includes(searchLower) || 
-      (user.email && user.email.toLowerCase().includes(searchLower))
+      (user.device_code && user.device_code.toLowerCase().includes(searchLower))
     )
   }
   
@@ -307,27 +398,54 @@ const filteredUsers = computed(() => {
     result = result.filter(user => user.registration_status === filters.status)
   }
   
+  console.log('过滤后用户数:', result.length)
   return result
 })
 
 // 加载数据
 const loadData = async () => {
-  if (activeTab.value === 'pending') {
-    await authStore.fetchPendingUsers()
-  } else {
-    await authStore.fetchUsers()
+  loadingError.value = null
+  
+  try {
+    if (activeTab.value === 'pending') {
+      console.log('加载待审核用户数据')
+      await authStore.fetchPendingUsers()
+      console.log('待审核用户数据加载完成:', authStore.pendingUsers?.length || 0)
+    } else if (activeTab.value === 'all') {
+      console.log('开始加载所有用户数据...')
+      const result = await authStore.fetchUsers()
+      console.log('所有用户数据加载结果:', 
+        result?.success ? '成功' : '失败',
+        '用户数:', authStore.users?.length || 0
+      )
+      
+      if (!result || !result.success) {
+        loadingError.value = result?.error || authStore.error || '加载用户列表失败，请重试'
+        console.error('加载用户列表失败:', loadingError.value)
+      }
+    }
+  } catch (err) {
+    console.error('加载数据出错:', err)
+    loadingError.value = err.message || '加载数据时出错，请重试'
   }
 }
 
 // 刷新数据
 const refreshData = async () => {
   await loadData()
-  ElMessage.success('数据已刷新')
+  if (!loadingError.value) {
+    ElMessage.success('数据已刷新')
+  }
 }
 
 // 切换标签页
 const handleTabClick = () => {
   loadData()
+}
+
+// 前往主页
+const goToDashboard = () => {
+  router.push('/dashboard')
 }
 
 // 搜索处理（防抖）
@@ -337,7 +455,8 @@ const handleSearch = () => {
   }
   
   searchTimeout.value = setTimeout(() => {
-    // 这里可以添加远程搜索逻辑，目前使用本地过滤
+    // 简单的前端过滤，不需要额外操作
+    console.log('执行搜索过滤')
   }, 300)
 }
 
@@ -363,6 +482,7 @@ const approveUser = async (user, status) => {
       }
     )
     
+    console.log('提交用户审核:', user.id, status)
     const result = await authStore.approveUser(user.id, {
       registration_status: status,
       registration_notes: approvalForm.registration_notes
@@ -385,8 +505,92 @@ const approveUser = async (user, status) => {
   }
 }
 
+// 用户编辑表单规则
+const userEditRules = {
+  device_code: [
+    { pattern: /^[A-Z0-9]{5,10}$/, message: '设备代号格式不正确，应为5-10位大写字母和数字', trigger: 'blur' }
+  ],
+  role: [
+    { required: true, message: '请选择角色', trigger: 'change' }
+  ],
+  department: [
+    { required: true, message: '请选择部门', trigger: 'change' }
+  ],
+  registration_status: [
+    { required: true, message: '请选择状态', trigger: 'change' }
+  ]
+}
+
+// 编辑用户
+const editUser = (user) => {
+  editingUser.value = { ...user }
+  userEditVisible.value = true
+}
+
+// 保存用户编辑
+const saveUserEdit = async () => {
+  if (!userEditFormRef.value) return
+  
+  try {
+    await userEditFormRef.value.validate()
+    
+    // 处理设备代号大写
+    if (editingUser.value.device_code) {
+      editingUser.value.device_code = editingUser.value.device_code.toUpperCase()
+    }
+    
+    const result = await authStore.updateUser(editingUser.value.id, editingUser.value)
+    
+    if (result.success) {
+      ElMessage.success('用户信息更新成功')
+      userEditVisible.value = false
+      
+      // 刷新数据
+      await loadData()
+    } else {
+      ElMessage.error(result.error || '更新用户信息失败')
+    }
+  } catch (err) {
+    console.error('更新用户信息出错:', err)
+    ElMessage.error('表单验证失败，请检查输入')
+  }
+}
+
+// 确认删除用户
+const confirmDeleteUser = (user) => {
+  ElMessageBox.confirm(
+    `确定要删除用户 "${user.username}" 吗？此操作不可恢复！`,
+    '删除用户',
+    {
+      confirmButtonText: '确定删除',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }
+  )
+    .then(async () => {
+      const result = await authStore.deleteUser(user.id)
+      if (result.success) {
+        ElMessage.success(`已删除用户 "${user.username}"`)
+        await loadData()
+      } else {
+        ElMessage.error(result.error || '删除用户失败')
+      }
+    })
+    .catch(() => {
+      // 用户取消删除，无需操作
+    })
+}
+
+// 初始化监听组件错误
+watch(() => authStore.error, (newError) => {
+  if (newError) {
+    loadingError.value = newError
+  }
+})
+
 // 页面加载时获取数据
 onMounted(() => {
+  console.log('用户管理组件挂载，初始化加载数据')
   loadData()
 })
 </script>
@@ -404,6 +608,11 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
 }
 
 .table-container {
@@ -456,5 +665,19 @@ onMounted(() => {
 
 .mt-20 {
   margin-top: 20px;
+}
+
+.error-message {
+  margin: 20px 0;
+  text-align: center;
+}
+
+.retry-button {
+  margin-top: 10px;
+}
+
+.dialog-footer {
+  margin-top: 20px;
+  text-align: right;
 }
 </style> 

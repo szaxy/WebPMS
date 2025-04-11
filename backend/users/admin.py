@@ -9,14 +9,14 @@ from django.contrib import messages
 class UserAdmin(BaseUserAdmin):
     """自定义用户模型的Admin配置"""
     
-    list_display = ('username', 'email', 'first_name', 'last_name', 'role', 'department', 'registration_status', 'is_staff')
+    list_display = ('username', 'device_code', 'email', 'first_name', 'last_name', 'role', 'department', 'registration_status', 'is_staff')
     list_filter = ('role', 'department', 'registration_status', 'is_staff', 'is_superuser', 'is_active')
-    search_fields = ('username', 'email', 'first_name', 'last_name')
+    search_fields = ('username', 'device_code', 'email', 'first_name', 'last_name')
     actions = ['approve_users', 'reject_users']
     
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
-        (_('个人信息'), {'fields': ('first_name', 'last_name', 'email', 'avatar')}),
+        (_('个人信息'), {'fields': ('first_name', 'last_name', 'email', 'device_code', 'avatar')}),
         (_('CGTeamwork信息'), {'fields': ('cgtw_id',)}),
         (_('角色权限'), {'fields': ('role', 'department')}),
         (_('注册审核'), {'fields': ('registration_status', 'registration_notes', 'approved_by', 'approval_date')}),

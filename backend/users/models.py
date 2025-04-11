@@ -31,6 +31,7 @@ class User(AbstractUser):
     department = models.CharField(_('部门'), max_length=20, choices=DEPARTMENT_CHOICES, null=True, blank=True)
     cgtw_id = models.CharField(_('CGTeamwork用户ID'), max_length=100, null=True, blank=True)
     avatar = models.ImageField(_('头像'), upload_to='avatars/', null=True, blank=True)
+    device_code = models.CharField(_('设备代号'), max_length=10, null=True, blank=True, help_text=_('用户设备代号，格式如：FTDHDH05'))
     registration_status = models.CharField(_('注册状态'), max_length=20, choices=REGISTRATION_STATUS_CHOICES, default='pending')
     approved_by = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_users', verbose_name=_('审批人'))
     approval_date = models.DateTimeField(_('审批时间'), null=True, blank=True)
