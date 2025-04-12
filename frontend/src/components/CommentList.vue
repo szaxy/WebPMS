@@ -165,6 +165,9 @@ import { ElMessage } from 'element-plus'
 import { Document, Refresh } from '@element-plus/icons-vue'
 import commentService from '../services/commentService'
 import { useAuthStore } from '../stores/authStore'
+// 导入工具函数
+import { formatDateTime } from '@/utils/dateUtils'
+import { truncateText, truncateFilename } from '@/utils/stringUtils'
 
 const props = defineProps({
   shotId: {
@@ -249,18 +252,6 @@ const handleFileRemove = (file) => {
   }
 }
 
-// 格式化日期时间
-const formatDateTime = (dateString) => {
-  if (!dateString) return ''
-  
-  try {
-    const date = new Date(dateString)
-    return format(date, 'yyyy-MM-dd HH:mm')
-  } catch (e) {
-    return dateString
-  }
-}
-
 // 获取评论类型
 const getCommentType = (comment) => {
   if (comment.is_resolved) {
@@ -306,24 +297,6 @@ const replyToComment = (comment) => {
 // 取消回复
 const cancelReply = () => {
   replyTo.value = null
-}
-
-// 截断文本
-const truncateText = (text, length) => {
-  if (!text) return ''
-  return text.length > length ? text.substring(0, length) + '...' : text
-}
-
-// 截断文件名
-const truncateFilename = (filename) => {
-  if (!filename) return ''
-  
-  if (filename.length > 20) {
-    const ext = filename.split('.').pop()
-    return filename.substring(0, 16) + '...' + (ext ? '.' + ext : '')
-  }
-  
-  return filename
 }
 
 // 提交评论

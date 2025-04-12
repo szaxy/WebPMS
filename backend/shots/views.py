@@ -31,17 +31,10 @@ class ShotViewSet(viewsets.ModelViewSet):
             queryset = Shot.objects.all()
         else:
             # 其他角色只能看到自己部门的镜头
-            department_map = {
-                'animation': 'DH',
-                'fx': 'JS',
-                'post': 'HQ'
-            }
-            user_department = department_map.get(user.department)
-            
-            if not user_department:
+            if not user.department:
                 return Shot.objects.none()
             
-            queryset = Shot.objects.filter(department=user_department)
+            queryset = Shot.objects.filter(department=user.department)
         
         # 按项目代号过滤
         project_code = self.request.query_params.get('project_code', None)
@@ -260,17 +253,10 @@ class ShotNoteViewSet(viewsets.ModelViewSet):
             return ShotNote.objects.all()
         else:
             # 其他角色只能看到自己部门的镜头备注
-            department_map = {
-                'animation': 'DH',
-                'fx': 'JS',
-                'post': 'HQ'
-            }
-            user_department = department_map.get(user.department)
-            
-            if not user_department:
+            if not user.department:
                 return ShotNote.objects.none()
             
-            return ShotNote.objects.filter(shot__department=user_department)
+            return ShotNote.objects.filter(shot__department=user.department)
     
     def get_serializer_class(self):
         """根据操作类型选择合适的序列化器"""

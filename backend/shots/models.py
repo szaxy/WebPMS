@@ -30,11 +30,7 @@ class Shot(models.Model):
         ('PASS', _('Pass'))
     ]
     
-    DEPARTMENT_CHOICES = [
-        ('DH', _('动画')),
-        ('JS', _('解算')),
-        ('HQ', _('后期'))
-    ]
+    DEPARTMENT_CHOICES = User.DEPARTMENT_CHOICES
     
     project = models.ForeignKey(
         Project, 
@@ -43,11 +39,12 @@ class Shot(models.Model):
         verbose_name=_('所属项目')
     )
     shot_code = models.CharField(_('镜头编号'), max_length=100)
-    department = models.CharField(_('所属部门'), max_length=2, choices=DEPARTMENT_CHOICES, default='DH')
+    department = models.CharField(_('所属部门'), max_length=20, choices=DEPARTMENT_CHOICES, default='animation')
     prom_stage = models.CharField(_('推进阶段'), max_length=4, choices=STAGE_CHOICES, default='LAY')
     status = models.CharField(_('制作状态'), max_length=20, choices=STATUS_CHOICES, default='waiting')
     artist = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_shots', verbose_name=_('制作者'))
     duration_frame = models.IntegerField(_('时长(帧)'), default=0)
+    framepersecond = models.IntegerField(_('帧率'), default=25)
     deadline = models.DateField(_('截止日期'), null=True, blank=True)
     last_submit_date = models.DateField(_('最近提交日期'), null=True, blank=True)
     description = models.TextField(_('描述'), null=True, blank=True)

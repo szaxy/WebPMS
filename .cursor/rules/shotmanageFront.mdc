@@ -47,6 +47,8 @@ alwaysApply: true
   })
   ```
 
+- 前端使用到的工具函数统一放在项目 WebPMS\frontend\src\utils 目录下。
+
 ### 2. 数据模型与字段规范
 
 #### 2.1 镜头模型字段
@@ -55,11 +57,12 @@ alwaysApply: true
   - `id`: 镜头ID（数字）
   - `project`: 所属项目ID（数字）
   - `shot_code`: 镜头编号（字符串）
-  - `department`: 所属部门代码（`DH`/`JS`/`HQ`）
+  - `department`: 所属部门代码（使用user中的命名方式`animation`,`post`,`fx`,`producer`,`model`）
   - `prom_stage`: 推进阶段（`LAY`/`BLK`/`ANI`/`PASS`）
   - `status`: 状态值（参考下列状态值列表）
   - `artist`: 制作者ID（数字，可为null）
   - `duration_frame`: 时长帧数（数字）
+  - `framepersecond`: 帧率(数字)
   - `deadline`: 截止日期（日期字符串，ISO格式）
   - `last_submit_date`: 最近提交日期（日期字符串，可为null）
   - `description`: 描述文本（字符串）

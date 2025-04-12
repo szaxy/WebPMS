@@ -43,28 +43,26 @@ class Command(BaseCommand):
         fx_artists = list(User.objects.filter(department='fx', role='artist'))
         post_artists = list(User.objects.filter(department='post', role='artist'))
         
-        # 创建动画部门镜头
+        # 为每个部门创建测试镜头
         self.create_department_shots(
             project, 
-            'DH', 
-            'DH_EP001_SC', 
+            'animation', 
+            'AN_EP001_SC', 
             range(1, 11), 
             animation_artists
         )
         
-        # 创建解算部门镜头
         self.create_department_shots(
             project, 
-            'JS', 
-            'JS_EP001_SC', 
+            'fx', 
+            'FX_EP001_SC', 
             range(1, 11), 
             fx_artists
         )
         
-        # 创建后期部门镜头
         self.create_department_shots(
             project, 
-            'HQ', 
+            'post', 
             'HQ_EP001_SC', 
             range(1, 11), 
             post_artists

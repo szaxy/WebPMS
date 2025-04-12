@@ -6,7 +6,11 @@ echo =====================================================
 echo   WebPMS Platform - 智能启动程序
 echo =====================================================
 
-echo [步骤 1] 运行端口管理器检查端口占用情况...
+echo [步骤 1] 停止运行中的容器...
+docker-compose -f docker-compose.postgres.yml down 2>nul
+timeout /t 2 /nobreak > nul
+
+echo [步骤 2] 运行端口管理器检查端口占用情况...
 call port-manager.bat check
 if errorlevel 1 (
     echo 端口管理器出错，将使用默认端口配置继续...
@@ -27,7 +31,7 @@ echo - 后端端口: %BACKEND_PORT%
 echo - 数据库端口: %DB_PORT%
 echo - Redis端口: %REDIS_PORT%
 
-echo [步骤 2] 检查必要的离线资源...
+echo [步骤 3] 检查必要的离线资源...
 if not exist "offline-resources\python-packages\py3\tomli-2.0.0-py3-none-any.whl" (
     echo 错误: Python离线包不存在!
     echo 请确保离线资源目录结构正确。
@@ -48,7 +52,7 @@ if not exist "offline-resources\npm-packages\node_modules.tar.gz" (
     echo 前端离线依赖包检查通过。
 )
 
-echo [步骤 3] 加载Docker镜像(如需)...
+echo [步骤 4] 加载Docker镜像(如需)...
 echo 检查PostgreSQL镜像...
 docker images | findstr postgres:14.15 > nul
 if errorlevel 1 (
@@ -77,15 +81,13 @@ if errorlevel 1 (
     docker load -i docker\images\node-alpine.tar
 )
 
-echo [步骤 4] 设置环境变量...
+echo [步骤 5] 设置环境变量...
 set "FRONTEND_PORT_ENV=FRONTEND_PORT=%FRONTEND_PORT%"
 set "BACKEND_PORT_ENV=BACKEND_PORT=%BACKEND_PORT%"
 set "DB_PORT_ENV=DB_PORT=%DB_PORT%"
 set "REDIS_PORT_ENV=REDIS_PORT=%REDIS_PORT%"
 
-echo [步骤 5] 停止运行中的容器...
-docker-compose -f docker-compose.postgres.yml down 2>nul
-timeout /t 2 /nobreak > nul
+
 
 echo [步骤 6] 启动后端服务(数据库, redis, 后端)...
 set "COMPOSE_COMMAND=docker-compose -f docker-compose.postgres.yml"
@@ -93,13 +95,29 @@ set "COMPOSE_COMMAND=docker-compose -f docker-compose.postgres.yml"
 echo 等待后端服务初始化...
 timeout /t 15 /nobreak > nul
 
-echo [步骤 7] 启动前端服务...
+echo [步骤 7] 检查并应用数据库迁移...
+echo 检查数据库迁移状态...
+docker exec -it webpms-backend-1 python manage.py showmigrations | findstr "\[ \]" > nul
+if errorlevel 1 (
+    echo 所有迁移已应用.
+) else (
+    echo 发现未应用的迁移，正在应用...
+    echo --- 生成迁移文件 ---
+    docker exec -it webpms-backend-1 python manage.py makemigrations
+    
+    echo --- 应用所有迁移 ---
+    docker exec -it webpms-backend-1 python manage.py migrate
+    
+    echo 数据库迁移完成.
+)
+
+echo [步骤 8] 启动前端服务...
 %COMPOSE_COMMAND% up -d frontend
 echo 等待前端初始化(可能需要1-2分钟)...
 echo 正在解压前端依赖包并启动Vite服务器...
 timeout /t 90 /nobreak > nul
 
-echo [步骤 8] 检查容器状态...
+echo [步骤 9] 检查容器状态...
 %COMPOSE_COMMAND% ps
 
 echo =====================================================

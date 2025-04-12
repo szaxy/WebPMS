@@ -1,336 +1,331 @@
 <template>
   <div class="shot-management">
-    <!-- 页面顶部 -->
-    <div class="shot-management-header">
-      <h1 class="page-title">镜头管理</h1>
-      <div class="filters">
-        <!-- 项目选择 -->
-        <el-select 
-          v-model="selectedProject" 
-          placeholder="选择项目" 
-          clearable 
-          @change="handleProjectChange"
-          class="filter-item"
-        >
-          <el-option
-            v-for="project in projects.filter(p => p && p.id)"
-            :key="project.id"
-            :label="project.name"
-            :value="project.id"
-          />
-        </el-select>
-
-        <!-- 部门筛选 (仅对制片和管理员可见) -->
-        <el-select
-          v-if="canFilterByDepartment"
-          v-model="filters.department"
-          placeholder="选择部门"
-          clearable
-          @change="applyFilters"
-          class="filter-item"
-        >
-          <el-option label="动画部门" value="DH" />
-          <el-option label="解算部门" value="JS" />
-          <el-option label="后期部门" value="HQ" />
-        </el-select>
-
-        <!-- 推进阶段筛选 -->
-        <el-select
-          v-model="filters.prom_stage"
-          placeholder="推进阶段"
-          clearable
-          @change="applyFilters"
-          class="filter-item"
-        >
-          <el-option label="Layout" value="LAY" />
-          <el-option label="Block" value="BLK" />
-          <el-option label="Animation" value="ANI" />
-          <el-option label="Pass" value="PASS" />
-        </el-select>
-
-        <!-- 状态筛选 -->
-        <el-select
-          v-model="filters.status"
-          placeholder="制作状态"
-          clearable
-          @change="applyFilters"
-          class="filter-item"
-        >
-          <el-option label="等待开始" value="waiting" />
-          <el-option label="正在制作" value="in_progress" />
-          <el-option label="提交内审" value="submit_review" />
-          <el-option label="正在修改" value="revising" />
-          <el-option label="内审通过" value="internal_approved" />
-          <el-option label="客户审核" value="client_review" />
-          <el-option label="客户退回" value="client_rejected" />
-          <el-option label="客户通过" value="client_approved" />
-          <el-option label="客户返修" value="client_revision" />
-          <el-option label="已删除或合并" value="deleted_merged" />
-          <el-option label="暂停制作" value="suspended" />
-          <el-option label="已完结" value="completed" />
-        </el-select>
-
-        <!-- 搜索框 -->
-        <el-input
-          v-model="searchQuery"
-          placeholder="搜索镜头号..."
-          clearable
-          @input="applyFilters"
-          class="filter-item search-input"
-        >
-          <template #prefix>
-            <el-icon><Search /></el-icon>
-          </template>
-        </el-input>
-
-        <!-- 更多筛选按钮 -->
-        <el-dropdown @command="handleAdvancedFilter" trigger="click">
-          <el-button type="primary" plain>
-            高级筛选
-            <el-icon class="el-icon--right"><arrow-down /></el-icon>
-          </el-button>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item command="hasComments">有反馈的镜头</el-dropdown-item>
-              <el-dropdown-item command="hasNotes">有备注的镜头</el-dropdown-item>
-              <el-dropdown-item command="hasImportantNotes">有重要备注的镜头</el-dropdown-item>
-              <el-dropdown-item command="overdueDeadline">已逾期镜头</el-dropdown-item>
-              <el-dropdown-item command="upcomingDeadline">临近截止日期镜头</el-dropdown-item>
-              <el-dropdown-item command="clearAll">清除所有筛选</el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-      </div>
-    </div>
-
+    <!-- 页面内容 -->
     <div class="shot-management-content">
-      <!-- 左侧导航与筛选 -->
-      <div class="shot-sidebar">
-        <el-card class="sidebar-card">
-          <template #header>
-            <div class="card-header">
-              <span>快速筛选</span>
-            </div>
-          </template>
-          <el-menu @select="handleMenuSelect">
-            <el-menu-item index="all">所有镜头</el-menu-item>
-            <el-menu-item index="myShots">我负责的镜头</el-menu-item>
-            <el-menu-item index="waiting">等待开始</el-menu-item>
-            <el-menu-item index="in_progress">正在制作</el-menu-item>
-            <el-menu-item index="review">待审核</el-menu-item>
-            <el-menu-item index="completed">已完成</el-menu-item>
-          </el-menu>
-        </el-card>
+      <!-- 左侧区域 -->
+      <div class="left-panel">
+        <!-- 筛选区 -->
+        <div class="filters-container">
+          <h1 class="page-title">镜头管理</h1>
+          
+          <div class="filters">
+            <!-- 项目选择 -->
+            <el-select 
+              v-model="selectedProject" 
+              placeholder="选择项目" 
+              clearable 
+              @change="handleProjectChange"
+              class="filter-item"
+              size="small"
+            >
+              <el-option
+                v-for="project in projects.filter(p => p && p.id)"
+                :key="project.id"
+                :label="project.name"
+                :value="project.id"
+              />
+            </el-select>
 
-        <el-card class="sidebar-card">
-          <template #header>
-            <div class="card-header">
-              <span>列设置</span>
-            </div>
-          </template>
-          <el-checkbox-group v-model="visibleColumns" @change="saveColumnSettings">
-            <el-checkbox v-for="column in allColumns" :key="column.prop" :value="column.prop">
-              {{ column.label }}
-            </el-checkbox>
-          </el-checkbox-group>
-        </el-card>
-      </div>
+            <!-- 部门筛选 (仅对制片和管理员可见) -->
+            <el-select
+              v-if="canFilterByDepartment"
+              v-model="filters.department"
+              placeholder="部门"
+              clearable
+              @change="applyFilters"
+              class="filter-item"
+              size="small"
+            >
+              <el-option label="动画部门" value="animation" />
+              <el-option label="解算部门" value="fx" />
+              <el-option label="后期部门" value="post" />
+              <el-option label="模型部门" value="model" />
+            </el-select>
 
-      <!-- 中间镜头列表区域 -->
-      <div class="shot-list-container">
-        <el-card>
-          <template #header>
-            <div class="list-header">
-              <div class="list-title">
-                镜头列表
-                <el-tag v-if="filteredShots.length">{{ filteredShots.length }}个镜头</el-tag>
-              </div>
-              <div class="list-actions">
-                <el-button-group>
-                  <el-button @click="refreshShots" title="刷新">
-                    <el-icon><Refresh /></el-icon>
-                  </el-button>
-                  <el-button @click="exportShots" title="导出">
-                    <el-icon><Download /></el-icon>
-                  </el-button>
-                </el-button-group>
-              </div>
-            </div>
+            <!-- 推进阶段筛选 -->
+            <el-select
+              v-model="filters.prom_stage"
+              placeholder="推进阶段"
+              clearable
+              @change="applyFilters"
+              class="filter-item"
+              size="small"
+            >
+              <el-option label="Layout" value="LAY" />
+              <el-option label="Block" value="BLK" />
+              <el-option label="Animation" value="ANI" />
+              <el-option label="Pass" value="PASS" />
+            </el-select>
+
+            <!-- 状态筛选 -->
+            <el-select
+              v-model="filters.status"
+              placeholder="制作状态"
+              clearable
+              @change="applyFilters"
+              class="filter-item"
+              size="small"
+            >
+              <el-option label="等待开始" value="waiting" />
+              <el-option label="正在制作" value="in_progress" />
+              <el-option label="提交内审" value="submit_review" />
+              <el-option label="正在修改" value="revising" />
+              <el-option label="内审通过" value="internal_approved" />
+              <el-option label="客户审核" value="client_review" />
+              <el-option label="客户退回" value="client_rejected" />
+              <el-option label="客户通过" value="client_approved" />
+              <el-option label="客户返修" value="client_revision" />
+              <el-option label="已删除或合并" value="deleted_merged" />
+              <el-option label="暂停制作" value="suspended" />
+              <el-option label="已完结" value="completed" />
+            </el-select>
+
+            <!-- 搜索框 -->
+            <el-input
+              v-model="searchQuery"
+              placeholder="搜索镜头号..."
+              clearable
+              @input="applyFilters"
+              class="filter-item search-input"
+              size="small"
+            >
+              <template #prefix>
+                <el-icon><Search /></el-icon>
+              </template>
+            </el-input>
+
+            <!-- 高级筛选按钮 -->
+            <el-dropdown @command="handleAdvancedFilter" trigger="click">
+              <el-button type="primary" plain size="small">
+                高级筛选
+                <el-icon class="el-icon--right"><arrow-down /></el-icon>
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="hasComments">有反馈的镜头</el-dropdown-item>
+                  <el-dropdown-item command="hasNotes">有备注的镜头</el-dropdown-item>
+                  <el-dropdown-item command="hasImportantNotes">有重要备注的镜头</el-dropdown-item>
+                  <el-dropdown-item command="overdueDeadline">已逾期镜头</el-dropdown-item>
+                  <el-dropdown-item command="upcomingDeadline">临近截止日期镜头</el-dropdown-item>
+                  <el-dropdown-item command="clearAll">清除所有筛选</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
             
-            <!-- 批量操作工具栏 -->
-            <div class="batch-actions" v-if="shotStore.selectedShotIds.length > 0">
-              <div class="selected-info">
-                已选择 <strong>{{ shotStore.selectedShotIds.length }}</strong> 个镜头
-              </div>
-              <div class="action-buttons">
-                <el-button type="danger" @click="confirmBatchDelete" size="small">
-                  <el-icon><Delete /></el-icon> 批量删除
-                </el-button>
-                <el-button type="info" @click="clearSelection" size="small">
-                  <el-icon><Close /></el-icon> 取消选择
-                </el-button>
-              </div>
-            </div>
-          </template>
+            <!-- 展示项按钮 -->
+            <el-button size="small" @click="columnDialogVisible = true">
+              展示项
+            </el-button>
+          </div>
+        </div>
 
-          <!-- 镜头表格 -->
-          <el-table
-            ref="shotTable"
-            v-loading="loading"
-            :data="filteredShots"
-            @row-click="handleRowClick"
-            :highlight-current-row="true"
-            style="width: 100%"
-            :max-height="tableHeight"
-            stripe
-            border
-            @selection-change="handleSelectionChange"
-          >
-            <!-- 诊断信息 -->
-            <template v-if="filteredShots.length === 0 && !loading" #empty>
-              <div style="padding: 20px; text-align: left;">
-                <h3>未找到镜头数据，请检查以下信息：</h3>
-                <p><strong>当前项目:</strong> {{ selectedProject ? projects.find(p => p.id === selectedProject)?.name : '未选择项目' }}</p>
-                <p><strong>当前用户角色:</strong> {{ authStore.user?.role || '未知' }}</p>
-                <p><strong>当前用户部门:</strong> {{ userDepartment || '未知' }}</p>
-                <p><strong>应用筛选:</strong> {{ JSON.stringify(filters) }}</p>
-                <p><strong>搜索关键字:</strong> {{ searchQuery || '无' }}</p>
-                <p><strong>项目总数:</strong> {{ projects.length }}</p>
-                <div v-if="shotStore.error" class="error-message">
-                  <strong>错误信息:</strong> {{ shotStore.error }}
+        <!-- 镜头列表区域 -->
+        <div class="shot-list-area">
+          <el-card class="shot-list-card">
+            <template #header>
+              <div class="list-header">
+                <div class="list-title">
+                  镜头列表
+                  <el-tag v-if="filteredShots.length">{{ filteredShots.length }}个镜头</el-tag>
                 </div>
-                <el-button type="primary" @click="refreshShots">刷新数据</el-button>
+                <div class="list-actions">
+                  <el-button-group>
+                    <el-button @click="refreshShots" title="刷新" size="small">
+                      <el-icon><Refresh /></el-icon>
+                    </el-button>
+                    <el-button @click="exportShots" title="导出" size="small">
+                      <el-icon><Download /></el-icon>
+                    </el-button>
+                  </el-button-group>
+                </div>
+              </div>
+              
+              <!-- 批量操作工具栏 -->
+              <div class="batch-actions" v-if="shotStore.selectedShotIds.length > 0">
+                <div class="selected-info">
+                  已选择 <strong>{{ shotStore.selectedShotIds.length }}</strong> 个镜头
+                </div>
+                <div class="action-buttons">
+                  <el-button type="danger" @click="confirmBatchDelete" size="small">
+                    <el-icon><Delete /></el-icon> 删除
+                  </el-button>
+                  <el-button type="info" @click="clearSelection" size="small">
+                    <el-icon><Close /></el-icon> 取消选择
+                  </el-button>
+                </div>
               </div>
             </template>
-            
-            <!-- 状态标记列 -->
-            <el-table-column type="selection" width="55" />
-            
-            <el-table-column fixed width="40">
-              <template #default="{ row }">
-                <div class="status-indicators">
-                  <el-tooltip v-if="row.has_comments" content="有反馈">
-                    <div class="indicator comment-indicator"></div>
-                  </el-tooltip>
-                  <el-tooltip v-if="row.has_notes" content="有备注">
-                    <div class="indicator note-indicator"></div>
-                  </el-tooltip>
-                  <el-tooltip v-if="row.has_important_notes" content="有重要备注">
-                    <div class="indicator important-note-indicator"></div>
-                  </el-tooltip>
+
+            <!-- 镜头表格 -->
+            <el-table
+              ref="shotTable"
+              v-loading="loading"
+              :data="filteredShots"
+              @row-click="handleRowClick"
+              :highlight-current-row="true"
+              style="width: 100%"
+              :max-height="tableHeight"
+              stripe
+              border
+              @selection-change="handleSelectionChange"
+              table-layout="fixed"
+            >
+              <!-- 诊断信息 -->
+              <template v-if="filteredShots.length === 0 && !loading" #empty>
+                <div style="padding: 20px; text-align: left;">
+                  <h3>未找到镜头数据，请检查以下信息：</h3>
+                  <p><strong>当前项目:</strong> {{ selectedProject ? projects.find(p => p.id === selectedProject)?.name : '未选择项目' }}</p>
+                  <p><strong>当前用户角色:</strong> {{ authStore.user?.role || '未知' }}</p>
+                  <p><strong>当前用户部门:</strong> {{ userDepartment || '未知' }}</p>
+                  <p><strong>应用筛选:</strong> {{ JSON.stringify(filters) }}</p>
+                  <p><strong>搜索关键字:</strong> {{ searchQuery || '无' }}</p>
+                  <p><strong>项目总数:</strong> {{ projects.length }}</p>
+                  <div v-if="shotStore.error" class="error-message">
+                    <strong>错误信息:</strong> {{ shotStore.error }}
+                  </div>
+                  <el-button type="primary" @click="refreshShots">刷新数据</el-button>
                 </div>
               </template>
-            </el-table-column>
+              
+              <!-- 状态标记列 -->
+              <el-table-column type="selection" width="40" fixed />
+              
+              <!-- 常规列 -->
+              <el-table-column v-if="isColumnVisible('shot_code')" prop="shot_code" label="镜头号" fixed width="180" sortable>
+                <template #default="{ row }">
+                  <div class="shot-code-container">
+                    <span>{{ row.shot_code }}</span>
+                    <div class="status-indicators" v-if="row.has_comments || row.has_notes || row.has_important_notes">
+                      <el-tooltip v-if="row.has_comments" content="有反馈">
+                        <div class="indicator comment-indicator"></div>
+                      </el-tooltip>
+                      <el-tooltip v-if="row.has_notes" content="有备注">
+                        <div class="indicator note-indicator"></div>
+                      </el-tooltip>
+                      <el-tooltip v-if="row.has_important_notes" content="有重要备注">
+                        <div class="indicator important-note-indicator"></div>
+                      </el-tooltip>
+                    </div>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column v-if="isColumnVisible('duration_frame')" prop="duration_frame" label="帧数" width="80" sortable />
+              
+              <el-table-column v-if="isColumnVisible('prom_stage')" label="推进阶段" width="100">
+                <template #default="{ row }">
+                  <el-tag :type="getStageTagType(row.prom_stage)">
+                    {{ row.prom_stage_display }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              
+              <el-table-column v-if="isColumnVisible('status')" label="制作状态" width="100">
+                <template #default="{ row }">
+                  <el-tag :type="getStatusTagType(row.status)">
+                    {{ row.status_display }}
+                  </el-tag>
+                </template>
+              </el-table-column>
 
-            <!-- 常规列 -->
-            <el-table-column v-if="isColumnVisible('shot_code')" prop="shot_code" label="镜头号" fixed width="120" sortable />
-            <el-table-column v-if="isColumnVisible('duration_frame')" prop="duration_frame" label="帧数" width="80" sortable />
-            
-            <el-table-column v-if="isColumnVisible('prom_stage')" label="推进阶段" width="120">
-              <template #default="{ row }">
-                <el-tag :type="getStageTagType(row.prom_stage)">
-                  {{ row.prom_stage_display }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            
-            <el-table-column v-if="isColumnVisible('status')" label="制作状态" width="120">
-              <template #default="{ row }">
-                <el-tag :type="getStatusTagType(row.status)">
-                  {{ row.status_display }}
-                </el-tag>
-              </template>
-            </el-table-column>
+              <el-table-column v-if="isColumnVisible('artist')" label="制作者" width="100">
+                <template #default="{ row }">
+                  {{ row.artist_name || '-' }}
+                </template>
+              </el-table-column>
 
-            <el-table-column v-if="isColumnVisible('artist')" label="制作者" width="120">
-              <template #default="{ row }">
-                <span>{{ row.artist_name || '-' }}</span>
-              </template>
-            </el-table-column>
+              <el-table-column v-if="isColumnVisible('deadline')" label="截止日期" width="100" sortable>
+                <template #default="{ row }">
+                  <span :class="getDeadlineClass(row)">
+                    {{ formatDate(row.deadline) }}
+                  </span>
+                </template>
+              </el-table-column>
 
-            <el-table-column v-if="isColumnVisible('deadline')" label="截止日期" width="120" sortable>
-              <template #default="{ row }">
-                <span :class="getDeadlineClass(row)">
-                  {{ formatDate(row.deadline) }}
-                </span>
-              </template>
-            </el-table-column>
+              <el-table-column v-if="isColumnVisible('last_submit_date')" label="最近提交" width="100" sortable>
+                <template #default="{ row }">
+                  <span :class="getSubmitDateClass(row)">
+                    {{ formatDate(row.last_submit_date) }}
+                  </span>
+                </template>
+              </el-table-column>
 
-            <el-table-column v-if="isColumnVisible('last_submit_date')" label="最近提交" width="120" sortable>
-              <template #default="{ row }">
-                <span :class="getSubmitDateClass(row)">
-                  {{ formatDate(row.last_submit_date) || '-' }}
-                </span>
-              </template>
-            </el-table-column>
+              <el-table-column v-if="isColumnVisible('department')" label="部门" width="80">
+                <template #default="{ row }">
+                  {{ row.department_display }}
+                </template>
+              </el-table-column>
 
-            <el-table-column v-if="isColumnVisible('department')" label="部门" width="100">
-              <template #default="{ row }">
-                <span>{{ row.department_display }}</span>
-              </template>
-            </el-table-column>
+              <el-table-column v-if="isColumnVisible('description')" label="描述" width="150">
+                <template #default="{ row }">
+                  <el-tooltip 
+                    v-if="row.description" 
+                    :content="row.description" 
+                    placement="top-start" 
+                    :show-after="500"
+                    :enterable="false"
+                  >
+                    <span>{{ truncateText(row.description, 15) }}</span>
+                  </el-tooltip>
+                  <span v-else>-</span>
+                </template>
+              </el-table-column>
 
-            <el-table-column v-if="isColumnVisible('description')" prop="description" label="描述" min-width="200" show-overflow-tooltip />
+              <el-table-column v-if="isColumnVisible('updated_at')" label="更新时间" width="160" sortable>
+                <template #default="{ row }">
+                  {{ formatDateTime(row.updated_at) }}
+                </template>
+              </el-table-column>
+            </el-table>
 
-            <el-table-column v-if="isColumnVisible('updated_at')" label="更新时间" width="180" sortable>
-              <template #default="{ row }">
-                {{ formatDateTime(row.updated_at) }}
-              </template>
-            </el-table-column>
-
-            <!-- 操作列 -->
-            <el-table-column fixed="right" label="操作" width="180">
-              <template #default="scope">
-                <el-button 
-                  size="small" 
-                  type="primary" 
-                  @click.stop="viewShotDetails(scope.row)"
-                >
-                  详情
-                </el-button>
-                <el-button 
-                  size="small" 
-                  type="warning" 
-                  @click.stop="editShot(scope.row)"
-                >
-                  编辑
-                </el-button>
-                <el-button 
-                  size="small" 
-                  type="danger" 
-                  @click.stop="confirmDeleteShot(scope.row)"
-                >
-                  删除
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-
-          <!-- 分页 -->
-          <div class="pagination-container">
-            <el-pagination
-              v-model:current-page="currentPage"
-              v-model:page-size="pageSize"
-              :page-sizes="[20, 50, 100, 200]"
-              layout="total, sizes, prev, pager, next, jumper"
-              :total="totalShotsCount"
-              @size-change="handleSizeChange"
-              @current-change="handleCurrentChange"
-            />
-          </div>
-        </el-card>
+            <!-- 分页 -->
+            <div class="pagination-container">
+              <el-pagination
+                v-model:current-page="currentPage"
+                v-model:page-size="pageSize"
+                :page-sizes="[20, 50, 100, 200]"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="totalShotsCount"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+              />
+            </div>
+          </el-card>
+        </div>
       </div>
 
       <!-- 右侧详情区域 -->
-      <div v-if="selectedShot" class="shot-details-container">
-        <ShotDetails 
-          :shot="selectedShot" 
-          @update="handleShotUpdate" 
-          @close="selectedShot = null" 
-        />
+      <div class="right-panel">
+        <div v-if="selectedShot" class="shot-details-container">
+          <ShotDetails 
+            :shot="selectedShot" 
+            @update="handleShotUpdate" 
+            @close="selectedShot = null" 
+          />
+        </div>
+        <div v-else class="empty-details">
+          <el-empty description="请选择一个镜头以展示详情" />
+        </div>
       </div>
     </div>
   </div>
+  
+  <!-- 列设置对话框 -->
+  <el-dialog
+    v-model="columnDialogVisible"
+    title="列展示设置"
+    width="400px"
+  >
+    <el-checkbox-group v-model="visibleColumns" @change="saveColumnSettings">
+      <div class="column-options">
+        <el-checkbox v-for="column in allColumns" :key="column.prop" :value="column.prop">
+          {{ column.label }}
+        </el-checkbox>
+      </div>
+    </el-checkbox-group>
+    <template #footer>
+      <el-button @click="columnDialogVisible = false">关闭</el-button>
+    </template>
+  </el-dialog>
   
   <!-- 镜头编辑对话框 -->
   <ShotEditDialog
@@ -346,14 +341,20 @@ import { Search, Refresh, Download, ArrowDown, Delete, Close } from '@element-pl
 import { useShotStore } from '@/stores/shotStore'
 import { useProjectStore } from '@/stores/projectStore'
 import { useAuthStore } from '@/stores/authStore'
+import { usePermissions } from '@/composables/usePermissions'
 import ShotDetails from '@/components/ShotDetails.vue'
 import ShotEditDialog from '@/components/ShotEditDialog.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { formatDate, formatDateTime, getDeadlineClass, getSubmitDateClass } from '@/utils/dateUtils'
+import { getStatusTagType, getStageTagType } from '@/utils/statusUtils'
+import { truncateText } from '@/utils/stringUtils'
 
 // 店铺
 const shotStore = useShotStore()
 const projectStore = useProjectStore()
 const authStore = useAuthStore()
+// 使用权限组合式API
+const permissions = usePermissions()
 
 // 数据
 const loading = ref(false)
@@ -367,20 +368,22 @@ const pageSize = ref(50)
 const totalShotsCount = ref(0)
 const editDialogVisible = ref(false)
 const currentEditShot = ref(null)
+const columnDialogVisible = ref(false)
 
-// 用户角色
-const canFilterByDepartment = computed(() => {
-  return authStore.isAdmin || authStore.user?.role === 'producer'
-})
+// 用户角色和权限 - 使用权限服务
+const canFilterByDepartment = permissions.canFilterByDepartment
+const canViewAllShots = permissions.canViewAllShots
+const canDeleteShots = permissions.canDeleteShot
+const canCreateShot = computed(() => true) // 默认所有用户都可以创建镜头
 
 // 获取用户部门
 const userDepartment = computed(() => {
-  return authStore.user?.department || null
+  return permissions.canAccessShotsByDepartment.value
 })
 
 // 筛选
 const filters = reactive({
-  department: canFilterByDepartment.value ? null : userDepartment.value,
+  department: null, // 初始化为null，会在组件挂载时根据用户角色设置
   prom_stage: null,
   status: null,
   has_comments: null,
@@ -395,6 +398,7 @@ const filters = reactive({
 const allColumns = [
   { prop: 'shot_code', label: '镜头号' },
   { prop: 'duration_frame', label: '帧数' },
+  { prop: 'framepersecond', label: '帧率' },
   { prop: 'prom_stage', label: '推进阶段' },
   { prop: 'status', label: '制作状态' },
   { prop: 'artist', label: '制作者' },
@@ -481,9 +485,11 @@ const loadShots = async () => {
       ...filters
     }
     
-    // 根据用户部门限制
-    if (!canFilterByDepartment.value && userDepartment.value) {
-      params.department = userDepartment.value
+    // 使用权限服务获取部门访问限制
+    const accessibleDepartment = permissions.canAccessShotsByDepartment.value
+    if (accessibleDepartment) {
+      console.log('用户部门限制，部门值:', accessibleDepartment)
+      params.department = accessibleDepartment
     }
     
     console.log('请求参数:', params)
@@ -494,23 +500,21 @@ const loadShots = async () => {
     totalShotsCount.value = response?.count || 0
     
     if (shotStore.shots.length === 0) {
-      console.log('没有找到镜头，用户角色:', authStore.user?.role, '用户部门:', userDepartment.value)
-      // 使用导入的ElMessage
+      console.log('没有找到镜头，用户角色:', permissions.currentUserRole.value, '用户部门:', permissions.currentUserDepartment.value)
       ElMessage({ 
         message: '没有找到符合条件的镜头', 
         type: 'info' 
       })
     } else {
-      console.log(`成功加载 ${shotStore.shots.length} 个镜头`)
+      console.log(`成功加载 ${shotStore.shots.length} 个镜头，用户部门: ${permissions.currentUserDepartment.value}`)
     }
   } catch (error) {
     console.error('加载镜头失败', error)
-    // 使用导入的ElMessage
     ElMessage({ 
       message: '加载镜头失败，请检查网络连接或刷新页面', 
       type: 'error' 
     })
-    shotStore.shots = [] // 确保是空数组
+    shotStore.shots = []
     totalShotsCount.value = 0
   } finally {
     loading.value = false
@@ -557,36 +561,43 @@ const handleSelectionChange = (selection) => {
 }
 
 // 处理行点击
-const handleRowClick = (row, column) => {
-  // 如果点击的是选择框列，不执行任何操作
-  if (column.type === 'selection') return
-  
-  // 否则查看镜头详情
-  viewShotDetails(row)
-}
-
-// 查看镜头详情
-const viewShotDetails = (shot) => {
-  selectedShot.value = shot
+const handleRowClick = (row) => {
+  selectedShot.value = { ...row }
 }
 
 // 编辑镜头
 const editShot = (shot) => {
-  currentEditShot.value = shot
-  editDialogVisible.value = true
+  try {
+    // 使用权限服务检查编辑权限
+    if (!permissions.canEditShot(shot).value) {
+      ElMessage.warning('您没有权限编辑此镜头')
+      return
+    }
+    
+    currentEditShot.value = shot
+    editDialogVisible.value = true
+  } catch (error) {
+    console.error('权限检查失败:', error)
+    ElMessage.error('权限检查时出错')
+  }
 }
 
 // 处理镜头更新
 const handleShotUpdate = (updatedShot) => {
-  // 刷新当前选中的镜头数据
-  if (selectedShot.value && selectedShot.value.id === updatedShot.id) {
-    selectedShot.value = updatedShot
-  }
-  
-  // 刷新镜头列表中的数据
-  const index = shotStore.shots.findIndex(s => s.id === updatedShot.id)
-  if (index !== -1) {
-    shotStore.shots[index] = updatedShot
+  try {
+    // 刷新当前选中的镜头数据
+    if (selectedShot.value && selectedShot.value.id === updatedShot.id) {
+      selectedShot.value = updatedShot
+    }
+    
+    // 刷新镜头列表中的数据
+    const index = shotStore.shots.findIndex(s => s.id === updatedShot.id)
+    if (index !== -1) {
+      shotStore.shots[index] = updatedShot
+    }
+  } catch (error) {
+    console.error('更新镜头数据失败:', error)
+    ElMessage.error('更新镜头数据失败')
   }
 }
 
@@ -631,37 +642,6 @@ const handleAdvancedFilter = (command) => {
   applyFilters()
 }
 
-// 处理菜单选择
-const handleMenuSelect = (key) => {
-  // 清除之前的筛选
-  Object.keys(filters).forEach(k => {
-    filters[k] = null
-  })
-  
-  switch (key) {
-    case 'all':
-      // 清除所有筛选
-      break
-    case 'myShots':
-      filters.artist = authStore.user?.id
-      break
-    case 'waiting':
-      filters.status = 'waiting'
-      break
-    case 'in_progress':
-      filters.status = 'in_progress'
-      break
-    case 'review':
-      filters.status = 'submit_review'
-      break
-    case 'completed':
-      filters.status = 'completed'
-      break
-  }
-  
-  applyFilters()
-}
-
 // 处理分页
 const handleSizeChange = async (size) => {
   pageSize.value = size
@@ -691,144 +671,42 @@ const loadColumnSettings = () => {
   }
 }
 
-// 格式化日期
-const formatDate = (dateString) => {
-  if (!dateString) return '-'
-  const date = new Date(dateString)
-  return new Intl.DateTimeFormat('zh-CN').format(date)
-}
-
-// 格式化日期时间
-const formatDateTime = (dateTimeString) => {
-  if (!dateTimeString) return '-'
-  const date = new Date(dateTimeString)
-  return new Intl.DateTimeFormat('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  }).format(date)
-}
-
-// 获取截止日期样式
-const getDeadlineClass = (shot) => {
-  if (!shot.deadline) return ''
-  
-  const today = new Date()
-  const deadline = new Date(shot.deadline)
-  const diffDays = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24))
-  
-  if (diffDays < 0) {
-    return 'text-danger' // 已逾期
-  } else if (diffDays <= 7) {
-    return 'text-warning' // 临近
-  }
-  return ''
-}
-
-// 获取提交日期样式
-const getSubmitDateClass = (shot) => {
-  if (!shot.deadline || !shot.last_submit_date) return ''
-  
-  const today = new Date()
-  const deadline = new Date(shot.deadline)
-  const diffDays = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24))
-  
-  if (shot.last_submit_date) {
-    if (diffDays < 0) {
-      return 'text-warning' // 已提交但逾期
-    }
-    return ''
-  }
-  
-  if (diffDays < 0) {
-    return 'text-danger' // 未提交且逾期
-  }
-  return ''
-}
-
-// 获取状态标签类型
-const getStatusTagType = (status) => {
-  const statusMap = {
-    'waiting': 'info',
-    'in_progress': 'primary',
-    'submit_review': 'warning',
-    'revising': 'danger',
-    'internal_approved': 'success',
-    'client_review': 'warning',
-    'client_rejected': 'danger',
-    'client_approved': 'success',
-    'client_revision': 'danger',
-    'deleted_merged': 'info',
-    'suspended': 'info',
-    'completed': 'success'
-  }
-  
-  return statusMap[status] || 'info'
-}
-
-// 获取阶段标签类型
-const getStageTagType = (stage) => {
-  const stageMap = {
-    'LAY': 'info',
-    'BLK': 'warning',
-    'ANI': 'primary',
-    'PASS': 'success'
-  }
-  
-  return stageMap[stage] || 'info'
-}
-
-// 调整表格高度
-const adjustTableHeight = () => {
+// 表格调整高度
+const resizeTable = () => {
   nextTick(() => {
+    // 动态计算表格高度，考虑页面其他元素的高度
     const windowHeight = window.innerHeight
-    const headerHeight = 120 // 预估头部高度
-    const paginationHeight = 50 // 预估分页高度
-    const padding = 40 // 边距
-
-    tableHeight.value = windowHeight - headerHeight - paginationHeight - padding
+    // 减去其他UI元素的高度 (头部、分页、内边距等)
+    const otherElementsHeight = 240 
+    tableHeight.value = windowHeight - otherElementsHeight
   })
 }
 
-// 监听窗口大小变化
-window.addEventListener('resize', adjustTableHeight)
+// 添加窗口大小变化的监听器
+window.addEventListener('resize', resizeTable)
 
 // 生命周期钩子
 onMounted(async () => {
-  console.log('组件挂载，当前用户信息:', authStore.user)
-  
-  // 如果用户信息未加载，先等待加载完成
-  if (!authStore.user && authStore.token) {
-    console.log('尝试加载用户信息...')
-    try {
-      await authStore.fetchUserInfo()
-      console.log('用户信息加载成功:', authStore.user)
-    } catch (error) {
-      console.error('加载用户信息失败:', error)
-      ElMessage({
-        message: '获取用户信息失败，可能影响数据访问权限',
-        type: 'warning'
-      })
+  try {
+    // 如果用户未登录，获取用户信息
+    if (!authStore.user) {
+      await authStore.fetchCurrentUser()
     }
-  }
-  
-  loadColumnSettings()
-  await loadProjects()
-  adjustTableHeight()
-  
-  // 监听选中变化
- // shotTable.value?.store.states.selection.value = shotStore.selectedShots
-  
-  // 监听选中变化
-  if (shotTable.value && shotTable.value.store && shotTable.value.store.states) {
-    shotTable.value.store.states.selection.value = shotStore.selectedShots
+    
+    // 加载项目和镜头数据
+    await loadProjects()
+  } catch (error) {
+    console.error('初始化失败:', error)
+    ElMessage({
+      message: '初始化失败，请刷新页面重试',
+      type: 'error'
+    })
   }
 })
 
 onUnmounted(() => {
-  window.removeEventListener('resize', adjustTableHeight)
+  // 清理监听器
+  window.removeEventListener('resize', resizeTable)
 })
 
 // 处理镜头保存
@@ -840,97 +718,121 @@ const handleShotSaved = async (updatedShot) => {
 
 // 确认删除单个镜头
 const confirmDeleteShot = (shot) => {
-  ElMessageBox.confirm(
-    `确定要删除镜头 "${shot.shot_code}" 吗？此操作不可恢复。`,
-    '删除确认',
-    {
-      confirmButtonText: '确认删除',
-      cancelButtonText: '取消',
-      type: 'warning'
+  try {
+    // 使用权限服务检查删除权限
+    if (!permissions.canDeleteShot.value) {
+      ElMessage.warning('您没有权限删除镜头')
+      return
     }
-  ).then(async () => {
-    try {
-      const success = await shotStore.deleteShot(shot.id)
-      if (success) {
-        ElMessage.success('镜头删除成功')
-        await refreshShots()
-      } else {
-        ElMessage.error(shotStore.error || '删除失败')
+    
+    ElMessageBox.confirm(
+      `确定要删除镜头 "${shot.shot_code}" 吗？此操作不可恢复。`,
+      '删除确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
       }
-    } catch (error) {
-      console.error('删除镜头失败', error)
-      ElMessage.error('删除镜头失败，请重试')
-    }
-  }).catch(() => {
-    // 用户取消删除，不执行任何操作
-  })
+    )
+      .then(async () => {
+        try {
+          await shotStore.deleteShot(shot.id)
+          ElMessage.success('镜头删除成功')
+          // 如果当前选中的是被删除的镜头，清空选择
+          if (selectedShot.value?.id === shot.id) {
+            selectedShot.value = null
+          }
+          await refreshShots()
+        } catch (error) {
+          console.error('删除镜头失败', error)
+          ElMessage.error('删除镜头失败')
+        }
+      })
+      .catch(() => {
+        ElMessage.info('已取消删除')
+      })
+  } catch (error) {
+    console.error('权限检查失败:', error)
+    ElMessage.error('权限检查时出错')
+  }
 }
 
 // 确认批量删除
 const confirmBatchDelete = () => {
-  if (shotStore.selectedShotIds.length === 0) {
-    ElMessage.warning('请选择要删除的镜头')
-    return
-  }
-  
-  ElMessageBox.confirm(
-    `确定要删除选中的 ${shotStore.selectedShotIds.length} 个镜头吗？此操作不可恢复。`,
-    '批量删除确认',
-    {
-      confirmButtonText: '确认删除',
-      cancelButtonText: '取消',
-      type: 'warning'
+  try {
+    if (shotStore.selectedShotIds.length === 0) {
+      ElMessage.warning('请选择要删除的镜头')
+      return
     }
-  ).then(async () => {
-    try {
-      loading.value = true
-      
-      // 逐个删除，提高成功率
-      let successCount = 0
-      let failCount = 0
-      const totalCount = shotStore.selectedShotIds.length
-      
-      // 复制一份ID列表以避免在循环中修改
-      const idsToDelete = [...shotStore.selectedShotIds]
-      
-      console.log(`开始批量删除 ${idsToDelete.length} 个镜头...`)
-      for (const id of idsToDelete) {
-        try {
-          const success = await shotStore.deleteShot(id)
-          if (success) {
-            successCount++
-          } else {
+    
+    // 使用权限服务检查删除权限
+    if (!permissions.canDeleteShot.value) {
+      ElMessage.warning('您没有权限删除镜头')
+      return
+    }
+    
+    ElMessageBox.confirm(
+      `确定要删除选中的 ${shotStore.selectedShotIds.length} 个镜头吗？此操作不可恢复。`,
+      '批量删除确认',
+      {
+        confirmButtonText: '确认删除',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    ).then(async () => {
+      try {
+        loading.value = true
+        
+        // 逐个删除，提高成功率
+        let successCount = 0
+        let failCount = 0
+        const totalCount = shotStore.selectedShotIds.length
+        
+        // 复制一份ID列表以避免在循环中修改
+        const idsToDelete = [...shotStore.selectedShotIds]
+        
+        console.log(`开始批量删除 ${idsToDelete.length} 个镜头...`)
+        for (const id of idsToDelete) {
+          try {
+            const success = await shotStore.deleteShot(id)
+            if (success) {
+              successCount++
+            } else {
+              failCount++
+            }
+          } catch (err) {
+            console.error(`删除镜头 ${id} 时发生错误:`, err)
             failCount++
           }
-        } catch (err) {
-          console.error(`删除镜头 ${id} 时发生错误:`, err)
-          failCount++
         }
+        
+        // 汇总结果
+        if (successCount > 0) {
+          ElMessage.success(`成功删除 ${successCount} 个镜头`)
+        }
+        
+        if (failCount > 0) {
+          ElMessage.warning(`有 ${failCount} 个镜头删除失败`)
+        }
+        
+        // 清空选择
+        shotStore.selectAllShots(false)
+        
+        // 刷新列表
+        await refreshShots()
+      } catch (error) {
+        console.error('批量删除过程中发生错误:', error)
+        ElMessage.error('批量删除过程中发生错误，请检查控制台日志')
+      } finally {
+        loading.value = false
       }
-      
-      // 汇总结果
-      if (successCount > 0) {
-        ElMessage.success(`成功删除 ${successCount} 个镜头`)
-      }
-      
-      if (failCount > 0) {
-        ElMessage.warning(`有 ${failCount} 个镜头删除失败`)
-      }
-      
-      // 清空选择
-      shotStore.selectAllShots(false)
-      
-      // 刷新列表
-      await refreshShots()
-    } catch (error) {
-      console.error('批量删除过程中发生错误:', error)
-      ElMessage.error('批量删除过程中发生错误，请检查控制台日志')
-    } finally {
-      loading.value = false
-    }
-  }).catch(() => {
-    // 用户取消删除，不执行任何操作
-  })
+    }).catch(() => {
+      // 用户取消删除，不执行任何操作
+    })
+  } catch (error) {
+    console.error('权限检查失败:', error)
+    ElMessage.error('权限检查时出错')
+  }
 }
 
 // 清除选择
@@ -944,63 +846,85 @@ const clearSelection = () => {
 
 <style scoped>
 .shot-management {
-  height: 100%;
+  height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
-.shot-management-header {
-  padding: 16px;
+.shot-management-content {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
+  height: calc(100vh - 20px);
+  padding: 10px;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.left-panel {
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.right-panel {
+  flex: 2;
+  overflow: hidden;
+  background-color: #f5f7fa;
+  border-radius: 4px;
+}
+
+.filters-container {
+  padding: 10px;
+  background-color: #f5f7fa;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.page-title {
+  font-size: 18px;
+  margin: 0 0 10px 0;
 }
 
 .filters {
   display: flex;
-  gap: 12px;
   flex-wrap: wrap;
+  gap: 8px;
   align-items: center;
 }
 
 .filter-item {
-  min-width: 120px;
+  width: 120px;
 }
 
 .search-input {
-  width: 200px;
+  width: 150px;
 }
 
-.shot-management-content {
-  flex: 1;
-  display: flex;
-  gap: 16px;
-  padding: 0 16px 16px;
-  overflow: hidden;
-}
-
-.shot-sidebar {
-  width: 250px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.sidebar-card {
-  height: fit-content;
-}
-
-.shot-list-container {
+.shot-list-area {
   flex: 1;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+.shot-list-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .shot-details-container {
-  width: 400px;
+  height: 100%;
   overflow-y: auto;
+}
+
+.empty-details {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .list-header {
@@ -1011,8 +935,9 @@ const clearSelection = () => {
 
 .status-indicators {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  flex-direction: row;
+  gap: 2px;
+  margin-left: 5px;
 }
 
 .indicator {
@@ -1022,15 +947,15 @@ const clearSelection = () => {
 }
 
 .comment-indicator {
-  background-color: #409EFF; /* 蓝色 */
+  background-color: #409EFF;
 }
 
 .note-indicator {
-  background-color: #E6A23C; /* 橙色 */
+  background-color: #E6A23C;
 }
 
 .important-note-indicator {
-  background-color: #F56C6C; /* 红色 */
+  background-color: #F56C6C;
 }
 
 .text-danger {
@@ -1042,7 +967,7 @@ const clearSelection = () => {
 }
 
 .pagination-container {
-  margin-top: 16px;
+  margin-top: 10px;
   display: flex;
   justify-content: center;
 }
@@ -1053,6 +978,7 @@ const clearSelection = () => {
   align-items: center;
   padding: 8px;
   background-color: #f0f0f0;
+  margin-top: 8px;
 }
 
 .selected-info {
@@ -1063,5 +989,29 @@ const clearSelection = () => {
 .action-buttons {
   display: flex;
   gap: 8px;
+}
+
+.column-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+/* 添加以下新样式 */
+.shot-code-container {
+  display: flex;
+  align-items: center;
+}
+
+/* 固定选择框列宽度 */
+:deep(.el-table .el-table__cell.is-leaf.el-table-column--selection) {
+  width: 40px !important;
+}
+
+:deep(.el-table-column--selection .cell) {
+  min-width: 40px !important;
+  max-width: 40px !important;
+  padding-right: 10px;
+  padding-left: 10px;
 }
 </style> 

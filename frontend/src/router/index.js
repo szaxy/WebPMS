@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '@/stores/authStore'
 
 // 路由懒加载
 const Dashboard = () => import('../views/dashboard/Index.vue')
@@ -65,8 +65,18 @@ const router = createRouter({
 })
 
 // 路由守卫
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
+  
+  // 如果存在token但用户信息为空，尝试获取用户信息
+  if (authStore.token && !authStore.user) {
+    try {
+      await authStore.fetchCurrentUser()
+    } catch (error) {
+      console.error('获取用户信息失败，可能需要重新登录:', error)
+    }
+  }
+  
   const isAuthenticated = authStore.isAuthenticated
   
   // 需要认证但未登录

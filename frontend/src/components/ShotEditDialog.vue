@@ -29,10 +29,18 @@
       </el-form-item>
       
       <el-form-item label="所属部门" prop="department">
-        <el-select v-model="form.department" placeholder="选择部门" style="width: 100%">
-          <el-option label="动画部门" value="DH" />
-          <el-option label="解算部门" value="JS" />
-          <el-option label="后期部门" value="HQ" />
+        <el-select
+          v-model="form.department"
+          placeholder="选择部门"
+          style="width: 100%"
+          :disabled="!canChangeDepartment"
+        >
+          <el-option
+            v-for="dept in availableDepartments"
+            :key="dept.value"
+            :label="dept.label"
+            :value="dept.value"
+          />
         </el-select>
       </el-form-item>
       
@@ -116,10 +124,12 @@ import { ElMessage } from 'element-plus'
 import { useShotStore } from '@/stores/shotStore'
 import { useProjectStore } from '@/stores/projectStore'
 import { useAuthStore } from '@/stores/authStore'
+import { usePermissions } from '@/composables/usePermissions'
 
 const shotStore = useShotStore()
 const projectStore = useProjectStore()
 const authStore = useAuthStore()
+const permissions = usePermissions()
 
 const props = defineProps({
   shot: {
@@ -151,7 +161,7 @@ const users = ref([])
 const form = reactive({
   project: null,
   shot_code: '',
-  department: 'DH',
+  department: 'animation',
   prom_stage: 'LAY',
   status: 'waiting',
   artist: null,
@@ -169,6 +179,37 @@ const rules = {
   status: [{ required: true, message: '请选择制作状态', trigger: 'change' }]
 }
 
+// 判断当前用户是否可以更改项目部门
+const canChangeDepartment = computed(() => {
+  // 使用权限组合式API检查用户是否有权限更改部门
+  return permissions.canFilterByDepartment.value
+})
+
+// 获取用户可选的部门
+const availableDepartments = computed(() => {
+  // 如果用户可以切换部门，返回所有部门选项
+  if (canChangeDepartment.value) {
+    return [
+      { label: '动画部门', value: 'animation' },
+      { label: '解算部门', value: 'fx' },
+      { label: '后期部门', value: 'post' },
+      { label: '模型部门', value: 'model' },
+      { label: '管理员部门', value: 'admin' }
+    ]
+  }
+  
+  // 否则只能选择自己的部门
+  const userDept = permissions.currentUserDepartment.value
+  if (userDept === 'animation') return [{ label: '动画部门', value: 'animation' }]
+  if (userDept === 'fx') return [{ label: '解算部门', value: 'fx' }]
+  if (userDept === 'post') return [{ label: '后期部门', value: 'post' }]
+  if (userDept === 'model') return [{ label: '模型部门', value: 'model' }]
+  if (userDept === 'admin') return [{ label: '管理员部门', value: 'admin' }]
+  
+  // 默认返回空数组
+  return []
+})
+
 // 重置表单
 const resetForm = () => {
   if (formRef.value) {
@@ -177,7 +218,8 @@ const resetForm = () => {
   
   form.project = null
   form.shot_code = ''
-  form.department = 'DH'
+  // 根据用户权限设置默认部门
+  form.department = canChangeDepartment.value ? 'animation' : (permissions.currentUserDepartment.value || 'animation')
   form.prom_stage = 'LAY'
   form.status = 'waiting'
   form.artist = null
@@ -238,6 +280,12 @@ const submitForm = async () => {
   try {
     await formRef.value.validate()
     
+    // 如果用户没有权限编辑此镜头，提示并退出
+    if (props.shot && !permissions.canEditShot(props.shot).value) {
+      ElMessage.warning('您没有权限编辑此镜头')
+      return
+    }
+    
     submitting.value = true
     
     // 准备提交数据
@@ -270,8 +318,8 @@ const submitForm = async () => {
       ElMessage.error(shotStore.error || '操作失败')
     }
   } catch (error) {
-    console.error('表单验证失败', error)
-    ElMessage.error('请检查表单填写是否正确')
+    console.error('表单验证或权限检查失败', error)
+    ElMessage.error('操作失败，请检查表单填写是否正确或刷新页面')
   } finally {
     submitting.value = false
   }

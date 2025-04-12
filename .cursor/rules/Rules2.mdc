@@ -64,6 +64,7 @@ alwaysApply: true
    - status: 制作状态
    - deadline: 截止日期
    - duration: 时长(秒)
+   - framepersecond: 帧率
    - description: 描述
    - metadata: JSON字段
    - cgtw_task_id: CGTeamwork任务ID

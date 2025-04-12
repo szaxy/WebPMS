@@ -10,7 +10,7 @@
     <div class="shot-info">
       <div class="info-item" v-if="shot.deadline">
         <el-icon><Calendar /></el-icon>
-        <span>{{ formatDate(shot.deadline) }}</span>
+        <span>{{ formatShortDate(shot.deadline) }}</span>
       </div>
       
       <div class="info-item" v-if="shot.duration_frame">
@@ -34,8 +34,9 @@
 
 <script setup>
 import { Calendar, Timer, ChatDotRound } from '@element-plus/icons-vue'
-import { format, formatDistance } from 'date-fns'
+import { formatDistance } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
+import { formatShortDate } from '@/utils/dateUtils'
 
 const props = defineProps({
   shot: {
@@ -64,18 +65,6 @@ const getStatusText = (status) => {
     'need_revision': '需修改'
   }
   return textMap[status] || '未知'
-}
-
-// 格式化日期
-const formatDate = (dateString) => {
-  if (!dateString) return ''
-  
-  try {
-    const date = new Date(dateString)
-    return format(date, 'MM-dd')
-  } catch (e) {
-    return dateString
-  }
 }
 
 // 格式化时间

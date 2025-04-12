@@ -16,6 +16,8 @@ export const useAuthStore = defineStore('auth', () => {
   const isAdmin = computed(() => user.value?.role === 'admin')
   const isSupervisor = computed(() => user.value?.role === 'supervisor' || isAdmin.value)
   const isLeader = computed(() => user.value?.role === 'leader' || isSupervisor.value)
+  const isProducer = computed(() => user.value?.role === 'producer')
+  const isArtist = computed(() => user.value?.role === 'artist')
   
   // 错误处理函数
   const handleError = (err, defaultMessage) => {
@@ -207,6 +209,8 @@ export const useAuthStore = defineStore('auth', () => {
     isAdmin,
     isSupervisor,
     isLeader,
+    isProducer,
+    isArtist,
     
     // 操作
     login,

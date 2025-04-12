@@ -22,7 +22,7 @@ class ShotSerializer(serializers.ModelSerializer):
             'shot_code', 'department', 'department_display', 
             'prom_stage', 'prom_stage_display', 'status', 'status_display', 
             'artist', 'artist_name', 'deadline', 'last_submit_date',
-            'duration_frame', 'description', 'metadata',
+            'duration_frame', 'framepersecond', 'description', 'metadata',
             'cgtw_task_id', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
@@ -44,7 +44,7 @@ class ShotListSerializer(serializers.ModelSerializer):
             'department', 'department_display', 
             'prom_stage', 'prom_stage_display',
             'status', 'status_display', 'artist', 'artist_name',
-            'deadline', 'last_submit_date', 'duration_frame',
+            'deadline', 'last_submit_date', 'duration_frame', 'framepersecond',
             'notes_count', 'updated_at'
         ]
     

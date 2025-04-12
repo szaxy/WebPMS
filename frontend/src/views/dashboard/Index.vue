@@ -126,7 +126,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '@/stores/authStore'
 import { 
   HomeFilled, 
   VideoCameraFilled, 
@@ -155,10 +155,44 @@ const fetchPendingCount = async () => {
   }
 }
 
+// 加载数据
+const loadData = async () => {
+  try {
+    loading.value = true
+    errors.value = []
+    
+    if (!authStore.user) {
+      await authStore.fetchCurrentUser()
+    }
+    
+    // 如果用户是管理员，加载待审核用户
+    if (authStore.isAdmin) {
+      try {
+        await authStore.fetchPendingUsers()
+        pendingUsersData.value = authStore.pendingUsers
+      } catch (error) {
+        console.error('加载待审核用户失败:', error)
+        errors.value.push('加载待审核用户失败')
+      }
+    }
+    
+    // 加载项目统计数据
+    await loadProjectStats()
+    
+    // 加载最近镜头活动
+    await loadRecentShotActivities()
+  } catch (error) {
+    console.error('加载仪表盘数据失败:', error)
+    errors.value.push('加载数据失败，请刷新页面重试')
+  } finally {
+    loading.value = false
+  }
+}
+
 onMounted(async () => {
   // 如果没有用户信息，获取用户信息
   if (!authStore.user) {
-    await authStore.fetchUserInfo()
+    await authStore.fetchCurrentUser()
   }
   
   // 如果是管理员，获取待审核用户数量

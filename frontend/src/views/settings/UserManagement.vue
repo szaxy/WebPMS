@@ -108,6 +108,7 @@
               <el-option label="解算" value="fx" />
               <el-option label="制片" value="producer" />
               <el-option label="模型" value="model" />
+              <el-option label="管理员" value="admin" />
             </el-select>
             <el-select
               v-model="filters.status"
@@ -158,6 +159,7 @@
                   <el-tag v-else-if="scope.row.department === 'fx'" type="warning">解算</el-tag>
                   <el-tag v-else-if="scope.row.department === 'producer'" type="info">制片</el-tag>
                   <el-tag v-else-if="scope.row.department === 'model'" type="danger">模型</el-tag>
+                  <el-tag v-else-if="scope.row.department === 'admin'" type="info">管理员</el-tag>
                   <span v-else>{{ scope.row.department }}</span>
                 </template>
               </el-table-column>
@@ -308,6 +310,7 @@
               <el-option label="解算" value="fx" />
               <el-option label="制片" value="producer" />
               <el-option label="模型" value="model" />
+              <el-option label="管理员" value="admin" />
             </el-select>
           </el-form-item>
           <el-form-item label="状态" prop="registration_status">
@@ -336,7 +339,7 @@
 
 <script setup>
 import { ref, computed, onMounted, reactive, watch } from 'vue'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '@/stores/authStore'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
 

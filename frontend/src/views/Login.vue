@@ -36,7 +36,7 @@
             <el-form-item>
               <el-button 
                 type="primary" 
-                :loading="authStore.loading" 
+                :loading="authStore.isLoading" 
                 class="login-button" 
                 @click="handleLogin">
                 登录
@@ -112,7 +112,7 @@
             <el-form-item>
               <el-button 
                 type="primary" 
-                :loading="authStore.loading" 
+                :loading="authStore.isLoading" 
                 class="register-button" 
                 @click="handleRegister">
                 注册
@@ -133,7 +133,7 @@ import { ref, reactive, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { User, Lock, Message } from '@element-plus/icons-vue'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '@/stores/authStore'
 
 const router = useRouter()
 const authStore = useAuthStore()

@@ -1,0 +1,57 @@
+/**
+ * ElementPlus 组件库自定义样式
+ * 确保ElementPlus组件使用Noto Sans SC字体
+ */
+
+/* 全局设置ElementPlus组件字体 */
+.el-message-box,
+.el-dialog,
+.el-dropdown-menu,
+.el-menu,
+.el-date-picker,
+.el-select-dropdown,
+.el-popover,
+.el-tooltip__popper,
+.el-notification {
+  font-family: var(--font-family-sans-serif) !important;
+}
+
+/* 表单元素 */
+.el-form-item__label,
+.el-input__inner,
+.el-textarea__inner,
+.el-select-dropdown__item,
+.el-checkbox__label,
+.el-radio__label {
+  font-family: var(--font-family-sans-serif) !important;
+}
+
+/* 按钮 */
+.el-button {
+  font-family: var(--font-family-sans-serif) !important;
+}
+
+/* 表格 */
+.el-table {
+  font-family: var(--font-family-sans-serif) !important;
+}
+.el-table th,
+.el-table td {
+  font-family: var(--font-family-sans-serif) !important;
+}
+
+/* 导航菜单 */
+.el-menu-item,
+.el-submenu__title {
+  font-family: var(--font-family-sans-serif) !important;
+}
+
+/* 标签页 */
+.el-tabs__item {
+  font-family: var(--font-family-sans-serif) !important;
+}
+
+/* 消息提示 */
+.el-message__content {
+  font-family: var(--font-family-sans-serif) !important;
+} 

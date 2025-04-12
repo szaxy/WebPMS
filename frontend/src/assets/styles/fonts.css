@@ -1,0 +1,45 @@
+/* 
+ * 字体定义文件
+ * 引入 NotoSans 字体
+ */
+
+@font-face {
+  font-family: 'Noto Sans SC';
+  src: url('../fonts/NotoSansSC-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900; /* 变量字体支持所有粗细 */
+  font-style: normal;
+  font-display: swap; /* 避免字体加载时闪烁 */
+}
+
+/* 将 Noto Sans SC 设置为默认字体 */
+:root {
+  --font-family-sans-serif: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-family-monospace: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+}
+
+/* 应用到整个应用 */
+body {
+  font-family: var(--font-family-sans-serif);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 确保表格、按钮和输入框等元素也使用相同字体 */
+button, 
+input, 
+optgroup, 
+select, 
+textarea, 
+.el-button, 
+.el-input__inner, 
+.el-textarea__inner,
+.el-table {
+  font-family: var(--font-family-sans-serif);
+}
+
+/* 标题样式优化 */
+h1, h2, h3, h4, h5, h6,
+.el-dialog__title {
+  font-family: var(--font-family-sans-serif);
+  font-weight: 500;
+} 

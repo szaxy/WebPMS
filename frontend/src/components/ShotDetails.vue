@@ -16,101 +16,68 @@
           <template #header>
             <div class="card-header">
               <span>基本信息</span>
-              <el-button v-if="canEdit" type="primary" size="small" plain @click="editShotInfo">
-                <el-icon><Edit /></el-icon> 编辑
-              </el-button>
+              <div class="header-actions">
+                <el-button v-if="canUpdateStatus" type="success" size="small" @click="statusDialogVisible = true">
+                  <el-icon><RefreshRight /></el-icon> 更新状态
+                </el-button>
+                <el-button v-if="canEdit" type="primary" size="small" plain @click="editShotInfo">
+                  <el-icon><Edit /></el-icon> 编辑
+                </el-button>
+              </div>
             </div>
           </template>
           <div class="shot-info">
+            <!-- 第一行：部门-制作者、推进阶段、制作状态 -->
             <div class="info-row">
-              <div class="info-label">项目：</div>
-              <div class="info-value">{{ shot.project_name }}</div>
-            </div>
-            <div class="info-row">
-              <div class="info-label">部门：</div>
-              <div class="info-value">{{ shot.department_display }}</div>
-            </div>
-            <div class="info-row">
-              <div class="info-label">推进阶段：</div>
-              <div class="info-value">
-                <el-tag :type="getStageTagType(shot.prom_stage)">
-                  {{ shot.prom_stage_display }}
-                </el-tag>
+              <div class="info-item">
+                <div class="info-label">部门-制作者：</div>
+                <div class="info-value">{{ shot.department_display }}-{{ shot.artist_name || '未分配' }}</div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">推进阶段：</div>
+                <div class="info-value">
+                  <el-tag :type="getStageTagType(shot.prom_stage)">
+                    {{ shot.prom_stage_display }}
+                  </el-tag>
+                </div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">制作状态：</div>
+                <div class="info-value">
+                  <el-tag :type="getStatusTagType(shot.status)">
+                    {{ shot.status_display }}
+                  </el-tag>
+                </div>
               </div>
             </div>
+            
+            <!-- 第二行：帧数、截止日期、更新日期 -->
             <div class="info-row">
-              <div class="info-label">制作状态：</div>
-              <div class="info-value">
-                <el-tag :type="getStatusTagType(shot.status)">
-                  {{ shot.status_display }}
-                </el-tag>
+              <div class="info-item">
+                <div class="info-label">帧数：</div>
+                <div class="info-value">
+                  {{ shot.duration_frame }} <span class="frame-rate">@{{ shot.framepersecond }}</span>
+                </div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">截止日期：</div>
+                <div class="info-value">
+                  <span :class="getDeadlineClass(shot)">
+                    {{ formatDate(shot.deadline) }}
+                  </span>
+                </div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">更新时间：</div>
+                <div class="info-value">{{ formatDateTime(shot.updated_at) }}</div>
               </div>
             </div>
-            <div class="info-row">
-              <div class="info-label">制作者：</div>
-              <div class="info-value">{{ shot.artist_name || '-' }}</div>
-            </div>
-            <div class="info-row">
-              <div class="info-label">帧数：</div>
-              <div class="info-value">{{ shot.duration_frame }}</div>
-            </div>
-            <div class="info-row">
-              <div class="info-label">截止日期：</div>
-              <div class="info-value">
-                <span :class="getDeadlineClass(shot)">
-                  {{ formatDate(shot.deadline) }}
-                </span>
-              </div>
-            </div>
-            <div class="info-row">
-              <div class="info-label">最近提交：</div>
-              <div class="info-value">
-                <span :class="getSubmitDateClass(shot)">
-                  {{ formatDate(shot.last_submit_date) || '尚未提交' }}
-                </span>
-              </div>
-            </div>
-            <div class="info-row">
+            
+            <!-- 描述信息 -->
+            <div class="info-description">
               <div class="info-label">描述：</div>
               <div class="info-value description">{{ shot.description || '无描述' }}</div>
             </div>
-          </div>
-        </el-card>
-
-        <!-- 状态更新 -->
-        <el-card v-if="canUpdateStatus" class="detail-card">
-          <template #header>
-            <div class="card-header">
-              <span>状态更新</span>
-            </div>
-          </template>
-          <div class="status-update">
-            <el-select 
-              v-model="newStatus" 
-              placeholder="选择新状态" 
-              class="status-select"
-              :disabled="statusUpdating"
-            >
-              <el-option label="等待开始" value="waiting" />
-              <el-option label="正在制作" value="in_progress" />
-              <el-option label="提交内审" value="submit_review" />
-              <el-option label="正在修改" value="revising" />
-              <el-option label="内审通过" value="internal_approved" />
-              <el-option label="客户审核" value="client_review" />
-              <el-option label="客户退回" value="client_rejected" />
-              <el-option label="客户通过" value="client_approved" />
-              <el-option label="客户返修" value="client_revision" />
-              <el-option label="暂停制作" value="suspended" />
-              <el-option label="已完结" value="completed" />
-            </el-select>
-            <el-button 
-              type="primary" 
-              :loading="statusUpdating"
-              :disabled="!newStatus || newStatus === shot.status"
-              @click="updateShotStatus"
-            >
-              更新状态
-            </el-button>
           </div>
         </el-card>
 
@@ -235,7 +202,7 @@
                 />
               </el-form-item>
               <el-form-item>
-                <el-checkbox v-model="noteForm.isImportant">
+                <el-checkbox v-model="noteForm.is_important">
                   标记为重要提示 <span class="important-hint">(提交状态变更时将提示确认)</span>
                 </el-checkbox>
               </el-form-item>
@@ -254,16 +221,67 @@
         </el-card>
       </div>
     </el-scrollbar>
+
+    <!-- 状态更新对话框 -->
+    <el-dialog
+      v-model="statusDialogVisible"
+      title="更新镜头状态"
+      width="400px"
+      :close-on-click-modal="false"
+    >
+      <div class="status-update-dialog">
+        <el-form label-position="top">
+          <el-form-item label="当前状态">
+            <el-tag :type="getStatusTagType(shot.status)">
+              {{ shot.status_display }}
+            </el-tag>
+          </el-form-item>
+          <el-form-item label="选择新状态">
+            <el-select 
+              v-model="newStatus" 
+              placeholder="选择新状态" 
+              class="status-select-full"
+              :disabled="statusUpdating"
+            >
+              <el-option label="等待开始" value="waiting" />
+              <el-option label="正在制作" value="in_progress" />
+              <el-option label="提交内审" value="submit_review" />
+              <el-option label="正在修改" value="revising" />
+              <el-option label="内审通过" value="internal_approved" />
+              <el-option label="客户审核" value="client_review" />
+              <el-option label="客户退回" value="client_rejected" />
+              <el-option label="客户通过" value="client_approved" />
+              <el-option label="客户返修" value="client_revision" />
+              <el-option label="暂停制作" value="suspended" />
+              <el-option label="已完结" value="completed" />
+            </el-select>
+          </el-form-item>
+        </el-form>
+      </div>
+      <template #footer>
+        <el-button @click="statusDialogVisible = false">取消</el-button>
+        <el-button 
+          type="primary" 
+          :loading="statusUpdating"
+          :disabled="!newStatus || newStatus === shot.status"
+          @click="updateShotStatus"
+        >
+          更新状态
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Close, Edit, Plus } from '@element-plus/icons-vue'
+import { Close, Edit, Plus, RefreshRight } from '@element-plus/icons-vue'
 import { useShotStore } from '@/stores/shotStore'
 import { useAuthStore } from '@/stores/authStore'
 import shotService from '@/services/shotService'
+import { formatDate, formatDateTime, getDeadlineClass, getSubmitDateClass } from '@/utils/dateUtils'
+import { getStatusTagType, getStageTagType } from '@/utils/statusUtils'
 
 // Props
 const props = defineProps({
@@ -291,6 +309,7 @@ const statusUpdating = ref(false)
 const showAddComment = ref(false)
 const showAddNote = ref(false)
 const newStatus = ref('')
+const statusDialogVisible = ref(false)
 
 // 表单
 const commentForm = ref({
@@ -299,21 +318,21 @@ const commentForm = ref({
 
 const noteForm = ref({
   content: '',
-  isImportant: false
+  is_important: false
 })
 
 // 表单验证规则
 const commentRules = {
   content: [
     { required: true, message: '请输入反馈内容', trigger: 'blur' },
-    { min: 2, max: 2000, message: '长度在 2 到 2000 个字符', trigger: 'blur' }
+    { min: 1, max: 500, message: '长度在1到500个字符之间', trigger: 'blur' }
   ]
 }
 
 const noteRules = {
   content: [
     { required: true, message: '请输入备注内容', trigger: 'blur' },
-    { min: 2, max: 2000, message: '长度在 2 到 2000 个字符', trigger: 'blur' }
+    { min: 1, max: 500, message: '长度在1到500个字符之间', trigger: 'blur' }
   ]
 }
 
@@ -420,14 +439,14 @@ const submitNote = async () => {
     
     const data = {
       content: noteForm.value.content,
-      isImportant: noteForm.value.isImportant
+      is_important: noteForm.value.is_important
     }
     
     await shotService.addShotNote(props.shot.id, data)
     
     // 清空表单
     noteForm.value.content = ''
-    noteForm.value.isImportant = false
+    noteForm.value.is_important = false
     showAddNote.value = false
     
     // 重新加载备注
@@ -527,95 +546,6 @@ const closeDetails = () => {
   emit('close')
 }
 
-// 格式化日期
-const formatDate = (dateString) => {
-  if (!dateString) return '-'
-  const date = new Date(dateString)
-  return new Intl.DateTimeFormat('zh-CN').format(date)
-}
-
-// 格式化日期时间
-const formatDateTime = (dateTimeString) => {
-  if (!dateTimeString) return '-'
-  const date = new Date(dateTimeString)
-  return new Intl.DateTimeFormat('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  }).format(date)
-}
-
-// 获取截止日期样式
-const getDeadlineClass = (shot) => {
-  if (!shot.deadline) return ''
-  
-  const today = new Date()
-  const deadline = new Date(shot.deadline)
-  const diffDays = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24))
-  
-  if (diffDays < 0) {
-    return 'text-danger' // 已逾期
-  } else if (diffDays <= 7) {
-    return 'text-warning' // 临近
-  }
-  return ''
-}
-
-// 获取提交日期样式
-const getSubmitDateClass = (shot) => {
-  if (!shot.deadline || !shot.last_submit_date) return ''
-  
-  const today = new Date()
-  const deadline = new Date(shot.deadline)
-  const diffDays = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24))
-  
-  if (shot.last_submit_date) {
-    if (diffDays < 0) {
-      return 'text-warning' // 已提交但逾期
-    }
-    return ''
-  }
-  
-  if (diffDays < 0) {
-    return 'text-danger' // 未提交且逾期
-  }
-  return ''
-}
-
-// 获取状态标签类型
-const getStatusTagType = (status) => {
-  const statusMap = {
-    'waiting': 'info',
-    'in_progress': 'primary',
-    'submit_review': 'warning',
-    'revising': 'danger',
-    'internal_approved': 'success',
-    'client_review': 'warning',
-    'client_rejected': 'danger',
-    'client_approved': 'success',
-    'client_revision': 'danger',
-    'deleted_merged': 'info',
-    'suspended': 'info',
-    'completed': 'success'
-  }
-  
-  return statusMap[status] || 'info'
-}
-
-// 获取阶段标签类型
-const getStageTagType = (stage) => {
-  const stageMap = {
-    'LAY': 'info',
-    'BLK': 'warning',
-    'ANI': 'primary',
-    'PASS': 'success'
-  }
-  
-  return stageMap[stage] || 'info'
-}
-
 // 监听镜头变化
 watch(() => props.shot, (newShot) => {
   if (newShot && newShot.id) {
@@ -658,14 +588,14 @@ onMounted(() => {
 }
 
 .shot-details-content {
-  padding: 16px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .detail-card {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .card-header {
@@ -675,28 +605,55 @@ onMounted(() => {
 }
 
 .shot-info {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  padding: 8px;
 }
 
 .info-row {
   display: flex;
-  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.info-row:first-child {
+  margin-top: 2px;
+}
+
+.info-row .info-item {
+  flex: 1;
+  padding-right: 8px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.info-description {
+  margin-top: 8px;
+  border-top: 1px dashed #ebeef5;
+  padding-top: 8px;
 }
 
 .info-label {
-  width: 80px;
-  font-weight: bold;
+  font-size: 12px;
   color: #606266;
+  margin-bottom: 2px;
 }
 
 .info-value {
-  flex: 1;
+  word-break: break-word;
 }
 
 .description {
   white-space: pre-line;
+  color: #606266;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
 }
 
 .status-update {
@@ -777,5 +734,26 @@ onMounted(() => {
 .important-hint {
   color: #F56C6C;
   font-size: 12px;
+}
+
+.status-update-dialog {
+  padding: 16px;
+}
+
+.status-select-full {
+  width: 100%;
+}
+
+.frame-rate {
+  font-style: italic;
+  font-size: 0.9em;
+  color: #909399;
+  margin-left: 2px;
+}
+
+.el-tag {
+  padding: 0 6px;
+  height: 22px;
+  line-height: 20px;
 }
 </style> 
