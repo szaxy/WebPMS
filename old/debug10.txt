@@ -1,0 +1,77 @@
+authStore.js:44 用户信息初始化成功: admin
+runtime-core.esm-bundler.js:51  [Vue warn]: Unhandled error during execution of render function 
+  at <ElCard class="shot-list-card" > 
+  at <ShotManagement onVnodeUnmounted=fn<onVnodeUnmounted> ref=Ref< undefined > > 
+  at <RouterView> 
+  at <App>
+warn$1 @ runtime-core.esm-bundler.js:51
+runtime-core.esm-bundler.js:51  [Vue warn]: Unhandled error during execution of component update 
+  at <RouterView> 
+  at <App>
+warn$1 @ runtime-core.esm-bundler.js:51
+ShotManagement.vue:129  Uncaught (in promise) TypeError: Cannot read properties of undefined (reading 'length')
+    at ShotManagement.vue:129:47
+    at renderFnWithContext (runtime-core.esm-bundler.js:692:13)
+    at renderSlot (runtime-core.esm-bundler.js:2981:53)
+    at Proxy.<anonymous> (card.vue:25:31)
+    at renderComponentRoot (runtime-core.esm-bundler.js:6502:16)
+    at ReactiveEffect.componentUpdateFn [as fn] (runtime-core.esm-bundler.js:5319:46)
+    at ReactiveEffect.run (reactivity.esm-bundler.js:225:19)
+    at setupRenderEffect (runtime-core.esm-bundler.js:5454:5)
+    at mountComponent (runtime-core.esm-bundler.js:5229:7)
+    at processComponent (runtime-core.esm-bundler.js:5182:9)
+ShotManagement.vue:129  Uncaught (in promise) TypeError: Cannot read properties of undefined (reading 'length')
+    at ShotManagement.vue:129:47
+    at renderFnWithContext (runtime-core.esm-bundler.js:692:13)
+    at renderSlot (runtime-core.esm-bundler.js:2981:53)
+    at Proxy.<anonymous> (card.vue:25:31)
+    at renderComponentRoot (runtime-core.esm-bundler.js:6502:16)
+    at ReactiveEffect.componentUpdateFn [as fn] (runtime-core.esm-bundler.js:5319:46)
+    at ReactiveEffect.run (reactivity.esm-bundler.js:225:19)
+    at setupRenderEffect (runtime-core.esm-bundler.js:5454:5)
+    at mountComponent (runtime-core.esm-bundler.js:5229:7)
+    at processComponent (runtime-core.esm-bundler.js:5182:9)
+ShotManagement.vue:129  Uncaught (in promise) TypeError: Cannot read properties of undefined (reading 'length')
+    at ShotManagement.vue:129:47
+    at renderFnWithContext (runtime-core.esm-bundler.js:692:13)
+    at renderSlot (runtime-core.esm-bundler.js:2981:53)
+    at Proxy.<anonymous> (card.vue:25:31)
+    at renderComponentRoot (runtime-core.esm-bundler.js:6502:16)
+    at ReactiveEffect.componentUpdateFn [as fn] (runtime-core.esm-bundler.js:5319:46)
+    at ReactiveEffect.run (reactivity.esm-bundler.js:225:19)
+    at setupRenderEffect (runtime-core.esm-bundler.js:5454:5)
+    at mountComponent (runtime-core.esm-bundler.js:5229:7)
+    at processComponent (runtime-core.esm-bundler.js:5182:9)
+ShotManagement.vue:129  Uncaught (in promise) TypeError: Cannot read properties of undefined (reading 'length')
+    at ShotManagement.vue:129:47
+    at renderFnWithContext (runtime-core.esm-bundler.js:692:13)
+    at renderSlot (runtime-core.esm-bundler.js:2981:53)
+    at Proxy.<anonymous> (card.vue:25:31)
+    at renderComponentRoot (runtime-core.esm-bundler.js:6502:16)
+    at ReactiveEffect.componentUpdateFn [as fn] (runtime-core.esm-bundler.js:5319:46)
+    at ReactiveEffect.run (reactivity.esm-bundler.js:225:19)
+    at setupRenderEffect (runtime-core.esm-bundler.js:5454:5)
+    at mountComponent (runtime-core.esm-bundler.js:5229:7)
+    at processComponent (runtime-core.esm-bundler.js:5182:9)
+ShotManagement.vue:129  Uncaught (in promise) TypeError: Cannot read properties of undefined (reading 'length')
+    at ShotManagement.vue:129:47
+    at renderFnWithContext (runtime-core.esm-bundler.js:692:13)
+    at renderSlot (runtime-core.esm-bundler.js:2981:53)
+    at Proxy.<anonymous> (card.vue:25:31)
+    at renderComponentRoot (runtime-core.esm-bundler.js:6502:16)
+    at ReactiveEffect.componentUpdateFn [as fn] (runtime-core.esm-bundler.js:5319:46)
+    at ReactiveEffect.run (reactivity.esm-bundler.js:225:19)
+    at setupRenderEffect (runtime-core.esm-bundler.js:5454:5)
+    at mountComponent (runtime-core.esm-bundler.js:5229:7)
+    at processComponent (runtime-core.esm-bundler.js:5182:9)
+ShotManagement.vue:129  Uncaught (in promise) TypeError: Cannot read properties of undefined (reading 'length')
+    at ShotManagement.vue:129:47
+    at renderFnWithContext (runtime-core.esm-bundler.js:692:13)
+    at renderSlot (runtime-core.esm-bundler.js:2981:53)
+    at Proxy.<anonymous> (card.vue:25:31)
+    at renderComponentRoot (runtime-core.esm-bundler.js:6502:16)
+    at ReactiveEffect.componentUpdateFn [as fn] (runtime-core.esm-bundler.js:5319:46)
+    at ReactiveEffect.run (reactivity.esm-bundler.js:225:19)
+    at setupRenderEffect (runtime-core.esm-bundler.js:5454:5)
+    at mountComponent (runtime-core.esm-bundler.js:5229:7)
+    at processComponent (runtime-core.esm-bundler.js:5182:9)

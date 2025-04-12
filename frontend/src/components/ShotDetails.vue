@@ -9,7 +9,7 @@
     </div>
 
     <!-- 内容区域 -->
-    <el-scrollbar height="calc(100vh - 140px)">
+    <el-scrollbar height="calc(100vh - 60px)">
       <div class="shot-details-content">
         <!-- 常规信息 -->
         <el-card class="detail-card">
@@ -635,8 +635,8 @@ onMounted(() => {
 }
 
 .info-label {
-  font-size: 12px;
-  color: #606266;
+  font-size: 0.7em;
+  color: #909399;
   margin-bottom: 2px;
 }
 

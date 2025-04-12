@@ -87,7 +87,8 @@ export const useShotStore = defineStore('shot', () => {
           
           try {
             // 进行第二次请求，使用apiClient而非axios，确保带上token
-            const shotResponse = await shotService.getShotsFromUrl(response.data.shots)
+            // 传递原始筛选参数
+            const shotResponse = await shotService.getShotsFromUrl(response.data.shots, params)
             if (shotResponse.data.results && Array.isArray(shotResponse.data.results)) {
               shots.value = shotResponse.data.results
               console.log('第二次请求成功获取镜头数据(分页):', shots.value.length, '条记录')
@@ -532,4 +533,4 @@ export const useShotStore = defineStore('shot', () => {
     toggleShotSelection,
     selectAllShots
   }
-}) 
+})

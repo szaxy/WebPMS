@@ -66,14 +66,15 @@ export default {
   },
   
   // 从完整URL获取镜头列表
-  getShotsFromUrl(url) {
+  getShotsFromUrl(url, params = {}) {
     console.log('从URL获取镜头列表:', url)
+    console.log('携带参数:', params)
     
     // 提取相对路径
     const relativeUrl = url.replace(/^https?:\/\/[^\/]+\/api/, '');
     console.log('转换为相对路径:', relativeUrl)
     
-    return apiClient.get(relativeUrl)
+    return apiClient.get(relativeUrl, { params })
       .then(response => {
         console.log('URL请求响应状态:', response.status)
         console.log('URL请求数据类型:', typeof response.data, Array.isArray(response.data) ? '是数组' : '不是数组')

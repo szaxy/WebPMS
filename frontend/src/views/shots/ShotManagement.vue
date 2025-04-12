@@ -378,7 +378,11 @@ const canCreateShot = computed(() => true) // 默认所有用户都可以创建�
 
 // 获取用户部门
 const userDepartment = computed(() => {
-  return permissions.canAccessShotsByDepartment.value
+  // 当用户角色是admin时，直接返回"管理员"
+  if (permissions.currentUserRole.value === 'admin') {
+    return '管理员'
+  }
+  return permissions.currentUserDepartment.value || '未知'
 })
 
 // 筛选
@@ -477,17 +481,25 @@ const loadShots = async () => {
   loading.value = true
   try {
     console.log('开始加载镜头，项目ID:', selectedProject.value)
+    
+    // 构建基本参数
     const params = {
       project: selectedProject.value,
       limit: pageSize.value,
       offset: (currentPage.value - 1) * pageSize.value,
       search: searchQuery.value || undefined,
-      ...filters
     }
+    
+    // 添加有效的筛选条件（过滤掉null/undefined值）
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== null && value !== undefined) {
+        params[key] = value;
+      }
+    });
     
     // 使用权限服务获取部门访问限制
     const accessibleDepartment = permissions.canAccessShotsByDepartment.value
-    if (accessibleDepartment) {
+    if (accessibleDepartment && !params.department) {
       console.log('用户部门限制，部门值:', accessibleDepartment)
       params.department = accessibleDepartment
     }
@@ -642,14 +654,16 @@ const handleAdvancedFilter = (command) => {
   applyFilters()
 }
 
-// 处理分页
-const handleSizeChange = async (size) => {
-  pageSize.value = size
+// 处理页码变更
+const handleCurrentChange = async (page) => {
+  currentPage.value = page
   await loadShots()
 }
 
-const handleCurrentChange = async (page) => {
-  currentPage.value = page
+// 处理每页条数变更
+const handleSizeChange = async (size) => {
+  pageSize.value = size
+  currentPage.value = 1
   await loadShots()
 }
 

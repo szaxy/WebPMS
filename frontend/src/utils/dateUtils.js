@@ -5,14 +5,19 @@
 import { format } from 'date-fns'
 
 /**
- * 格式化日期为本地格式
+ * 格式化日期为月/日/年格式
  * @param {string|Date} dateString - 日期字符串或Date对象
  * @returns {string} 格式化后的日期字符串，如果输入为空则返回'-'
  */
 export const formatDate = (dateString) => {
   if (!dateString) return '-'
-  const date = new Date(dateString)
-  return new Intl.DateTimeFormat('zh-CN').format(date)
+  
+  try {
+    const date = new Date(dateString)
+    return format(date, 'MM/dd/yyyy')
+  } catch (e) {
+    return dateString || '-'
+  }
 }
 
 /**
