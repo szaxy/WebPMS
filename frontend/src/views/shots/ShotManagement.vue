@@ -6,7 +6,17 @@
       <div class="left-panel">
         <!-- 筛选区 -->
         <div class="filters-container">
-          <h1 class="page-title">镜头管理</h1>
+          <div class="page-header">
+            <h1 class="page-title">镜头管理</h1>
+            <el-button 
+              type="primary" 
+              size="small" 
+              @click="goToHome"
+              class="home-button"
+            >
+              <el-icon><Back /></el-icon> 返回主页
+            </el-button>
+          </div>
           
           <div class="filters">
             <!-- 项目选择 -->
@@ -130,6 +140,9 @@
                 </div>
                 <div class="list-actions">
                   <el-button-group>
+                    <el-button @click="openAddShotDialog" title="添加" size="small">
+                      <el-icon><Plus /></el-icon>
+                    </el-button>
                     <el-button @click="refreshShots" title="刷新" size="small">
                       <el-icon><Refresh /></el-icon>
                     </el-button>
@@ -327,6 +340,227 @@
     </template>
   </el-dialog>
   
+  <!-- 添加镜头对话框 -->
+  <el-dialog
+    v-model="addShotDialogVisible"
+    title="添加镜头"
+    width="650px"
+    :close-on-click-modal="false"
+  >
+    <el-tabs v-model="activeAddTab">
+      <!-- 单个添加选项卡 -->
+      <el-tab-pane label="单个添加" name="single">
+        <el-form :model="singleShotForm" label-width="90px" label-position="right" size="small" :inline="true">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 10px;">
+            <el-form-item label="所属项目" required>
+              <el-select 
+                v-model="singleShotForm.project" 
+                placeholder="选择项目" 
+                style="width: 100%"
+                filterable
+                clearable
+              >
+                <el-option
+                  v-for="project in projects"
+                  :key="project.id"
+                  :label="project.name"
+                  :value="project.id"
+                />
+              </el-select>
+            </el-form-item>
+            
+            <el-form-item label="镜头号" required>
+              <el-input v-model="singleShotForm.shot_code" placeholder="输入镜头号" />
+            </el-form-item>
+            
+            <el-form-item label="帧数" required>
+              <el-input-number v-model="singleShotForm.duration_frame" :min="1" style="width: 100%" />
+            </el-form-item>
+            
+            <el-form-item label="帧率" required>
+              <el-input-number v-model="singleShotForm.framepersecond" :min="1" :precision="0" :step="1" :default="24" style="width: 100%" />
+            </el-form-item>
+            
+            <el-form-item label="制作者" required>
+              <el-select 
+                v-model="singleShotForm.artist" 
+                placeholder="选择制作者"
+                filterable 
+                clearable
+                style="width: 100%"
+              >
+                <el-option label="待实现用户选择" value="" disabled />
+              </el-select>
+            </el-form-item>
+            
+            <el-form-item label="推进阶段">
+              <el-select 
+                v-model="singleShotForm.prom_stage" 
+                placeholder="选择推进阶段"
+                style="width: 100%"
+              >
+                <el-option label="Layout" value="LAY" />
+                <el-option label="Block" value="BLK" />
+                <el-option label="Animation" value="ANI" />
+                <el-option label="Pass" value="PASS" />
+              </el-select>
+            </el-form-item>
+            
+            <el-form-item label="截止日期">
+              <el-date-picker
+                v-model="singleShotForm.deadline"
+                type="date"
+                placeholder="选择截止日期"
+                style="width: 100%"
+              />
+            </el-form-item>
+            
+            <el-form-item label="最近提交">
+              <el-date-picker
+                v-model="singleShotForm.last_submit_date"
+                type="date"
+                placeholder="选择最近提交日期"
+                style="width: 100%"
+              />
+            </el-form-item>
+          </div>
+          
+          <el-form-item label="描述" style="width: 100%">
+            <el-input
+              v-model="singleShotForm.description"
+              type="textarea"
+              :rows="2"
+              placeholder="输入镜头描述"
+              style="width: 100%"
+            />
+          </el-form-item>
+        </el-form>
+      </el-tab-pane>
+      
+      <!-- 批量添加选项卡 -->
+      <el-tab-pane label="批量添加" name="batch">
+        <el-form :model="batchShotForm" label-width="90px" label-position="right" size="small">
+          <el-form-item label="所属项目" required>
+            <el-select 
+              v-model="batchShotForm.project" 
+              placeholder="选择项目" 
+              filterable
+              clearable
+              style="width: 100%"
+            >
+              <el-option
+                v-for="project in projects"
+                :key="project.id"
+                :label="project.name"
+                :value="project.id"
+              />
+            </el-select>
+          </el-form-item>
+          
+          <el-form-item label="命名规则">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <el-input v-model="batchShotForm.prefix" placeholder="前缀" style="width: 80px" />
+              <span>+</span>
+              <div style="display: flex; align-items: center; gap: 5px;">
+                <span>数字</span>
+                <el-tooltip content="数字位数">
+                  <el-input-number v-model="batchShotForm.digit_count" :min="1" :max="6" style="width: 90px" />
+                </el-tooltip>
+              </div>
+              <span>+</span>
+              <el-input v-model="batchShotForm.suffix" placeholder="后缀" style="width: 80px" />
+            </div>
+          </el-form-item>
+          
+          <el-form-item label="数字规则">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div style="display: flex; flex-direction: column; gap: 5px;">
+                <span>起始值</span>
+                <el-input-number v-model="batchShotForm.start_num" :min="0" />
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 5px;">
+                <span>步长</span>
+                <el-input-number v-model="batchShotForm.step" :min="1" />
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 5px;">
+                <span>数量</span>
+                <el-input-number v-model="batchShotForm.count" :min="1" :max="100" />
+              </div>
+            </div>
+          </el-form-item>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; column-gap: 10px;">
+            <el-form-item label="帧数" required>
+              <el-input-number v-model="batchShotForm.duration_frame" :min="1" style="width: 100%" />
+            </el-form-item>
+            
+            <el-form-item label="帧率" required>
+              <el-input-number v-model="batchShotForm.framepersecond" :min="1" :precision="0" :step="1" :default="24" style="width: 100%" />
+            </el-form-item>
+            
+            <el-form-item label="推进阶段">
+              <el-select v-model="batchShotForm.prom_stage" style="width: 100%">
+                <el-option label="Layout" value="LAY" />
+                <el-option label="Block" value="BLK" />
+                <el-option label="Animation" value="ANI" />
+                <el-option label="Pass" value="PASS" />
+              </el-select>
+            </el-form-item>
+            
+            <el-form-item label="截止日期">
+              <el-date-picker 
+                v-model="batchShotForm.deadline" 
+                type="date" 
+                placeholder="选择日期"
+                style="width: 100%" 
+              />
+            </el-form-item>
+          </div>
+          
+          <el-form-item label="预览">
+            <div class="preview-container" v-if="batchShotNamePreview.length > 0">
+              <div class="preview-tags">
+                <el-tag 
+                  v-for="(name, index) in batchShotNamePreview.slice(0, 10)" 
+                  :key="index"
+                  class="preview-tag"
+                >
+                  {{ name }}
+                </el-tag>
+              </div>
+              <div v-if="batchShotNamePreview.length > 10" class="preview-more">
+                ...共 {{ batchShotNamePreview.length }} 个镜头
+              </div>
+            </div>
+            <div v-else class="no-preview">
+              请设置命名规则和数量以查看预览
+            </div>
+          </el-form-item>
+        </el-form>
+      </el-tab-pane>
+      
+      <!-- 导入镜头选项卡 -->
+      <el-tab-pane label="导入镜头" name="import">
+        <div class="import-placeholder" style="padding: 20px 0; text-align: center;">
+          <el-icon style="font-size: 48px; color: #909399; margin-bottom: 10px"><Connection /></el-icon>
+          <div style="font-size: 16px; margin-bottom: 10px;">导入镜头功能正在开发中</div>
+          <div style="color: #909399; font-size: 14px;">敬请期待...</div>
+        </div>
+      </el-tab-pane>
+    </el-tabs>
+    
+    <template #footer>
+      <el-button @click="addShotDialogVisible = false">取消</el-button>
+      <el-button 
+        type="primary" 
+        @click="submitAddShot" 
+        :disabled="activeAddTab === 'import'"
+      >
+        确认添加
+      </el-button>
+    </template>
+  </el-dialog>
+  
   <!-- 镜头编辑对话框 -->
   <ShotEditDialog
     v-model:visible="editDialogVisible"
@@ -337,7 +571,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
-import { Search, Refresh, Download, ArrowDown, Delete, Close } from '@element-plus/icons-vue'
+import { Search, Refresh, Download, ArrowDown, Delete, Close, Plus, Connection, Back } from '@element-plus/icons-vue'
 import { useShotStore } from '@/stores/shotStore'
 import { useProjectStore } from '@/stores/projectStore'
 import { useAuthStore } from '@/stores/authStore'
@@ -348,11 +582,13 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDate, formatDateTime, getDeadlineClass, getSubmitDateClass } from '@/utils/dateUtils'
 import { getStatusTagType, getStageTagType } from '@/utils/statusUtils'
 import { truncateText } from '@/utils/stringUtils'
+import { useRouter } from 'vue-router'
 
 // 店铺
 const shotStore = useShotStore()
 const projectStore = useProjectStore()
 const authStore = useAuthStore()
+const router = useRouter()
 // 使用权限组合式API
 const permissions = usePermissions()
 
@@ -369,6 +605,56 @@ const totalShotsCount = ref(0)
 const editDialogVisible = ref(false)
 const currentEditShot = ref(null)
 const columnDialogVisible = ref(false)
+const addShotDialogVisible = ref(false)
+const activeAddTab = ref('single')
+
+// 单个添加镜头表单
+const singleShotForm = reactive({
+  project: '',
+  shot_code: '',
+  duration_frame: 24,
+  framepersecond: 24,
+  artist: '',
+  prom_stage: 'LAY',
+  deadline: '',
+  last_submit_date: '',
+  description: ''
+})
+
+// 批量添加镜头表单
+const batchShotForm = reactive({
+  project: '',
+  prefix: 'SC_',
+  start_num: 10,
+  suffix: '',
+  step: 10,
+  count: 5,
+  digit_count: 3,
+  prom_stage: 'LAY',
+  deadline: '',
+  framepersecond: 24,
+  duration_frame: 24,
+  last_submit_date: '',
+})
+
+// 批量添加预览
+const batchShotNamePreview = computed(() => {
+  if (!batchShotForm.prefix && !batchShotForm.suffix && !batchShotForm.start_num && !batchShotForm.count) {
+    return []
+  }
+  
+  const result = []
+  const digitCount = batchShotForm.digit_count || 3
+  
+  for (let i = 0; i < batchShotForm.count; i++) {
+    const num = batchShotForm.start_num + (i * batchShotForm.step)
+    const numStr = num.toString().padStart(digitCount, '0')
+    const name = `${batchShotForm.prefix || ''}${numStr}${batchShotForm.suffix || ''}`
+    result.push(name)
+  }
+  
+  return result
+})
 
 // 用户角色和权限 - 使用权限服务
 const canFilterByDepartment = permissions.canFilterByDepartment
@@ -856,6 +1142,153 @@ const clearSelection = () => {
     shotTable.value.clearSelection()
   }
 }
+
+// 打开添加镜头对话框
+const openAddShotDialog = () => {
+  // 预先填充项目ID
+  singleShotForm.project = selectedProject.value || ''
+  batchShotForm.project = selectedProject.value || ''
+  
+  addShotDialogVisible.value = true
+}
+
+// 处理添加镜头
+const submitAddShot = async () => {
+  try {
+    if (activeAddTab.value === 'single') {
+      // 验证单个镜头表单
+      if (!singleShotForm.project) {
+        ElMessage.error('请选择项目')
+        return
+      }
+      if (!singleShotForm.shot_code) {
+        ElMessage.error('请输入镜头号')
+        return
+      }
+      if (!singleShotForm.duration_frame || singleShotForm.duration_frame <= 0) {
+        ElMessage.error('请输入有效的帧数')
+        return
+      }
+      if (!singleShotForm.framepersecond || singleShotForm.framepersecond <= 0) {
+        ElMessage.error('请输入有效的帧率')
+        return
+      }
+
+      // 开始创建镜头
+      loading.value = true
+      const newShot = await shotStore.createShot(singleShotForm)
+      if (newShot) {
+        ElMessage.success(`镜头 ${newShot.shot_code} 创建成功`)
+        await refreshShots()
+      } else {
+        ElMessage.error('创建镜头失败')
+      }
+    } else if (activeAddTab.value === 'batch') {
+      // 验证批量镜头表单
+      if (!batchShotForm.project) {
+        ElMessage.error('请选择项目')
+        return
+      }
+      if (batchShotForm.count <= 0) {
+        ElMessage.error('请输入有效的镜头数量')
+        return
+      }
+      if (batchShotNamePreview.value.length === 0) {
+        ElMessage.error('无法生成有效镜头名称，请检查命名规则')
+        return
+      }
+
+      // 开始批量创建镜头
+      loading.value = true
+      const baseShot = {
+        project: batchShotForm.project,
+        prom_stage: batchShotForm.prom_stage || 'LAY',
+        deadline: batchShotForm.deadline || null,
+        framepersecond: batchShotForm.framepersecond || 24,
+        duration_frame: batchShotForm.duration_frame || 24,
+        last_submit_date: batchShotForm.last_submit_date || null
+      }
+
+      let successCount = 0
+      let failCount = 0
+
+      // 逐个创建镜头
+      for (const shotName of batchShotNamePreview.value) {
+        try {
+          const shotData = {
+            ...baseShot,
+            shot_code: shotName
+          }
+          
+          const newShot = await shotStore.createShot(shotData)
+          if (newShot) {
+            successCount++
+          } else {
+            failCount++
+          }
+        } catch (error) {
+          console.error(`创建镜头 ${shotName} 失败:`, error)
+          failCount++
+        }
+      }
+
+      // 显示结果
+      if (successCount > 0) {
+        ElMessage.success(`成功创建 ${successCount} 个镜头`)
+      }
+      if (failCount > 0) {
+        ElMessage.warning(`有 ${failCount} 个镜头创建失败`)
+      }
+
+      await refreshShots()
+    }
+  } catch (error) {
+    console.error('添加镜头失败:', error)
+    ElMessage.error('添加镜头失败: ' + (error.message || '未知错误'))
+  } finally {
+    loading.value = false
+    // 清空表单并关闭对话框
+    resetAddShotForms()
+    addShotDialogVisible.value = false
+  }
+}
+
+// 重置添加镜头表单
+const resetAddShotForms = () => {
+  // 重置单个添加表单
+  Object.assign(singleShotForm, {
+    project: selectedProject.value || '',
+    shot_code: '',
+    duration_frame: 24,
+    framepersecond: 24,
+    artist: '',
+    prom_stage: 'LAY',
+    deadline: '',
+    last_submit_date: '',
+    description: ''
+  })
+  
+  // 重置批量添加表单
+  Object.assign(batchShotForm, {
+    project: selectedProject.value || '',
+    prefix: 'SC_',
+    start_num: 10,
+    suffix: '',
+    step: 10,
+    count: 5,
+    digit_count: 3,
+    prom_stage: 'LAY',
+    deadline: '',
+    framepersecond: 24,
+    duration_frame: 24,
+    last_submit_date: '',
+  })
+}
+
+// 页面导航
+const goToHome = () => {
+  router.push('/')
+}
 </script>
 
 <style scoped>
@@ -893,6 +1326,19 @@ const clearSelection = () => {
   background-color: #f5f7fa;
   border-radius: 4px;
   margin-bottom: 10px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.home-button {
+  position: absolute;
+  right: calc(150px + 20px); /* 搜索框宽度 + 额外间距 */
+  margin-right: 0;
 }
 
 .page-title {
@@ -1027,5 +1473,45 @@ const clearSelection = () => {
   max-width: 40px !important;
   padding-right: 10px;
   padding-left: 10px;
+}
+
+/* 添加镜头对话框相关样式 */
+.batch-preview {
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  padding: 10px;
+  min-height: 80px;
+  max-height: 120px;
+}
+
+.preview-title {
+  font-size: 12px;
+  color: #606266;
+  margin-bottom: 8px;
+}
+
+.preview-tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.preview-tag {
+  margin: 2px;
+  flex: 0 0 calc(20% - 10px);
+}
+
+.preview-more {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 8px;
+  text-align: right;
+}
+
+.no-preview {
+  color: #909399;
+  text-align: center;
+  padding: 20px 0;
+  font-size: 14px;
 }
 </style> 

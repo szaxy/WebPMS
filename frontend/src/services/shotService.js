@@ -93,7 +93,34 @@ export default {
   
   // 创建新镜头
   createShot(data) {
-    return apiClient.post('/shots/', data)
+    // 确保请求数据符合API规范
+    const shotData = {
+      project: data.project,
+      shot_code: data.shot_code,
+      duration_frame: data.duration_frame || 24,
+      framepersecond: data.framepersecond || 24,
+      prom_stage: data.prom_stage || 'LAY',
+      deadline: data.deadline || null,
+      last_submit_date: data.last_submit_date || null,
+      description: data.description || '',
+      status: data.status || 'waiting'
+    }
+    
+    // 如果提供了制作者ID，添加到请求数据
+    if (data.artist) {
+      shotData.artist = data.artist
+    }
+    
+    console.log('准备创建镜头，请求数据:', shotData)
+    return apiClient.post('/shots/create/', shotData)
+      .then(response => {
+        console.log('创建镜头API响应:', response.status)
+        return response
+      })
+      .catch(error => {
+        console.error('创建镜头API错误:', error)
+        throw error
+      })
   },
   
   // 更新镜头信息

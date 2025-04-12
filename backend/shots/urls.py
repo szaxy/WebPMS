@@ -16,6 +16,7 @@ router.register(r'shot-notes', ShotNoteViewSet, basename='shot-note')
 custom_urls = [
     # 更明确的列表URL，确保优先与其他路由匹配
     path('list/', ShotViewSet.as_view({'get': 'list'}), name='shot-list-explicit'),
+    path('create/', ShotViewSet.as_view({'post': 'create'}), name='shot-create'),
     path('batch-update/', ShotViewSet.as_view({'post': 'batch_update'}), name='shot-batch-update'),
     path('batch-rename/', ShotViewSet.as_view({'post': 'batch_rename'}), name='shot-batch-rename'),
     # 明确的删除路由 - 将HTTP方法映射到destroy视图

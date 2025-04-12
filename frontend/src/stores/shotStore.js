@@ -178,16 +178,37 @@ export const useShotStore = defineStore('shot', () => {
       loading.value = true
       error.value = null
       
+      console.log('开始创建新镜头:', shotData)
       const response = await shotService.createShot(shotData)
       const newShot = response.data
+      
+      console.log('创建镜头成功:', newShot)
       
       // 更新本地状态
       shots.value.push(newShot)
       
       return newShot
     } catch (err) {
-      console.error('Error creating shot:', err)
-      error.value = '创建镜头失败'
+      console.error('创建镜头失败:', err)
+      if (err.response) {
+        console.error('错误状态码:', err.response.status)
+        console.error('错误详情:', err.response.data)
+        
+        // 处理常见错误
+        if (err.response.status === 400 && err.response.data.shot_code) {
+          error.value = `镜头号错误: ${err.response.data.shot_code[0]}`
+        } else if (err.response.status === 400 && err.response.data.non_field_errors) {
+          error.value = err.response.data.non_field_errors[0]
+        } else if (err.response.status === 403) {
+          error.value = '您没有权限创建镜头'
+        } else {
+          error.value = '创建镜头失败: ' + (err.response.data.detail || '未知错误')
+        }
+      } else if (err.request) {
+        error.value = '服务器未响应，请检查网络连接'
+      } else {
+        error.value = `创建镜头失败: ${err.message}`
+      }
       return null
     } finally {
       loading.value = false
