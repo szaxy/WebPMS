@@ -107,7 +107,20 @@ export default {
   
   // 删除镜头
   deleteShot(id) {
+    console.log(`尝试删除镜头，ID: ${id}`)
     return apiClient.delete(`/shots/${id}/`)
+      .then(response => {
+        console.log(`删除成功响应:`, response)
+        return response
+      })
+      .catch(error => {
+        console.error(`删除失败，ID: ${id}, 错误:`, error)
+        if (error.response) {
+          console.error('状态码:', error.response.status)
+          console.error('响应数据:', error.response.data)
+        }
+        throw error
+      })
   },
   
   // 批量更新镜头

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebPMS 智能入口</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #333;
+        }
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            color: #409eff;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .info {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f0f9ff;
+            border-left: 4px solid #409eff;
+            border-radius: 4px;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #409eff;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            margin: 10px 0;
+            text-align: center;
+        }
+        .btn:hover {
+            background-color: #66b1ff;
+        }
+        .btn-container {
+            display: flex;
+            flex-direction: column;
+        }
+        .port-display {
+            font-size: 16px;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 14px;
+            color: #909399;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WebPMS 智能入口</h1>
+        
+        <div class="info">
+            <p>此页面会自动检测当前WebPMS系统实际运行的端口，并提供直接访问链接。无论端口如何变化，您都可以收藏此页面作为固定入口。</p>
+        </div>
+        
+        <div class="port-display">
+            当前检测到的系统端口: <span id="current-port">检测中...</span>
+        </div>
+        
+        <div class="btn-container">
+            <a href="#" id="main-link" class="btn">进入WebPMS系统</a>
+            <a href="#" id="admin-link" class="btn" style="background-color: #67c23a;">访问后台管理</a>
+        </div>
+        
+        <div class="footer">
+            <p>WebPMS - 荷和年动画项目管理平台</p>
+        </div>
+    </div>
+
+    <script>
+        // 检测所有可能的端口
+        const possiblePorts = [9527, 3000, 3001, 3002, 8080, 8081, 9528];
+        let workingPort = null;
+        const backendPort = 8000;  // 后端端口通常是固定的
+
+        // 更新链接
+        function updateLinks(port) {
+            document.getElementById('current-port').textContent = port;
+            document.getElementById('main-link').href = `http://localhost:${port}/`;
+            document.getElementById('admin-link').href = `http://localhost:${backendPort}/admin/`;
+        }
+
+        // 检测端口是否可用
+        function checkPort(port) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                const timeout = setTimeout(() => {
+                    img.onload = img.onerror = null;
+                    resolve(false);
+                }, 1000);
+
+                img.onload = img.onerror = () => {
+                    clearTimeout(timeout);
+                    resolve(true);
+                };
+
+                // 尝试加载一个不存在的图片，通过错误响应确定端口是否可用
+                img.src = `http://localhost:${port}/favicon.ico?_=${new Date().getTime()}`;
+            });
+        }
+
+        // 读取本地存储的端口号（如果有）
+        const savedPort = localStorage.getItem('webpms_port');
+        if (savedPort) {
+            checkPort(savedPort).then(isWorking => {
+                if (isWorking) {
+                    workingPort = savedPort;
+                    updateLinks(workingPort);
+                } else {
+                    // 保存的端口不可用，继续检测其他端口
+                    detectPorts();
+                }
+            });
+        } else {
+            detectPorts();
+        }
+
+        // 检测所有可能的端口
+        async function detectPorts() {
+            for (const port of possiblePorts) {
+                const isWorking = await checkPort(port);
+                if (isWorking) {
+                    workingPort = port;
+                    localStorage.setItem('webpms_port', port);
+                    updateLinks(port);
+                    break;
+                }
+            }
+
+            if (!workingPort) {
+                document.getElementById('current-port').textContent = '未检测到可用端口';
+                document.getElementById('main-link').href = '#';
+                document.getElementById('main-link').onclick = () => {
+                    alert('无法检测到运行中的WebPMS系统。请确保系统已启动。');
+                    return false;
+                };
+            }
+        }
+
+        // 添加刷新按钮事件
+        document.querySelector('.port-display').addEventListener('click', () => {
+            document.getElementById('current-port').textContent = '重新检测中...';
+            detectPorts();
+        });
+    </script>
+</body>
+</html> 

@@ -143,7 +143,10 @@ SIMPLE_JWT = {
 
 # CORS Settings
 CORS_ALLOW_ALL_ORIGINS = DEBUG
-CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='http://localhost:3000', cast=Csv())
+frontend_port = config('FRONTEND_PORT', default='3000')
+frontend_alt_port = config('FRONTEND_ALT_PORT', default='3001')
+default_cors = f'http://localhost:{frontend_port},http://localhost:{frontend_alt_port}'
+CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default=default_cors, cast=Csv())
 
 # Channels Settings
 CHANNEL_LAYERS = {

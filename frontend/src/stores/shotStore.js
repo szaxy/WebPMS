@@ -260,7 +260,10 @@ export const useShotStore = defineStore('shot', () => {
       loading.value = true
       error.value = null
       
-      await shotService.deleteShot(id)
+      console.log(`正在删除镜头 ID: ${id}，使用URL: /shots/${id}/`)
+      
+      const response = await shotService.deleteShot(id)
+      console.log('删除成功，响应:', response)
       
       // 更新本地状态
       const index = shots.value.findIndex(s => s.id === id)
@@ -279,8 +282,59 @@ export const useShotStore = defineStore('shot', () => {
       return true
     } catch (err) {
       console.error(`Error deleting shot ${id}:`, err)
+      if (err.response) {
+        console.error('删除错误详情 - 状态码:', err.response.status)
+        console.error('删除错误详情 - 响应数据:', err.response.data)
+      }
       error.value = '删除镜头失败'
       return false
+    } finally {
+      loading.value = false
+    }
+  }
+  
+  async function batchDeleteShots(ids) {
+    try {
+      loading.value = true
+      error.value = null
+      
+      console.log(`正在批量删除 ${ids.length} 个镜头，ID列表:`, ids)
+      
+      // 批量删除逻辑 - 使用Promise.allSettled而不是Promise.all允许部分成功
+      const results = await Promise.allSettled(ids.map(id => shotService.deleteShot(id)))
+      
+      // 统计成功和失败
+      const successResults = results.filter(r => r.status === 'fulfilled')
+      const failedResults = results.filter(r => r.status === 'rejected')
+      
+      // 移除成功删除的镜头
+      const successIds = successResults.map((_, index) => ids[index])
+      
+      // 更新本地状态
+      shots.value = shots.value.filter(shot => !successIds.includes(shot.id))
+      
+      // 清除已选择的镜头
+      selectedShotIds.value = selectedShotIds.value.filter(shotId => !successIds.includes(shotId))
+      
+      // 清除当前镜头
+      if (currentShot.value && successIds.includes(currentShot.value.id)) {
+        currentShot.value = null
+      }
+      
+      if (failedResults.length > 0) {
+        console.error(`有 ${failedResults.length} 个镜头删除失败:`, failedResults)
+        error.value = `有 ${failedResults.length} 个镜头删除失败`
+      }
+      
+      return {
+        message: `成功删除 ${successResults.length} 个镜头`,
+        deleted_count: successResults.length,
+        failed_count: failedResults.length
+      }
+    } catch (err) {
+      console.error('批量删除镜头失败:', err)
+      error.value = '批量删除镜头失败'
+      return null
     } finally {
       loading.value = false
     }
@@ -464,6 +518,7 @@ export const useShotStore = defineStore('shot', () => {
     updateShot,
     updateShotStatus,
     deleteShot,
+    batchDeleteShots,
     batchUpdateShots,
     batchRenameShots,
     fetchShotNotes,

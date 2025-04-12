@@ -208,6 +208,37 @@ class ShotViewSet(viewsets.ModelViewSet):
             serializer.validated_data['last_submit_date'] = timezone.now().date()
             
         serializer.save()
+        
+    def destroy(self, request, *args, **kwargs):
+        """删除镜头的方法"""
+        print(f"接收到删除请求: {request.path}, 参数: {kwargs}")
+        try:
+            # 获取对象
+            instance = self.get_object()
+            shot_code = instance.shot_code
+            shot_id = instance.id
+            
+            print(f"准备删除镜头 ID: {shot_id}, 编号: {shot_code}")
+            
+            # 执行删除
+            self.perform_destroy(instance)
+            
+            print(f"镜头删除成功: {shot_id}")
+            
+            return Response({
+                'message': f'成功删除镜头 {shot_code}',
+                'id': shot_id
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            print(f"删除镜头失败: {str(e)}")
+            return Response({
+                'error': f'删除镜头失败: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+    def perform_destroy(self, instance):
+        """执行镜头删除操作"""
+        # 可以在这里添加删除前的额外逻辑，比如权限检查等
+        instance.delete()
 
 class ShotNoteViewSet(viewsets.ModelViewSet):
     """

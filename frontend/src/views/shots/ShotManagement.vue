@@ -156,6 +156,21 @@
                 </el-button-group>
               </div>
             </div>
+            
+            <!-- 批量操作工具栏 -->
+            <div class="batch-actions" v-if="shotStore.selectedShotIds.length > 0">
+              <div class="selected-info">
+                已选择 <strong>{{ shotStore.selectedShotIds.length }}</strong> 个镜头
+              </div>
+              <div class="action-buttons">
+                <el-button type="danger" @click="confirmBatchDelete" size="small">
+                  <el-icon><Delete /></el-icon> 批量删除
+                </el-button>
+                <el-button type="info" @click="clearSelection" size="small">
+                  <el-icon><Close /></el-icon> 取消选择
+                </el-button>
+              </div>
+            </div>
           </template>
 
           <!-- 镜头表格 -->
@@ -169,6 +184,7 @@
             :max-height="tableHeight"
             stripe
             border
+            @selection-change="handleSelectionChange"
           >
             <!-- 诊断信息 -->
             <template v-if="filteredShots.length === 0 && !loading" #empty>
@@ -188,6 +204,8 @@
             </template>
             
             <!-- 状态标记列 -->
+            <el-table-column type="selection" width="55" />
+            
             <el-table-column fixed width="40">
               <template #default="{ row }">
                 <div class="status-indicators">
@@ -261,7 +279,7 @@
             </el-table-column>
 
             <!-- 操作列 -->
-            <el-table-column fixed="right" label="操作" width="120">
+            <el-table-column fixed="right" label="操作" width="180">
               <template #default="scope">
                 <el-button 
                   size="small" 
@@ -269,6 +287,20 @@
                   @click.stop="viewShotDetails(scope.row)"
                 >
                   详情
+                </el-button>
+                <el-button 
+                  size="small" 
+                  type="warning" 
+                  @click.stop="editShot(scope.row)"
+                >
+                  编辑
+                </el-button>
+                <el-button 
+                  size="small" 
+                  type="danger" 
+                  @click.stop="confirmDeleteShot(scope.row)"
+                >
+                  删除
                 </el-button>
               </template>
             </el-table-column>
@@ -299,16 +331,24 @@
       </div>
     </div>
   </div>
+  
+  <!-- 镜头编辑对话框 -->
+  <ShotEditDialog
+    v-model:visible="editDialogVisible"
+    :shot="currentEditShot"
+    @saved="handleShotSaved"
+  />
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
-import { Search, Refresh, Download, ArrowDown } from '@element-plus/icons-vue'
+import { Search, Refresh, Download, ArrowDown, Delete, Close } from '@element-plus/icons-vue'
 import { useShotStore } from '@/stores/shotStore'
 import { useProjectStore } from '@/stores/projectStore'
 import { useAuthStore } from '@/stores/authStore'
 import ShotDetails from '@/components/ShotDetails.vue'
-import { ElMessage } from 'element-plus'
+import ShotEditDialog from '@/components/ShotEditDialog.vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 // 店铺
 const shotStore = useShotStore()
@@ -325,6 +365,8 @@ const tableHeight = ref(600)
 const currentPage = ref(1)
 const pageSize = ref(50)
 const totalShotsCount = ref(0)
+const editDialogVisible = ref(false)
+const currentEditShot = ref(null)
 
 // 用户角色
 const canFilterByDepartment = computed(() => {
@@ -506,9 +548,21 @@ const exportShots = () => {
   })
 }
 
+// 表格行选择变化
+const handleSelectionChange = (selection) => {
+  shotStore.selectAllShots(false) // 先清空
+  selection.forEach(shot => {
+    shotStore.selectShot(shot.id)
+  })
+}
+
 // 处理行点击
-const handleRowClick = (row) => {
-  selectedShot.value = row
+const handleRowClick = (row, column) => {
+  // 如果点击的是选择框列，不执行任何操作
+  if (column.type === 'selection') return
+  
+  // 否则查看镜头详情
+  viewShotDetails(row)
 }
 
 // 查看镜头详情
@@ -516,21 +570,24 @@ const viewShotDetails = (shot) => {
   selectedShot.value = shot
 }
 
+// 编辑镜头
+const editShot = (shot) => {
+  currentEditShot.value = shot
+  editDialogVisible.value = true
+}
+
 // 处理镜头更新
-const handleShotUpdate = async (updatedShot) => {
-  // 更新表格中的对应行
-  const index = filteredShots.value.findIndex(s => s.id === updatedShot.id)
-  if (index !== -1) {
-    filteredShots.value[index] = updatedShot
-  }
-  
-  // 更新选中的镜头
+const handleShotUpdate = (updatedShot) => {
+  // 刷新当前选中的镜头数据
   if (selectedShot.value && selectedShot.value.id === updatedShot.id) {
     selectedShot.value = updatedShot
   }
   
-  // 刷新列表
-  await loadShots()
+  // 刷新镜头列表中的数据
+  const index = shotStore.shots.findIndex(s => s.id === updatedShot.id)
+  if (index !== -1) {
+    shotStore.shots[index] = updatedShot
+  }
 }
 
 // 处理高级筛选
@@ -760,11 +817,129 @@ onMounted(async () => {
   loadColumnSettings()
   await loadProjects()
   adjustTableHeight()
+  
+  // 监听选中变化
+ // shotTable.value?.store.states.selection.value = shotStore.selectedShots
+  
+  // 监听选中变化
+  if (shotTable.value && shotTable.value.store && shotTable.value.store.states) {
+    shotTable.value.store.states.selection.value = shotStore.selectedShots
+  }
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', adjustTableHeight)
 })
+
+// 处理镜头保存
+const handleShotSaved = async (updatedShot) => {
+  ElMessage.success('镜头保存成功')
+  await refreshShots()
+  currentEditShot.value = null
+}
+
+// 确认删除单个镜头
+const confirmDeleteShot = (shot) => {
+  ElMessageBox.confirm(
+    `确定要删除镜头 "${shot.shot_code}" 吗？此操作不可恢复。`,
+    '删除确认',
+    {
+      confirmButtonText: '确认删除',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }
+  ).then(async () => {
+    try {
+      const success = await shotStore.deleteShot(shot.id)
+      if (success) {
+        ElMessage.success('镜头删除成功')
+        await refreshShots()
+      } else {
+        ElMessage.error(shotStore.error || '删除失败')
+      }
+    } catch (error) {
+      console.error('删除镜头失败', error)
+      ElMessage.error('删除镜头失败，请重试')
+    }
+  }).catch(() => {
+    // 用户取消删除，不执行任何操作
+  })
+}
+
+// 确认批量删除
+const confirmBatchDelete = () => {
+  if (shotStore.selectedShotIds.length === 0) {
+    ElMessage.warning('请选择要删除的镜头')
+    return
+  }
+  
+  ElMessageBox.confirm(
+    `确定要删除选中的 ${shotStore.selectedShotIds.length} 个镜头吗？此操作不可恢复。`,
+    '批量删除确认',
+    {
+      confirmButtonText: '确认删除',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }
+  ).then(async () => {
+    try {
+      loading.value = true
+      
+      // 逐个删除，提高成功率
+      let successCount = 0
+      let failCount = 0
+      const totalCount = shotStore.selectedShotIds.length
+      
+      // 复制一份ID列表以避免在循环中修改
+      const idsToDelete = [...shotStore.selectedShotIds]
+      
+      console.log(`开始批量删除 ${idsToDelete.length} 个镜头...`)
+      for (const id of idsToDelete) {
+        try {
+          const success = await shotStore.deleteShot(id)
+          if (success) {
+            successCount++
+          } else {
+            failCount++
+          }
+        } catch (err) {
+          console.error(`删除镜头 ${id} 时发生错误:`, err)
+          failCount++
+        }
+      }
+      
+      // 汇总结果
+      if (successCount > 0) {
+        ElMessage.success(`成功删除 ${successCount} 个镜头`)
+      }
+      
+      if (failCount > 0) {
+        ElMessage.warning(`有 ${failCount} 个镜头删除失败`)
+      }
+      
+      // 清空选择
+      shotStore.selectAllShots(false)
+      
+      // 刷新列表
+      await refreshShots()
+    } catch (error) {
+      console.error('批量删除过程中发生错误:', error)
+      ElMessage.error('批量删除过程中发生错误，请检查控制台日志')
+    } finally {
+      loading.value = false
+    }
+  }).catch(() => {
+    // 用户取消删除，不执行任何操作
+  })
+}
+
+// 清除选择
+const clearSelection = () => {
+  shotStore.selectAllShots(false)
+  if (shotTable.value) {
+    shotTable.value.clearSelection()
+  }
+}
 </script>
 
 <style scoped>
@@ -870,5 +1045,23 @@ onUnmounted(() => {
   margin-top: 16px;
   display: flex;
   justify-content: center;
+}
+
+.batch-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  background-color: #f0f0f0;
+}
+
+.selected-info {
+  font-size: 12px;
+  color: #606266;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
 }
 </style> 

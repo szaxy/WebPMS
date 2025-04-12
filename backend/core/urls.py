@@ -5,6 +5,7 @@ from django.conf.urls.static import static
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+from shots.views import ShotViewSet
 
 # API文档视图
 schema_view = get_schema_view(
@@ -24,6 +25,9 @@ urlpatterns = [
     # API文档
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+    
+    # 为删除操作明确注册路径
+    path('api/shots/<int:pk>/', ShotViewSet.as_view({'delete': 'destroy'}), name='shot-delete-direct'),
     
     # API端点
     path('api/auth/', include('users.urls.auth')),

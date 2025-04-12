@@ -11,14 +11,14 @@ services:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_DB=${DB_NAME}
     ports:
-      - "15432:5432"  # 使用15432端口而不是5432
+      - "${DB_PORT:-15432}:5432"  # 使用环境变量或默认值
 
   # Redis cache service
   redis:
     image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/redis:alpine
     pull_policy: never
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
 
@@ -32,23 +32,26 @@ services:
              pip install --no-index --find-links=/offline-packages --find-links=/offline-packages/py3 -r requirements.txt &&
              python manage.py makemigrations &&
              python manage.py migrate --noinput || echo 'Migration error, continuing anyway...' &&
-             python manage.py runserver 0.0.0.0:8000"
+             python manage.py runserver 0.0.0.0:${BACKEND_PORT:-8000}"
     volumes:
       - ./backend:/app
       - ./media:/app/media
       - ./static:/app/static
       - ./offline-resources/python-packages:/offline-packages
       - ./requirements.txt:/app/requirements.txt
-    env_file: .env
+    env_file: 
+      - .env
+      - .env.ports
     depends_on:
       - db
       - redis
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-8000}:${BACKEND_PORT:-8000}"
     environment:
       - DEBUG=True
       - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
       - REDIS_URL=redis://redis:6379/0
+      - BACKEND_PORT=${BACKEND_PORT:-8000}
 
   # Vue frontend application
   frontend:
@@ -89,16 +92,19 @@ services:
              
              # 启动开发服务器
              echo '=== 前端依赖准备完成，正在启动Vite开发服务器 ===' &&
-             npm run dev"
+             FRONTEND_PORT=${FRONTEND_PORT:-3000} npm run dev"
     volumes:
       - ./frontend:/app
       - ./offline-resources/npm-packages:/npm-packages:ro
     ports:
-      - "3000:3000"
-      - "3001:3001"
+      - "${FRONTEND_PORT:-3000}:${FRONTEND_PORT:-3000}"
     environment:
       - NODE_ENV=development
-      - VITE_API_URL=http://localhost:8000/api
+      - VITE_API_URL=http://localhost:${BACKEND_PORT:-8000}/api
+      - FRONTEND_PORT=${FRONTEND_PORT:-3000}
+      - BACKEND_PORT=${BACKEND_PORT:-8000}
+    env_file:
+      - .env.ports
 
 volumes:
   postgres_data:
