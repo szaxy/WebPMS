@@ -181,6 +181,158 @@ export const useProjectStore = defineStore('project', () => {
     }
   }
   
+  async function fetchProjectStatistics(id) {
+    try {
+      loading.value = true
+      error.value = null
+      
+      const response = await projectService.getProjectStatistics(id)
+      return response.data
+    } catch (err) {
+      console.error(`Error fetching project statistics ${id}:`, err)
+      error.value = '获取项目统计信息失败'
+      return null
+    } finally {
+      loading.value = false
+    }
+  }
+  
+  async function deleteProject(id) {
+    try {
+      loading.value = true
+      error.value = null
+      
+      await projectService.deleteProject(id)
+      
+      // 更新本地状态
+      const index = projects.value.findIndex(p => p.id === id)
+      if (index !== -1) {
+        projects.value.splice(index, 1)
+      }
+      
+      if (currentProject.value && currentProject.value.id === id) {
+        currentProject.value = null
+      }
+      
+      return true
+    } catch (err) {
+      console.error(`Error deleting project ${id}:`, err)
+      error.value = '删除项目失败'
+      return false
+    } finally {
+      loading.value = false
+    }
+  }
+  
+  async function batchDeleteProjects(ids) {
+    try {
+      loading.value = true
+      error.value = null
+      
+      const response = await projectService.batchDeleteProjects(ids)
+      
+      // 更新本地状态
+      projects.value = projects.value.filter(p => !ids.includes(p.id))
+      
+      if (currentProject.value && ids.includes(currentProject.value.id)) {
+        currentProject.value = null
+      }
+      
+      return response.data
+    } catch (err) {
+      console.error('Error batch deleting projects:', err)
+      error.value = '批量删除项目失败'
+      return null
+    } finally {
+      loading.value = false
+    }
+  }
+  
+  async function batchUpdateProjectStatus(ids, status) {
+    try {
+      loading.value = true
+      error.value = null
+      
+      const response = await projectService.batchUpdateProjectStatus(ids, status)
+      
+      // 更新本地状态
+      ids.forEach(id => {
+        const index = projects.value.findIndex(p => p.id === id)
+        if (index !== -1) {
+          projects.value[index].status = status
+        }
+      })
+      
+      if (currentProject.value && ids.includes(currentProject.value.id)) {
+        currentProject.value.status = status
+      }
+      
+      return response.data
+    } catch (err) {
+      console.error('Error batch updating project status:', err)
+      error.value = '批量更新项目状态失败'
+      return null
+    } finally {
+      loading.value = false
+    }
+  }
+  
+  async function addDepartmentToProject(projectId, department) {
+    try {
+      loading.value = true
+      error.value = null
+      
+      const response = await projectService.addDepartmentToProject(projectId, department)
+      const updatedProject = response.data
+      
+      // 更新本地状态
+      const index = projects.value.findIndex(p => p.id === projectId)
+      if (index !== -1) {
+        projects.value[index] = updatedProject
+      }
+      
+      if (currentProject.value && currentProject.value.id === projectId) {
+        currentProject.value = updatedProject
+      }
+      
+      return updatedProject
+    } catch (err) {
+      console.error(`Error adding department to project ${projectId}:`, err)
+      error.value = '添加部门失败'
+      return null
+    } finally {
+      loading.value = false
+    }
+  }
+  
+  async function removeDepartmentFromProject(projectId, department) {
+    try {
+      loading.value = true
+      error.value = null
+      
+      const response = await projectService.removeDepartmentFromProject(projectId, department)
+      const updatedProject = response.data
+      
+      // 更新本地状态
+      const index = projects.value.findIndex(p => p.id === projectId)
+      if (index !== -1) {
+        projects.value[index] = updatedProject
+      }
+      
+      if (currentProject.value && currentProject.value.id === projectId) {
+        currentProject.value = updatedProject
+      }
+      
+      return updatedProject
+    } catch (err) {
+      console.error(`Error removing department from project ${projectId}:`, err)
+      error.value = '移除部门失败'
+      return null
+    } finally {
+      loading.value = false
+    }
+  }
+  
   return {
     // 状态
     projects,
@@ -198,6 +350,12 @@ export const useProjectStore = defineStore('project', () => {
     createProject,
     updateProject,
     updateProjectStatus,
-    fetchProjectStats
+    fetchProjectStats,
+    fetchProjectStatistics,
+    deleteProject,
+    batchDeleteProjects,
+    batchUpdateProjectStatus,
+    addDepartmentToProject,
+    removeDepartmentFromProject
   }
 }) 

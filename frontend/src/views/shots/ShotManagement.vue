@@ -143,6 +143,9 @@
                     <el-button @click="openAddShotDialog" title="添加" size="small">
                       <el-icon><Plus /></el-icon>
                     </el-button>
+                    <el-button @click="openProjectManagement" title="项目" size="small">
+                      <el-icon><Briefcase /></el-icon>
+                    </el-button>
                     <el-button @click="refreshShots" title="刷新" size="small">
                       <el-icon><Refresh /></el-icon>
                     </el-button>
@@ -406,20 +409,34 @@
               </el-select>
             </el-form-item>
             
-            <el-form-item label="截止日期">
+            <el-form-item label="截止日期" prop="deadline">
               <el-date-picker
                 v-model="singleShotForm.deadline"
                 type="date"
                 placeholder="选择截止日期"
+                value-format="YYYY-MM-DD"
+                format="YYYY-MM-DD"
+                :clearable="true"
+                :shortcuts="false"
+                :editable="false"
+                :popper-class="'shot-deadline-picker'"
+                @change="handleSingleDeadlineChange"
                 style="width: 100%"
               />
             </el-form-item>
             
-            <el-form-item label="最近提交">
+            <el-form-item label="最近提交日期" prop="last_submit_date">
               <el-date-picker
                 v-model="singleShotForm.last_submit_date"
                 type="date"
                 placeholder="选择最近提交日期"
+                value-format="YYYY-MM-DD"
+                format="YYYY-MM-DD"
+                :clearable="true"
+                :shortcuts="false"
+                :editable="false"
+                :popper-class="'shot-submit-date-picker'"
+                @change="handleSingleSubmitDateChange"
                 style="width: 100%"
               />
             </el-form-item>
@@ -507,12 +524,35 @@
               </el-select>
             </el-form-item>
             
-            <el-form-item label="截止日期">
-              <el-date-picker 
-                v-model="batchShotForm.deadline" 
-                type="date" 
-                placeholder="选择日期"
-                style="width: 100%" 
+            <el-form-item label="截止日期" prop="deadline">
+              <el-date-picker
+                v-model="batchShotForm.deadline"
+                type="date"
+                placeholder="选择截止日期"
+                value-format="YYYY-MM-DD"
+                format="YYYY-MM-DD"
+                :clearable="true"
+                :shortcuts="false"
+                :editable="false"
+                :popper-class="'shot-deadline-picker'"
+                @change="handleBatchDeadlineChange"
+                style="width: 100%"
+              />
+            </el-form-item>
+            
+            <el-form-item label="最近提交日期" prop="last_submit_date">
+              <el-date-picker
+                v-model="batchShotForm.last_submit_date"
+                type="date"
+                placeholder="选择最近提交日期"
+                value-format="YYYY-MM-DD"
+                format="YYYY-MM-DD"
+                :clearable="true"
+                :shortcuts="false"
+                :editable="false"
+                :popper-class="'shot-submit-date-picker'"
+                @change="handleBatchSubmitDateChange"
+                style="width: 100%"
               />
             </el-form-item>
           </div>
@@ -567,17 +607,24 @@
     :shot="currentEditShot"
     @saved="handleShotSaved"
   />
+  
+  <!-- 项目管理对话框 -->
+  <ProjectManagement
+    v-model:visible="projectManagementVisible"
+    @refresh="handleProjectRefresh"
+  />
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
-import { Search, Refresh, Download, ArrowDown, Delete, Close, Plus, Connection, Back } from '@element-plus/icons-vue'
+import { Search, Refresh, Download, ArrowDown, Delete, Close, Plus, Connection, Back, Briefcase } from '@element-plus/icons-vue'
 import { useShotStore } from '@/stores/shotStore'
 import { useProjectStore } from '@/stores/projectStore'
 import { useAuthStore } from '@/stores/authStore'
 import { usePermissions } from '@/composables/usePermissions'
 import ShotDetails from '@/components/ShotDetails.vue'
 import ShotEditDialog from '@/components/ShotEditDialog.vue'
+import ProjectManagement from '@/components/ProjectManagement.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDate, formatDateTime, getDeadlineClass, getSubmitDateClass } from '@/utils/dateUtils'
 import { getStatusTagType, getStageTagType } from '@/utils/statusUtils'
@@ -1174,41 +1221,253 @@ const submitAddShot = async () => {
         return
       }
 
+      // 确保日期数据的正确性
+      const shotFormData = { ...singleShotForm }
+      
+      // 确保日期格式正确 - 日期字段深度处理
+      if (shotFormData.deadline) {
+        // 验证日期格式
+        if (typeof shotFormData.deadline === 'string') {
+          const dateMatch = shotFormData.deadline.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+          if (dateMatch) {
+            // 保持格式不变，但确保是合法日期
+            const year = parseInt(dateMatch[1])
+            const month = parseInt(dateMatch[2]) - 1 // JS月份从0开始
+            const day = parseInt(dateMatch[3])
+            
+            const dateObj = new Date(year, month, day)
+            if (
+              dateObj.getFullYear() === year &&
+              dateObj.getMonth() === month &&
+              dateObj.getDate() === day
+            ) {
+              // 日期有效，重新格式化确保一致
+              shotFormData.deadline = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+            } else {
+              console.error('日期无效:', shotFormData.deadline)
+              delete shotFormData.deadline
+            }
+          } else {
+            console.error('日期格式错误:', shotFormData.deadline)
+            delete shotFormData.deadline
+          }
+        } else if (shotFormData.deadline instanceof Date) {
+          if (!isNaN(shotFormData.deadline.getTime())) {
+            shotFormData.deadline = shotFormData.deadline.toISOString().split('T')[0]
+          } else {
+            console.error('日期对象无效:', shotFormData.deadline)
+            delete shotFormData.deadline
+          }
+        } else {
+          console.error('未知日期类型:', typeof shotFormData.deadline)
+          delete shotFormData.deadline
+        }
+      }
+      
+      // 同样处理最近提交日期
+      if (shotFormData.last_submit_date) {
+        // 验证日期格式
+        if (typeof shotFormData.last_submit_date === 'string') {
+          const dateMatch = shotFormData.last_submit_date.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+          if (dateMatch) {
+            // 保持格式不变，但确保是合法日期
+            const year = parseInt(dateMatch[1])
+            const month = parseInt(dateMatch[2]) - 1 // JS月份从0开始
+            const day = parseInt(dateMatch[3])
+            
+            const dateObj = new Date(year, month, day)
+            if (
+              dateObj.getFullYear() === year &&
+              dateObj.getMonth() === month &&
+              dateObj.getDate() === day
+            ) {
+              // 日期有效，重新格式化确保一致
+              shotFormData.last_submit_date = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+            } else {
+              console.error('提交日期无效:', shotFormData.last_submit_date)
+              delete shotFormData.last_submit_date
+            }
+          } else {
+            console.error('提交日期格式错误:', shotFormData.last_submit_date)
+            delete shotFormData.last_submit_date
+          }
+        } else if (shotFormData.last_submit_date instanceof Date) {
+          if (!isNaN(shotFormData.last_submit_date.getTime())) {
+            shotFormData.last_submit_date = shotFormData.last_submit_date.toISOString().split('T')[0]
+          } else {
+            console.error('提交日期对象无效:', shotFormData.last_submit_date)
+            delete shotFormData.last_submit_date
+          }
+        } else {
+          console.error('未知提交日期类型:', typeof shotFormData.last_submit_date)
+          delete shotFormData.last_submit_date
+        }
+      }
+
+      // 调试日期值
+      console.log('表单提交前日期值:', {
+        原始日期: singleShotForm.deadline,
+        原始类型: typeof singleShotForm.deadline,
+        处理后日期: shotFormData.deadline,
+        处理后类型: typeof shotFormData.deadline,
+        原始提交日期: singleShotForm.last_submit_date,
+        原始提交类型: typeof singleShotForm.last_submit_date,
+        处理后提交日期: shotFormData.last_submit_date,
+        处理后提交类型: typeof shotFormData.last_submit_date
+      })
+
       // 开始创建镜头
       loading.value = true
-      const newShot = await shotStore.createShot(singleShotForm)
+      const newShot = await shotStore.createShot(shotFormData)
       if (newShot) {
         ElMessage.success(`镜头 ${newShot.shot_code} 创建成功`)
         await refreshShots()
       } else {
         ElMessage.error('创建镜头失败')
       }
-    } else if (activeAddTab.value === 'batch') {
-      // 验证批量镜头表单
-      if (!batchShotForm.project) {
-        ElMessage.error('请选择项目')
-        return
+      
+      // 添加return语句，防止代码继续执行到批量添加逻辑
+      return
+    }
+    
+    // 批量添加逻辑
+    if (!batchShotForm.project) {
+      ElMessage.error('请选择项目')
+      return
+    }
+    if (!batchShotForm.prefix) {
+      ElMessage.error('请输入前缀')
+      return
+    }
+    if (!batchShotForm.start_num || batchShotForm.start_num < 0) {
+      ElMessage.error('请输入有效的起始编号')
+      return
+    }
+    if (!batchShotForm.count || batchShotForm.count <= 0 || batchShotForm.count > 100) {
+      ElMessage.error('请输入有效的数量（1-100）')
+      return
+    }
+    if (!batchShotForm.digit_count || batchShotForm.digit_count <= 0) {
+      ElMessage.error('请输入有效的位数')
+      return
+    }
+    if (!batchShotForm.duration_frame || batchShotForm.duration_frame <= 0) {
+      ElMessage.error('请输入有效的帧数')
+      return
+    }
+    if (!batchShotForm.framepersecond || batchShotForm.framepersecond <= 0) {
+      ElMessage.error('请输入有效的帧率')
+      return
+    }
+    
+    // 确保日期数据的正确性 - 处理批量表单
+    const batchFormData = { ...batchShotForm }
+    
+    // 确保日期格式正确
+    if (batchFormData.deadline) {
+      // 验证日期格式
+      if (typeof batchFormData.deadline === 'string') {
+        const dateMatch = batchFormData.deadline.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+        if (dateMatch) {
+          // 保持格式不变，但确保是合法日期
+          const year = parseInt(dateMatch[1])
+          const month = parseInt(dateMatch[2]) - 1 // JS月份从0开始
+          const day = parseInt(dateMatch[3])
+          
+          const dateObj = new Date(year, month, day)
+          if (
+            dateObj.getFullYear() === year &&
+            dateObj.getMonth() === month &&
+            dateObj.getDate() === day
+          ) {
+            // 日期有效，重新格式化确保一致
+            batchFormData.deadline = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+          } else {
+            console.error('批量日期无效:', batchFormData.deadline)
+            delete batchFormData.deadline
+          }
+        } else {
+          console.error('批量日期格式错误:', batchFormData.deadline)
+          delete batchFormData.deadline
+        }
+      } else if (batchFormData.deadline instanceof Date) {
+        if (!isNaN(batchFormData.deadline.getTime())) {
+          batchFormData.deadline = batchFormData.deadline.toISOString().split('T')[0]
+        } else {
+          console.error('批量日期对象无效:', batchFormData.deadline)
+          delete batchFormData.deadline
+        }
+      } else {
+        console.error('未知批量日期类型:', typeof batchFormData.deadline)
+        delete batchFormData.deadline
       }
-      if (batchShotForm.count <= 0) {
-        ElMessage.error('请输入有效的镜头数量')
-        return
+    }
+    
+    // 同样处理最近提交日期
+    if (batchFormData.last_submit_date) {
+      // 验证日期格式
+      if (typeof batchFormData.last_submit_date === 'string') {
+        const dateMatch = batchFormData.last_submit_date.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+        if (dateMatch) {
+          // 保持格式不变，但确保是合法日期
+          const year = parseInt(dateMatch[1])
+          const month = parseInt(dateMatch[2]) - 1 // JS月份从0开始
+          const day = parseInt(dateMatch[3])
+          
+          const dateObj = new Date(year, month, day)
+          if (
+            dateObj.getFullYear() === year &&
+            dateObj.getMonth() === month &&
+            dateObj.getDate() === day
+          ) {
+            // 日期有效，重新格式化确保一致
+            batchFormData.last_submit_date = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+          } else {
+            console.error('批量提交日期无效:', batchFormData.last_submit_date)
+            delete batchFormData.last_submit_date
+          }
+        } else {
+          console.error('批量提交日期格式错误:', batchFormData.last_submit_date)
+          delete batchFormData.last_submit_date
+        }
+      } else if (batchFormData.last_submit_date instanceof Date) {
+        if (!isNaN(batchFormData.last_submit_date.getTime())) {
+          batchFormData.last_submit_date = batchFormData.last_submit_date.toISOString().split('T')[0]
+        } else {
+          console.error('批量提交日期对象无效:', batchFormData.last_submit_date)
+          delete batchFormData.last_submit_date
+        }
+      } else {
+        console.error('未知批量提交日期类型:', typeof batchFormData.last_submit_date)
+        delete batchFormData.last_submit_date
       }
-      if (batchShotNamePreview.value.length === 0) {
-        ElMessage.error('无法生成有效镜头名称，请检查命名规则')
-        return
-      }
+    }
+    
+    // 调试日期值
+    console.log('批量表单提交前日期值:', {
+      原始日期: batchShotForm.deadline,
+      原始类型: typeof batchShotForm.deadline,
+      处理后日期: batchFormData.deadline,
+      处理后类型: typeof batchFormData.deadline,
+      原始提交日期: batchShotForm.last_submit_date,
+      原始提交类型: typeof batchShotForm.last_submit_date,
+      处理后提交日期: batchFormData.last_submit_date,
+      处理后提交类型: typeof batchFormData.last_submit_date
+    })
 
-      // 开始批量创建镜头
-      loading.value = true
-      const baseShot = {
-        project: batchShotForm.project,
-        prom_stage: batchShotForm.prom_stage || 'LAY',
-        deadline: batchShotForm.deadline || null,
-        framepersecond: batchShotForm.framepersecond || 24,
-        duration_frame: batchShotForm.duration_frame || 24,
-        last_submit_date: batchShotForm.last_submit_date || null
+    // 开始创建镜头
+    loading.value = true
+    try {
+      // 构建批量添加的数据
+      const batchData = {
+        ...batchFormData,
+        project: batchFormData.project,
+        prefix: batchFormData.prefix,
+        start: batchFormData.start_num,
+        count: batchFormData.count,
+        digit_count: batchFormData.digit_count
       }
-
+      
       let successCount = 0
       let failCount = 0
 
@@ -1216,7 +1475,7 @@ const submitAddShot = async () => {
       for (const shotName of batchShotNamePreview.value) {
         try {
           const shotData = {
-            ...baseShot,
+            ...batchData,
             shot_code: shotName
           }
           
@@ -1241,15 +1500,18 @@ const submitAddShot = async () => {
       }
 
       await refreshShots()
+    } catch (error) {
+      console.error('批量创建镜头失败:', error)
+      ElMessage.error('批量创建镜头失败: ' + (error.message || '未知错误'))
+    } finally {
+      loading.value = false
+      // 清空表单并关闭对话框
+      resetAddShotForms()
+      addShotDialogVisible.value = false
     }
   } catch (error) {
     console.error('添加镜头失败:', error)
     ElMessage.error('添加镜头失败: ' + (error.message || '未知错误'))
-  } finally {
-    loading.value = false
-    // 清空表单并关闭对话框
-    resetAddShotForms()
-    addShotDialogVisible.value = false
   }
 }
 
@@ -1288,6 +1550,112 @@ const resetAddShotForms = () => {
 // 页面导航
 const goToHome = () => {
   router.push('/')
+}
+
+// 项目管理对话框
+const projectManagementVisible = ref(false)
+
+// 打开项目管理对话框
+const openProjectManagement = () => {
+  projectManagementVisible.value = true
+}
+
+// 处理项目刷新事件
+const handleProjectRefresh = async () => {
+  // 刷新项目列表
+  await projectStore.fetchProjects()
+  projects.value = projectStore.projects
+  
+  // 如果当前选择的项目被删除，则重置选择
+  if (selectedProject.value && !projects.value.find(p => p.id === selectedProject.value)) {
+    selectedProject.value = null
+    ElMessage.info('当前选择的项目已被删除')
+  }
+  
+  // 刷新镜头列表
+  await refreshShots()
+}
+
+// 处理单个添加表单的日期
+const handleSingleDeadlineChange = (val) => {
+  console.log('单个截止日期变化:', val, typeof val)
+  if (val) {
+    if (typeof val === 'string') {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+        singleShotForm.deadline = val
+      } else {
+        console.error('日期格式错误:', val)
+        singleShotForm.deadline = null
+      }
+    } else if (val instanceof Date && !isNaN(val.getTime())) {
+      singleShotForm.deadline = val.toISOString().split('T')[0]
+    } else {
+      console.error('未知日期格式:', val)
+      singleShotForm.deadline = null
+    }
+    console.log('最终截止日期值:', singleShotForm.deadline)
+  }
+}
+
+const handleSingleSubmitDateChange = (val) => {
+  console.log('单个提交日期变化:', val, typeof val)
+  if (val) {
+    if (typeof val === 'string') {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+        singleShotForm.last_submit_date = val
+      } else {
+        console.error('日期格式错误:', val)
+        singleShotForm.last_submit_date = null
+      }
+    } else if (val instanceof Date && !isNaN(val.getTime())) {
+      singleShotForm.last_submit_date = val.toISOString().split('T')[0]
+    } else {
+      console.error('未知日期格式:', val)
+      singleShotForm.last_submit_date = null
+    }
+    console.log('最终提交日期值:', singleShotForm.last_submit_date)
+  }
+}
+
+// 处理批量添加表单的日期
+const handleBatchDeadlineChange = (val) => {
+  console.log('批量截止日期变化:', val, typeof val)
+  if (val) {
+    if (typeof val === 'string') {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+        batchShotForm.deadline = val
+      } else {
+        console.error('日期格式错误:', val)
+        batchShotForm.deadline = null
+      }
+    } else if (val instanceof Date && !isNaN(val.getTime())) {
+      batchShotForm.deadline = val.toISOString().split('T')[0]
+    } else {
+      console.error('未知日期格式:', val)
+      batchShotForm.deadline = null
+    }
+    console.log('最终批量截止日期值:', batchShotForm.deadline)
+  }
+}
+
+const handleBatchSubmitDateChange = (val) => {
+  console.log('批量提交日期变化:', val, typeof val)
+  if (val) {
+    if (typeof val === 'string') {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+        batchShotForm.last_submit_date = val
+      } else {
+        console.error('日期格式错误:', val)
+        batchShotForm.last_submit_date = null
+      }
+    } else if (val instanceof Date && !isNaN(val.getTime())) {
+      batchShotForm.last_submit_date = val.toISOString().split('T')[0]
+    } else {
+      console.error('未知日期格式:', val)
+      batchShotForm.last_submit_date = null
+    }
+    console.log('最终批量提交日期值:', batchShotForm.last_submit_date)
+  }
 }
 </script>
 
@@ -1330,15 +1698,12 @@ const goToHome = () => {
 
 .page-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
 }
 
 .home-button {
-  position: absolute;
-  right: calc(150px + 20px); /* 搜索框宽度 + 额外间距 */
-  margin-right: 0;
+  margin-left: auto;
 }
 
 .page-title {

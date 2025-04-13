@@ -82,5 +82,30 @@ export default {
   // 获取项目统计数据
   getProjectStats(id) {
     return apiClient.get(`/projects/${id}/stats/`)
+  },
+  
+  // 获取项目统计信息
+  getProjectStatistics(id) {
+    return apiClient.get(`/projects/${id}/statistics/`)
+  },
+  
+  // 批量删除项目
+  batchDeleteProjects(ids) {
+    return apiClient.post('/projects/batch-delete/', { ids })
+  },
+  
+  // 批量更新项目状态
+  batchUpdateProjectStatus(ids, status) {
+    return apiClient.post('/projects/batch-update-status/', { ids, status })
+  },
+  
+  // 为项目添加部门
+  addDepartmentToProject(projectId, department) {
+    return apiClient.post(`/projects/${projectId}/add-department/`, { department })
+  },
+  
+  // 从项目移除部门
+  removeDepartmentFromProject(projectId, department) {
+    return apiClient.post(`/projects/${projectId}/remove-department/`, { department })
   }
 } 

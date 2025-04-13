@@ -16,7 +16,7 @@ router.register(r'shot-notes', ShotNoteViewSet, basename='shot-note')
 custom_urls = [
     # 更明确的列表URL，确保优先与其他路由匹配
     path('list/', ShotViewSet.as_view({'get': 'list'}), name='shot-list-explicit'),
-    path('create/', ShotViewSet.as_view({'post': 'create'}), name='shot-create'),
+    # 删除自定义create路径，使用DRF自动生成的标准路由
     path('batch-update/', ShotViewSet.as_view({'post': 'batch_update'}), name='shot-batch-update'),
     path('batch-rename/', ShotViewSet.as_view({'post': 'batch_rename'}), name='shot-batch-rename'),
     # 明确的删除路由 - 将HTTP方法映射到destroy视图
@@ -35,11 +35,13 @@ shot_note_urls = [
 
 # 合并URL模式
 urlpatterns = [
+    # 首先包含DefaultRouter的路由，确保它们获得优先匹配
+    path('', include(router.urls)),
+    
     # 直接将自定义路由附加到根路径
     path('shots/<int:pk>/', ShotViewSet.as_view({'delete': 'destroy'}), name='shot-delete-direct'),
     
-    # 其他路由
-    path('', include(router.urls)),
+    # 然后再包含自定义路由
     path('shots/', include(custom_urls)),
     path('shots/', include(shot_note_urls)),
 ] 

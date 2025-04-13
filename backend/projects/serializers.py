@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Project, ProjectDepartment
+import re
 
 class ProjectDepartmentSerializer(serializers.ModelSerializer):
     """项目部门关联序列化器"""
@@ -29,6 +30,26 @@ class ProjectSerializer(serializers.ModelSerializer):
             'departments', 'department_ids'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+    
+    def validate_code(self, value):
+        """
+        验证项目代号格式是否符合规范
+        规范：2-10个字符，只允许字母、数字和连字符，必须以字母开头
+        """
+        # 检查长度
+        if len(value) < 2 or len(value) > 10:
+            raise serializers.ValidationError("项目代号长度必须在2-10个字符之间")
+        
+        # 检查格式：字母开头，只允许字母、数字和连字符
+        if not re.match(r'^[A-Za-z][A-Za-z0-9\-]*$', value):
+            raise serializers.ValidationError("项目代号必须以字母开头，只允许包含字母、数字和连字符")
+        
+        # 检查项目代号唯一性（创建时）
+        if self.instance is None or self.instance.code != value:
+            if Project.objects.filter(code=value).exists():
+                raise serializers.ValidationError("项目代号已被使用")
+                
+        return value
     
     def create(self, validated_data):
         departments = validated_data.pop('department_ids', [])

@@ -195,10 +195,31 @@ export const useShotStore = defineStore('shot', () => {
         console.error('错误详情:', err.response.data)
         
         // 处理常见错误
-        if (err.response.status === 400 && err.response.data.shot_code) {
-          error.value = `镜头号错误: ${err.response.data.shot_code[0]}`
-        } else if (err.response.status === 400 && err.response.data.non_field_errors) {
-          error.value = err.response.data.non_field_errors[0]
+        if (err.response.status === 400) {
+          // 处理日期格式错误
+          if (err.response.data.deadline) {
+            error.value = `截止日期错误: ${err.response.data.deadline[0]}`
+            return null
+          }
+          
+          if (err.response.data.last_submit_date) {
+            error.value = `最近提交日期错误: ${err.response.data.last_submit_date[0]}`
+            return null
+          }
+          
+          // 处理其他字段错误
+          if (err.response.data.shot_code) {
+            error.value = `镜头号错误: ${err.response.data.shot_code[0]}`
+          } else if (err.response.data.non_field_errors) {
+            error.value = err.response.data.non_field_errors[0]
+          } else {
+            const firstErrorField = Object.keys(err.response.data)[0]
+            if (firstErrorField) {
+              error.value = `${firstErrorField}错误: ${err.response.data[firstErrorField][0]}`
+            } else {
+              error.value = '创建镜头失败: ' + (err.response.data.detail || '未知错误')
+            }
+          }
         } else if (err.response.status === 403) {
           error.value = '您没有权限创建镜头'
         } else {

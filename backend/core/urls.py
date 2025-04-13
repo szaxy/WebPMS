@@ -33,7 +33,7 @@ urlpatterns = [
     path('api/auth/', include('users.urls.auth')),
     path('api/users/', include('users.urls.users')),
     path('api/projects/', include('projects.urls')),
-    path('api/shots/', include('shots.urls')),
+    path('api/', include('shots.urls')),
     path('api/comments/', include('comments.urls')),
     path('api/sync/', include('integrations.cgtw.urls')),
 ]

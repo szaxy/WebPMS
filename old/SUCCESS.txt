@@ -1,0 +1,15 @@
+shotStore.js:181 开始创建新镜头: Proxy(Object) {project: 7, shot_code: 'HQTEST101', duration_frame: 24, framepersecond: 24, artist: '', …}
+shotService.js:121 准备创建镜头，请求数据: {project: 7, shot_code: 'HQTEST101', duration_frame: 24, framepersecond: 24, prom_stage: 'LAY', …}
+shotService.js:125 创建镜头API响应: 201
+shotStore.js:185 创建镜头成功: {id: 608, project: 7, project_name: '测试项目-后期', project_code: 'HQ1', shot_code: 'HQTEST101', …}
+ShotManagement.vue:800 开始加载镜头，项目ID: 7
+ShotManagement.vue:824 请求参数: {project: 7, limit: 50, offset: 0, search: undefined}
+shotStore.js:60 fetchShots开始请求，参数: {project: 7, limit: 50, offset: 0, search: undefined}
+shotService.js:43 获取镜头列表，参数: {project: 7, limit: 50, offset: 0, search: undefined}
+shotService.js:48 镜头列表响应状态: 200
+shotService.js:49 镜头列表数据类型: object 不是数组
+shotService.js:51 响应对象属性: (4) ['count', 'next', 'previous', 'results']
+shotStore.js:62 镜头API响应数据类型: object
+shotStore.js:70 成功获取镜头数据(分页): 100 条记录
+ShotManagement.vue:827 API响应: {count: 101, next: 'http://localhost:9704/api/shots/?limit=50&offset=0&page=2&project=7', previous: null, results: Array(100)}
+ShotManagement.vue:838 成功加载 100 个镜头，用户部门: admin

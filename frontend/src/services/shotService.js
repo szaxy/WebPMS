@@ -100,10 +100,41 @@ export default {
       duration_frame: data.duration_frame || 24,
       framepersecond: data.framepersecond || 24,
       prom_stage: data.prom_stage || 'LAY',
-      deadline: data.deadline || null,
-      last_submit_date: data.last_submit_date || null,
-      description: data.description || '',
-      status: data.status || 'waiting'
+      status: data.status || 'waiting',
+      description: data.description || ''
+    }
+    
+    // 处理日期字段 - 增强日期值处理逻辑
+    if (data.deadline) {
+      // 处理Date对象
+      if (data.deadline instanceof Date && !isNaN(data.deadline.getTime())) {
+        // 有效的Date对象，转换为YYYY-MM-DD格式
+        shotData.deadline = data.deadline.toISOString().split('T')[0]
+      } 
+      // 处理字符串
+      else if (typeof data.deadline === 'string') {
+        const trimmed = data.deadline.trim()
+        if (trimmed && /^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+          shotData.deadline = trimmed
+        }
+      }
+      // 其他情况不发送日期字段
+    }
+    
+    if (data.last_submit_date) {
+      // 处理Date对象
+      if (data.last_submit_date instanceof Date && !isNaN(data.last_submit_date.getTime())) {
+        // 有效的Date对象，转换为YYYY-MM-DD格式
+        shotData.last_submit_date = data.last_submit_date.toISOString().split('T')[0]
+      } 
+      // 处理字符串
+      else if (typeof data.last_submit_date === 'string') {
+        const trimmed = data.last_submit_date.trim()
+        if (trimmed && /^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+          shotData.last_submit_date = trimmed
+        }
+      }
+      // 其他情况不发送日期字段
     }
     
     // 如果提供了制作者ID，添加到请求数据
@@ -112,7 +143,8 @@ export default {
     }
     
     console.log('准备创建镜头，请求数据:', shotData)
-    return apiClient.post('/shots/create/', shotData)
+    // 使用标准REST端点，不需要create/
+    return apiClient.post('/shots/', shotData)
       .then(response => {
         console.log('创建镜头API响应:', response.status)
         return response

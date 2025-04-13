@@ -1,0 +1,290 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+
+# WebPMS项目模块开发规范
+
+## 一、后端开发规范
+
+### 1. 路由配置原则
+
+1. **路由层级结构**：
+   - 主URL配置(`core/urls.py`)只负责一级路径分发
+   - 模块URL配置(如`shots/urls.py`)负责内部路由管理
+   - 保持一致的URL前缀：`/api/{模块名}/`
+
+2. **DRF路由器优先级**：
+   ```python
+   # 正确的URL配置顺序
+   urlpatterns = [
+       # 1. 首先包含DefaultRouter的标准路由
+       path('', include(router.urls)),
+       
+       # 2. 然后是特定的自定义路由
+       path('{resource}/<int:pk>/', ViewSet.as_view({'specific': 'action'})),
+       
+       # 3. 最后是可能覆盖标准路由的通配模式
+       path('{resource}/', include(custom_urls)),
+   ]
+   ```
+
+3. **避免路由冲突**：
+   - 不要在多处定义相同路径的路由
+   - 使用明确的路由名称避免冲突
+   - 避免在`core/urls.py`中直接使用视图，而是通过include引入
+
+### 2. 视图集实现规范
+
+1. **标准CRUD操作**：
+   - 继承`ModelViewSet`获取标准CRUD功能
+   - 不要覆盖内置方法，除非有明确需要
+   - 自定义操作使用`@action`装饰器
+
+2. **权限和序列化**：
+   - 每个视图集明确指定`permission_classes`
+   - 使用`get_serializer_class()`为不同操作返回不同序列化器
+
+3. **接口响应格式**：
+   - 成功响应统一包含`message`字段
+   - 批量操作包含`affected_count`或类似计数字段
+
+## 二、前端开发规范
+
+### 1. API服务模块设计
+
+1. **服务命名与组织**：
+   - 每个业务模块创建单独的服务文件(如`shotService.js`)
+   - 服务方法命名遵循动词+名词格式(如`createShot`)
+
+2. **标准REST端点使用**：
+   ```javascript
+   // 标准CRUD操作映射
+   getList: () => apiClient.get('/{resource}/'),
+   getOne: (id) => apiClient.get(`/{resource}/${id}/`),
+   create: (data) => apiClient.post('/{resource}/', data),
+   update: (id, data) => apiClient.patch(`/{resource}/${id}/`, data),
+   delete: (id) => apiClient.delete(`/{resource}/${id}/`)
+   ```
+
+3. **自定义操作处理**：
+   - 使用约定格式：`/{resource}/{id}/{action}/`
+   - 批量操作使用显式路径：`/{resource}/batch-{action}/`
+
+### 2. 状态管理与错误处理
+
+1. **Pinia状态设计**：
+   - 保持扁平化的状态结构
+   - 使用命名一致的action(如`fetchItems`, `createItem`)
+   - 实现标准的错误处理和加载状态跟踪
+
+2. **统一错误处理**：
+   ```javascript
+   try {
+     const response = await service.callMethod(data)
+     // 成功处理
+   } catch (error) {
+     // 提取错误信息
+     const errorMsg = error.response?.data?.detail || '操作失败'
+     // 记录错误码和详情
+     console.error(`错误状态码: ${error.response?.status}`)
+     console.error(`错误详情:`, error.response?.data)
+   }
+   ```
+
+## 三、模块开发流程
+
+### 1. 开发顺序
+
+1. **后端先行**：
+   - 先完成模型设计和迁移
+   - 实现并测试API端点
+   - 用工具(如Postman)验证API行为
+
+2. **前端对接**：
+   - 创建API服务模块
+   - 实现状态管理
+   - 开发UI组件
+
+### 2. 测试检查清单
+
+**后端检查**：
+- [x] 确认模型设计完整且迁移正确
+- [x] URL路由配置没有冲突
+- [x] 权限控制正确
+- [x] 自定义操作添加了`@action`装饰器
+- [x] API响应格式一致
+
+**前端检查**：
+- [x] API服务方法使用正确的HTTP方法和路径
+- [x] 添加了完整的错误处理
+- [x] 处理加载状态和错误状态的UI反馈
+- [x] 请求参数格式符合API要求
+
+## 四、常见问题及预防措施
+
+### 1. 路由冲突问题
+
+**症状**:
+- 405方法不允许错误
+- API能访问但方法不正确
+
+**预防措施**:
+- 新增路由前检查现有URL配置
+- 保持DefaultRouter注册在urlpatterns最前面
+- 使用`django-debug-toolbar`检查路由匹配情况
+
+### 2. 权限问题
+
+**症状**:
+- 403权限错误
+- 401未认证错误
+
+**预防措施**:
+- 明确每个视图集的权限类
+- 测试不同角色的访问权限
+- 保持权限检查粒度一致
+
+### 3. 数据格式问题
+
+**症状**:
+- 400请求格式错误
+- 字段验证失败
+
+**预防措施**:
+- 前端调用前检查数据结构
+- 使用TypeScript或JSDoc定义数据类型
+- 实现请求前的数据验证
+
+## 五、示例模板
+
+### 1. 后端模板
+
+**模型定义**:
+```python
+class NewResource(models.Model):
+    name = models.CharField(max_length=100)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES)
+    # 其他字段...
+    
+    class Meta:
+        ordering = ['name']
+        indexes = [models.Index(fields=['status'])]
+```
+
+**序列化器**:
+```python
+class NewResourceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NewResource
+        fields = ['id', 'name', 'status', ...]
+```
+
+**视图集**:
+```python
+class NewResourceViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = NewResourceSerializer
+    filterset_fields = ['status']
+    search_fields = ['name']
+    
+    def get_queryset(self):
+        # 实现过滤逻辑...
+        return NewResource.objects.all()
+    
+    @action(detail=False, methods=['post'])
+    def batch_action(self, request):
+        # 实现批量操作...
+        return Response({'message': '操作成功', 'count': count})
+```
+
+**URL配置**:
+```python
+router = DefaultRouter()
+router.register('new-resources', NewResourceViewSet)
+
+urlpatterns = [
+    path('', include(router.urls)),
+    # 其他自定义路由...
+]
+```
+
+### 2. 前端模板
+
+**API服务**:
+```javascript
+// newResourceService.js
+export default {
+  getResources(params = {}) {
+    return apiClient.get('/new-resources/', { params })
+  },
+  
+  getResource(id) {
+    return apiClient.get(`/new-resources/${id}/`)
+  },
+  
+  createResource(data) {
+    return apiClient.post('/new-resources/', data)
+  },
+  
+  updateResource(id, data) {
+    return apiClient.patch(`/new-resources/${id}/`, data)
+  },
+  
+  deleteResource(id) {
+    return apiClient.delete(`/new-resources/${id}/`)
+  },
+  
+  batchAction(ids, actionData) {
+    return apiClient.post('/new-resources/batch-action/', { ids, ...actionData })
+  }
+}
+```
+
+**状态管理**:
+```javascript
+// newResourceStore.js
+export const useNewResourceStore = defineStore('newResource', {
+  state: () => ({
+    resources: [],
+    currentResource: null,
+    loading: false,
+    error: null
+  }),
+  
+  actions: {
+    async fetchResources(params = {}) {
+      this.loading = true
+      try {
+        const response = await newResourceService.getResources(params)
+        this.resources = response.data
+      } catch (error) {
+        this.error = '加载资源失败'
+        console.error(error)
+      } finally {
+        this.loading = false
+      }
+    },
+    
+    async createResource(data) {
+      this.loading = true
+      try {
+        const response = await newResourceService.createResource(data)
+        this.resources.push(response.data)
+        return response
+      } catch (error) {
+        this.error = '创建资源失败'
+        console.error(error)
+        throw error
+      } finally {
+        this.loading = false
+      }
+    }
+    
+    // 其他actions...
+  }
+})
+```
+
+遵循这些规范和模板，可以避免镜头添加功能中遇到的问题，确保模块开发的一致性和可靠性。

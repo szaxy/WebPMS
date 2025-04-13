@@ -288,6 +288,13 @@ const submitForm = async () => {
     
     submitting.value = true
     
+    // 调试日期值
+    console.log('编辑对话框提交前日期值:', {
+      deadline: form.deadline,
+      deadline_type: typeof form.deadline,
+      deadline_instanceof_date: form.deadline instanceof Date
+    })
+    
     // 准备提交数据
     const shotData = {
       project: form.project,
@@ -297,9 +304,56 @@ const submitForm = async () => {
       status: form.status,
       artist: form.artist,
       duration_frame: form.duration_frame,
-      deadline: form.deadline,
       description: form.description
     }
+    
+    // 处理日期字段 - 确保日期格式正确
+    if (form.deadline) {
+      // 处理Date对象
+      if (form.deadline instanceof Date && !isNaN(form.deadline.getTime())) {
+        shotData.deadline = form.deadline.toISOString().split('T')[0]
+      } 
+      // 处理字符串
+      else if (typeof form.deadline === 'string') {
+        // 验证日期格式
+        const dateMatch = form.deadline.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+        if (dateMatch) {
+          // 保持格式不变，但确保是合法日期
+          const year = parseInt(dateMatch[1])
+          const month = parseInt(dateMatch[2]) - 1 // JS月份从0开始
+          const day = parseInt(dateMatch[3])
+          
+          const dateObj = new Date(year, month, day)
+          if (
+            dateObj.getFullYear() === year &&
+            dateObj.getMonth() === month &&
+            dateObj.getDate() === day
+          ) {
+            // 日期有效，重新格式化确保一致
+            shotData.deadline = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+          } else {
+            console.error('日期无效:', form.deadline)
+            delete shotData.deadline
+            ElMessage.warning('截止日期无效，将不会保存日期信息')
+          }
+        } else {
+          console.error('日期格式错误:', form.deadline)
+          delete shotData.deadline
+          ElMessage.warning('截止日期格式错误，将不会保存日期信息')
+        }
+      } else {
+        console.error('未知日期类型:', typeof form.deadline)
+        delete shotData.deadline
+        ElMessage.warning('截止日期类型错误，将不会保存日期信息')
+      }
+    }
+    
+    // 最终日期检查日志
+    console.log('最终处理后的日期数据:', {
+      原始日期: form.deadline,
+      处理后日期: shotData.deadline,
+      处理后类型: typeof shotData.deadline
+    })
     
     let result
     if (props.shot) {
