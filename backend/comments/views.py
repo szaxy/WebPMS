@@ -13,6 +13,7 @@ class CommentViewSet(viewsets.ModelViewSet):
     """
     serializer_class = CommentSerializer
     permission_classes = [IsAuthenticated]
+    parser_classes = [parsers.JSONParser, parsers.MultiPartParser, parsers.FormParser]
     
     def get_queryset(self):
         """根据查询参数过滤评论"""
@@ -65,6 +66,17 @@ class CommentViewSet(viewsets.ModelViewSet):
             
         serializer = self.get_serializer(replies, many=True)
         return Response(serializer.data)
+    
+    @action(detail=False, methods=['post'])
+    def with_attachment(self, request):
+        """创建带附件的评论"""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        
+        # 返回创建的评论
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 class AttachmentViewSet(viewsets.ModelViewSet):
     """
@@ -72,7 +84,7 @@ class AttachmentViewSet(viewsets.ModelViewSet):
     """
     serializer_class = AttachmentSerializer
     permission_classes = [IsAuthenticated]
-    parser_classes = [parsers.MultiPartParser, parsers.FormParser]
+    parser_classes = [parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser]
     
     def get_queryset(self):
         return Attachment.objects.all()
@@ -91,4 +103,16 @@ class AttachmentViewSet(viewsets.ModelViewSet):
             serializer.save(comment=comment)
             
         except Comment.DoesNotExist:
-            raise ValueError("评论不存在") 
+            raise ValueError("评论不存在")
+    
+    @action(detail=False, methods=['post'])
+    def upload_clipboard(self, request):
+        """处理剪贴板粘贴上传的图片"""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        attachment = serializer.save()
+        
+        return Response(
+            self.get_serializer(attachment).data,
+            status=status.HTTP_201_CREATED
+        ) 

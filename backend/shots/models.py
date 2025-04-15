@@ -85,4 +85,29 @@ class ShotNote(models.Model):
         ordering = ['-created_at']
         
     def __str__(self):
-        return f"Note for {self.shot.shot_code} by {self.user.username}" 
+        return f"Note for {self.shot.shot_code} by {self.user.username}"
+
+
+class ShotNoteAttachment(models.Model):
+    """镜头备注附件模型，存储备注的附件信息"""
+    
+    note = models.ForeignKey(
+        ShotNote, 
+        on_delete=models.CASCADE, 
+        related_name='attachments',
+        verbose_name=_('关联备注')
+    )
+    file_path = models.FileField(_('文件路径'), upload_to='@attachments/%Y/%m/%d/')
+    thumbnail_path = models.FileField(_('缩略图路径'), upload_to='@attachments/thumbnails/%Y/%m/%d/', null=True, blank=True)
+    file_name = models.CharField(_('文件名'), max_length=255)
+    file_size = models.PositiveIntegerField(_('文件大小'), help_text=_('文件大小(字节)'))
+    mime_type = models.CharField(_('文件类型'), max_length=100)
+    is_image = models.BooleanField(_('是否为图片'), default=False)
+    created_at = models.DateTimeField(_('创建时间'), auto_now_add=True)
+    
+    class Meta:
+        verbose_name = _('备注附件')
+        verbose_name_plural = _('备注附件')
+        
+    def __str__(self):
+        return self.file_name 

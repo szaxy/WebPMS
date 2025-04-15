@@ -31,6 +31,11 @@ echo - 后端端口: %BACKEND_PORT%
 echo - 数据库端口: %DB_PORT%
 echo - Redis端口: %REDIS_PORT%
 
+REM +++ 新增：设置 VITE_API_URL 环境变量 +++
+    set "VITE_API_URL=http://localhost:%BACKEND_PORT%/api"
+    echo 设置前端 API 地址: %VITE_API_URL%
+    REM +++++++++++++++++++++++++++++++++++++++++
+
 echo [步骤 3] 检查必要的离线资源...
 if not exist "offline-resources\python-packages\py3\tomli-2.0.0-py3-none-any.whl" (
     echo 错误: Python离线包不存在!
@@ -87,10 +92,10 @@ set "BACKEND_PORT_ENV=BACKEND_PORT=%BACKEND_PORT%"
 set "DB_PORT_ENV=DB_PORT=%DB_PORT%"
 set "REDIS_PORT_ENV=REDIS_PORT=%REDIS_PORT%"
 
-
-
 echo [步骤 6] 启动后端服务(数据库, redis, 后端)...
 set "COMPOSE_COMMAND=docker-compose -f docker-compose.postgres.yml"
+REM 注意：确保在执行 up 命令时 VITE_API_URL 环境变量可用
+REM docker-compose 默认会读取执行命令的 shell 的环境变量
 %COMPOSE_COMMAND% up -d db redis backend
 echo 等待后端服务初始化...
 timeout /t 15 /nobreak > nul
@@ -112,6 +117,7 @@ if errorlevel 1 (
 )
 
 echo [步骤 8] 启动前端服务...
+REM docker-compose up 会读取 VITE_API_URL
 %COMPOSE_COMMAND% up -d frontend
 echo 等待前端初始化(可能需要1-2分钟)...
 echo 正在解压前端依赖包并启动Vite服务器...

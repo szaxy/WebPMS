@@ -18,7 +18,8 @@ class ProjectSerializer(serializers.ModelSerializer):
     department_ids = serializers.ListField(
         child=serializers.CharField(), 
         write_only=True, 
-        required=False
+        required=True,
+        error_messages={'required': '请至少选择一个部门'}
     )
     
     class Meta:
@@ -30,6 +31,20 @@ class ProjectSerializer(serializers.ModelSerializer):
             'departments', 'department_ids'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+    
+    def validate_start_date(self, value):
+        """验证开始日期，允许为空"""
+        # 如果日期为空，直接返回None
+        if value is None or value == '':
+            return None
+        return value
+    
+    def validate_end_date(self, value):
+        """验证结束日期，允许为空"""
+        # 如果日期为空，直接返回None
+        if value is None or value == '':
+            return None
+        return value
     
     def validate_code(self, value):
         """

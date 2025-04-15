@@ -1,0 +1,102 @@
+ProjectManagement.vue:404 提交项目表单数据: {"id":null,"name":"测试解算","code":"ceshi","status":"in_progress","start_date":"2025-04-15T16:00:00.000Z","end_date":"2025-04-29T16:00:00.000Z","description":"","department_ids":["fx"]}
+projectStore.js:94 创建项目API请求数据: {"id":null,"name":"测试解算","code":"ceshi","status":"in_progress","start_date":"2025-04-15T16:00:00.000Z","end_date":"2025-04-29T16:00:00.000Z","description":"","department_ids":["fx"]}
+projectService.js:59 
+            
+            
+            POST http://localhost:9704/api/projects/ 400 (Bad Request)
+dispatchXhrRequest @ xhr.js:195
+xhr @ xhr.js:15
+dispatchRequest @ dispatchRequest.js:51
+Promise.then
+_request @ Axios.js:163
+request @ Axios.js:40
+httpMethod @ Axios.js:226
+wrap @ bind.js:5
+createProject @ projectService.js:59
+createProject @ projectStore.js:95
+wrappedAction @ pinia.mjs:1399
+store.<computed> @ pinia.mjs:932
+submitProjectForm @ ProjectManagement.vue:416
+await in submitProjectForm
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+emit @ runtime-core.esm-bundler.js:6386
+(匿名) @ runtime-core.esm-bundler.js:8099
+handleClick @ use-button.ts:61
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+invoker @ runtime-dom.esm-bundler.js:729
+projectStore.js:105  Error creating project: AxiosError {message: 'Request failed with status code 400', name: 'AxiosError', code: 'ERR_BAD_REQUEST', config: {…}, request: XMLHttpRequest, …}
+createProject @ projectStore.js:105
+await in createProject
+wrappedAction @ pinia.mjs:1399
+store.<computed> @ pinia.mjs:932
+submitProjectForm @ ProjectManagement.vue:416
+await in submitProjectForm
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+emit @ runtime-core.esm-bundler.js:6386
+(匿名) @ runtime-core.esm-bundler.js:8099
+handleClick @ use-button.ts:61
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+invoker @ runtime-dom.esm-bundler.js:729
+projectStore.js:107  服务器返回错误状态: 400
+createProject @ projectStore.js:107
+await in createProject
+wrappedAction @ pinia.mjs:1399
+store.<computed> @ pinia.mjs:932
+submitProjectForm @ ProjectManagement.vue:416
+await in submitProjectForm
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+emit @ runtime-core.esm-bundler.js:6386
+(匿名) @ runtime-core.esm-bundler.js:8099
+handleClick @ use-button.ts:61
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+invoker @ runtime-dom.esm-bundler.js:729
+projectStore.js:108  服务器返回错误数据: {start_date: Array(1), end_date: Array(1)}
+createProject @ projectStore.js:108
+await in createProject
+wrappedAction @ pinia.mjs:1399
+store.<computed> @ pinia.mjs:932
+submitProjectForm @ ProjectManagement.vue:416
+await in submitProjectForm
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+emit @ runtime-core.esm-bundler.js:6386
+(匿名) @ runtime-core.esm-bundler.js:8099
+handleClick @ use-button.ts:61
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+invoker @ runtime-dom.esm-bundler.js:729
+projectStore.js:30 正在获取项目列表...
+projectService.js:30 项目API调用，参数: {}
+projectStore.js:30 正在获取项目列表...
+projectService.js:30 项目API调用，参数: {}
+projectService.js:33 项目API响应状态: 200
+projectService.js:34 项目API响应数据类型: object 不是数组
+projectService.js:38 项目分页数据 - 总数: 1 当前页数量: 1
+projectStore.js:32 项目API响应: {data: {…}, status: 200, statusText: 'OK', headers: AxiosHeaders, config: {…}, …}
+projectStore.js:37 检测到分页响应，共有 1 个项目
+ShotManagement.vue:815 开始加载镜头，项目ID: 6
+ShotManagement.vue:839 请求参数，包含分页: {project: 6, page_size: 50, page: 1, search: undefined}
+shotStore.js:60 fetchShots开始请求，参数: {project: 6, page_size: 50, page: 1, search: undefined}
+shotService.js:43 获取镜头列表，参数: {project: 6, page_size: 50, page: 1, search: undefined}
+shotService.js:67 转换后的API参数: {project: 6, page_size: 50, page: 1, search: undefined}
+projectService.js:33 项目API响应状态: 200
+projectService.js:34 项目API响应数据类型: object 不是数组
+projectService.js:38 项目分页数据 - 总数: 1 当前页数量: 1
+projectStore.js:32 项目API响应: {data: {…}, status: 200, statusText: 'OK', headers: AxiosHeaders, config: {…}, …}
+projectStore.js:37 检测到分页响应，共有 1 个项目
+shotService.js:72 镜头列表响应状态: 200
+shotService.js:73 镜头列表数据类型: object 不是数组
+shotService.js:75 响应对象属性: (4) ['count', 'next', 'previous', 'results']
+shotService.js:77 获取到分页结果，共 50 条，总数: 300
+shotService.js:78 分页信息: 页码 1 每页 50
+shotStore.js:62 镜头API响应数据类型: object
+shotStore.js:70 成功获取镜头数据(分页): 50 条记录, 总数: 300 页码: 1 每页: 50
+ShotManagement.vue:842 API响应: {count: 300, next: 'http://localhost:9704/api/shots/?page=2&page_size=50&project=6', previous: null, results: Array(50)}
+ShotManagement.vue:847 总记录数: 300, 当前页: 1, 每页条数: 50
+ShotManagement.vue:860 成功加载 50 个镜头，第 1 页，共 6 页

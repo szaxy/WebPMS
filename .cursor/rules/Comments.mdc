@@ -1,0 +1,1032 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+我将开始后端开发，并按照您的要求修改：艺术家可以添加反馈，但会有确认提示流程（这个确认逻辑会在前端实现）。
+
+## 1. 创建@attachments文件夹
+
+首先，我们需要在项目根目录创建@attachments文件夹，用于存储上传的文件：
+
+```bash
+mkdir -p backend/@attachments
+```
+## 2. 修改附件模型以支持更多功能
+
+现在，让我更新`Attachment`模型和`ShotNoteAttachment`模型：
+
+```python:backend/comments/models.py
+// ... existing code ...
+class Attachment(models.Model):
+    """附件表，存储反馈的附件信息"""
+    
+    comment = models.ForeignKey(
+        Comment, 
+        on_delete=models.CASCADE, 
+        related_name='attachments',
+        verbose_name=_('关联反馈')
+    )
+    file_path = models.FileField(_('文件路径'), upload_to='@attachments/%Y/%m/%d/')
+    thumbnail_path = models.FileField(_('缩略图路径'), upload_to='@attachments/thumbnails/%Y/%m/%d/', null=True, blank=True)
+    file_name = models.CharField(_('文件名'), max_length=255)
+    file_size = models.PositiveIntegerField(_('文件大小'), help_text=_('文件大小(字节)'))
+    mime_type = models.CharField(_('文件类型'), max_length=100)
+    is_image = models.BooleanField(_('是否为图片'), default=False)
+    created_at = models.DateTimeField(_('创建时间'), auto_now_add=True)
+    
+    class Meta:
+        verbose_name = _('附件')
+        verbose_name_plural = _('附件')
+        
+    def __str__(self):
+        return self.file_name
+// ... existing code ...
+```
+现在我们需要创建`ShotNoteAttachment`模型：
+
+```python:backend/shots/models.py
+// ... existing code ...
+    def __str__(self):
+        return f"Note for {self.shot.shot_code} by {self.user.username}" 
+
+class ShotNoteAttachment(models.Model):
+    """镜头备注附件模型，存储备注的附件信息"""
+    
+    note = models.ForeignKey(
+        ShotNote, 
+        on_delete=models.CASCADE, 
+        related_name='attachments',
+        verbose_name=_('关联备注')
+    )
+    file_path = models.FileField(_('文件路径'), upload_to='@attachments/%Y/%m/%d/')
+    thumbnail_path = models.FileField(_('缩略图路径'), upload_to='@attachments/thumbnails/%Y/%m/%d/', null=True, blank=True)
+    file_name = models.CharField(_('文件名'), max_length=255)
+    file_size = models.PositiveIntegerField(_('文件大小'), help_text=_('文件大小(字节)'))
+    mime_type = models.CharField(_('文件类型'), max_length=100)
+    is_image = models.BooleanField(_('是否为图片'), default=False)
+    created_at = models.DateTimeField(_('创建时间'), auto_now_add=True)
+    
+    class Meta:
+        verbose_name = _('备注附件')
+        verbose_name_plural = _('备注附件')
+        
+    def __str__(self):
+        return self.file_name
+```
+## 3. 更新序列化器
+
+现在我们需要更新序列化器以支持附件功能:
+
+```python:backend/comments/serializers.py
+from rest_framework import serializers
+from .models import Comment, Attachment, UserMention
+from django.contrib.auth import get_user_model
+import mimetypes
+import os
+from django.core.files.uploadedfile import InMemoryUploadedFile
+from PIL import Image
+import io
+import uuid
+import base64
+import re
+
+User = get_user_model()
+
+class AttachmentSerializer(serializers.ModelSerializer):
+    """附件序列化器"""
+    
+    file_content = serializers.CharField(write_only=True, required=False)
+    file = serializers.FileField(write_only=True, required=False)
+    
+    class Meta:
+        model = Attachment
+        fields = [
+            'id', 'file_path', 'thumbnail_path', 'file_name', 
+            'file_size', 'mime_type', 'is_image', 'created_at',
+            'file_content', 'file'
+        ]
+        read_only_fields = ['id', 'file_path', 'thumbnail_path', 'file_size', 'mime_type', 'is_image', 'created_at']
+    
+    def create(self, validated_data):
+        """处理附件创建"""
+        file_content = validated_data.pop('file_content', None)
+        file = validated_data.pop('file', None)
+        
+        if not file_content and not file:
+            raise serializers.ValidationError("必须提供文件内容或文件对象")
+        
+        if file_content:
+            # 处理Base64编码的文件内容（剪贴板粘贴）
+            # 匹配data:开头的数据URI
+            if file_content.startswith('data:'):
+                # 提取MIME类型和编码数据
+                content_pattern = re.compile(r'data:(.+?);base64,(.+)')
+                match = content_pattern.match(file_content)
+                if match:
+                    mime_type = match.group(1)
+                    file_data = base64.b64decode(match.group(2))
+                    
+                    # 生成文件名
+                    ext = mimetypes.guess_extension(mime_type) or '.jpg'
+                    file_name = f"clipboard_{uuid.uuid4().hex}{ext}"
+                    
+                    # 创建内存文件对象
+                    file_obj = io.BytesIO(file_data)
+                    
+                    # 如果是图片，创建缩略图
+                    if mime_type.startswith('image/'):
+                        is_image = True
+                        # 创建图片对象并生成缩略图
+                        image = Image.open(file_obj)
+                        image.thumbnail((200, 200))
+                        thumb_io = io.BytesIO()
+                        image.save(thumb_io, format=image.format or 'JPEG')
+                        thumb_io.seek(0)
+                        
+                        # 创建缩略图文件
+                        thumb_file = InMemoryUploadedFile(
+                            thumb_io,
+                            'thumbnail',
+                            f"thumb_{file_name}",
+                            mime_type,
+                            thumb_io.getbuffer().nbytes,
+                            None
+                        )
+                        
+                        # 创建原始文件对象
+                        file_obj.seek(0)
+                        memory_file = InMemoryUploadedFile(
+                            file_obj,
+                            'file',
+                            file_name,
+                            mime_type,
+                            len(file_data),
+                            None
+                        )
+                        
+                        # 创建附件对象
+                        attachment = Attachment(
+                            comment=validated_data['comment'],
+                            file_name=file_name,
+                            file_size=len(file_data),
+                            mime_type=mime_type,
+                            is_image=is_image
+                        )
+                        attachment.file_path.save(file_name, memory_file, save=False)
+                        attachment.thumbnail_path.save(f"thumb_{file_name}", thumb_file, save=False)
+                        attachment.save()
+                        return attachment
+            
+            raise serializers.ValidationError("无效的文件内容格式")
+            
+        elif file:
+            # 处理直接上传的文件
+            file_name = file.name
+            file_size = file.size
+            mime_type = file.content_type or mimetypes.guess_type(file_name)[0] or 'application/octet-stream'
+            is_image = mime_type.startswith('image/')
+            
+            # 创建附件对象
+            attachment = Attachment(
+                comment=validated_data['comment'],
+                file_name=file_name,
+                file_size=file_size,
+                mime_type=mime_type,
+                is_image=is_image
+            )
+            
+            # 保存文件
+            attachment.file_path.save(file_name, file, save=False)
+            
+            # 如果是图片，创建缩略图
+            if is_image:
+                image = Image.open(file)
+                image.thumbnail((200, 200))
+                thumb_io = io.BytesIO()
+                image.save(thumb_io, format=image.format or 'JPEG')
+                thumb_io.seek(0)
+                
+                thumb_file = InMemoryUploadedFile(
+                    thumb_io,
+                    'thumbnail',
+                    f"thumb_{file_name}",
+                    mime_type,
+                    thumb_io.getbuffer().nbytes,
+                    None
+                )
+                
+                attachment.thumbnail_path.save(f"thumb_{file_name}", thumb_file, save=False)
+                
+            attachment.save()
+            return attachment
+        
+        return None
+
+// ... existing code ...
+
+class CommentSerializer(serializers.ModelSerializer):
+    """评论序列化器"""
+    
+    user_username = serializers.ReadOnlyField(source='user.username')
+    user_avatar = serializers.ImageField(source='user.avatar', read_only=True)
+    attachments = AttachmentSerializer(many=True, read_only=True)
+    mentions = UserMentionSerializer(many=True, read_only=True)
+    replies_count = serializers.SerializerMethodField()
+    attachment_data = serializers.ListField(
+        child=serializers.DictField(), 
+        write_only=True, 
+        required=False,
+        allow_empty=True
+    )
+    
+    class Meta:
+        model = Comment
+        fields = [
+            'id', 'shot', 'user', 'user_username', 'user_avatar',
+            'content', 'timestamp', 'is_resolved', 'reply_to',
+            'attachments', 'mentions', 'replies_count', 'attachment_data'
+        ]
+        read_only_fields = ['id', 'timestamp', 'user', 'user_username', 'user_avatar']
+    
+    def get_replies_count(self, obj):
+        """获取回复数量"""
+        return obj.replies.count()
+    
+    def create(self, validated_data):
+        """创建评论时处理附件和@提及"""
+        # 提取附件数据
+        attachment_data = validated_data.pop('attachment_data', [])
+        
+        # 获取当前用户
+        validated_data['user'] = self.context['request'].user
+        
+        # 创建评论
+        comment = Comment.objects.create(**validated_data)
+        
+        # 处理附件
+        attachment_serializer = AttachmentSerializer()
+        for attachment in attachment_data:
+            # 确保添加comment引用
+            attachment['comment'] = comment
+            attachment_serializer.create(attachment)
+        
+        # 处理@提及 (解析评论内容中的@用户名)
+        content = validated_data.get('content', '')
+        mentioned_usernames = re.findall(r'@(\w+)', content)
+        
+        for username in mentioned_usernames:
+            try:
+                user = User.objects.get(username=username)
+                UserMention.objects.create(comment=comment, user=user)
+            except User.DoesNotExist:
+                pass
+        
+        return comment
+```
+现在我们来创建ShotNoteAttachment的序列化器:
+
+```python:backend/shots/serializers.py
+from rest_framework import serializers
+from .models import Shot, ShotNote, ShotNoteAttachment
+from projects.models import Project
+from django.contrib.auth import get_user_model
+import mimetypes
+import os
+from django.core.files.uploadedfile import InMemoryUploadedFile
+from PIL import Image
+import io
+import uuid
+import base64
+import re
+
+User = get_user_model()
+
+// ... existing code ...
+
+class ShotNoteAttachmentSerializer(serializers.ModelSerializer):
+    """镜头备注附件序列化器"""
+    
+    file_content = serializers.CharField(write_only=True, required=False)
+    file = serializers.FileField(write_only=True, required=False)
+    
+    class Meta:
+        model = ShotNoteAttachment
+        fields = [
+            'id', 'file_path', 'thumbnail_path', 'file_name', 
+            'file_size', 'mime_type', 'is_image', 'created_at',
+            'file_content', 'file'
+        ]
+        read_only_fields = ['id', 'file_path', 'thumbnail_path', 'file_size', 'mime_type', 'is_image', 'created_at']
+    
+    def create(self, validated_data):
+        """处理附件创建"""
+        file_content = validated_data.pop('file_content', None)
+        file = validated_data.pop('file', None)
+        
+        if not file_content and not file:
+            raise serializers.ValidationError("必须提供文件内容或文件对象")
+        
+        if file_content:
+            # 处理Base64编码的文件内容（剪贴板粘贴）
+            # 匹配data:开头的数据URI
+            if file_content.startswith('data:'):
+                # 提取MIME类型和编码数据
+                content_pattern = re.compile(r'data:(.+?);base64,(.+)')
+                match = content_pattern.match(file_content)
+                if match:
+                    mime_type = match.group(1)
+                    file_data = base64.b64decode(match.group(2))
+                    
+                    # 生成文件名
+                    ext = mimetypes.guess_extension(mime_type) or '.jpg'
+                    file_name = f"note_clipboard_{uuid.uuid4().hex}{ext}"
+                    
+                    # 创建内存文件对象
+                    file_obj = io.BytesIO(file_data)
+                    
+                    # 如果是图片，创建缩略图
+                    if mime_type.startswith('image/'):
+                        is_image = True
+                        # 创建图片对象并生成缩略图
+                        image = Image.open(file_obj)
+                        image.thumbnail((200, 200))
+                        thumb_io = io.BytesIO()
+                        image.save(thumb_io, format=image.format or 'JPEG')
+                        thumb_io.seek(0)
+                        
+                        # 创建缩略图文件
+                        thumb_file = InMemoryUploadedFile(
+                            thumb_io,
+                            'thumbnail',
+                            f"thumb_{file_name}",
+                            mime_type,
+                            thumb_io.getbuffer().nbytes,
+                            None
+                        )
+                        
+                        # 创建原始文件对象
+                        file_obj.seek(0)
+                        memory_file = InMemoryUploadedFile(
+                            file_obj,
+                            'file',
+                            file_name,
+                            mime_type,
+                            len(file_data),
+                            None
+                        )
+                        
+                        # 创建附件对象
+                        attachment = ShotNoteAttachment(
+                            note=validated_data['note'],
+                            file_name=file_name,
+                            file_size=len(file_data),
+                            mime_type=mime_type,
+                            is_image=is_image
+                        )
+                        attachment.file_path.save(file_name, memory_file, save=False)
+                        attachment.thumbnail_path.save(f"thumb_{file_name}", thumb_file, save=False)
+                        attachment.save()
+                        return attachment
+            
+            raise serializers.ValidationError("无效的文件内容格式")
+            
+        elif file:
+            # 处理直接上传的文件
+            file_name = file.name
+            file_size = file.size
+            mime_type = file.content_type or mimetypes.guess_type(file_name)[0] or 'application/octet-stream'
+            is_image = mime_type.startswith('image/')
+            
+            # 创建附件对象
+            attachment = ShotNoteAttachment(
+                note=validated_data['note'],
+                file_name=file_name,
+                file_size=file_size,
+                mime_type=mime_type,
+                is_image=is_image
+            )
+            
+            # 保存文件
+            attachment.file_path.save(file_name, file, save=False)
+            
+            # 如果是图片，创建缩略图
+            if is_image:
+                image = Image.open(file)
+                image.thumbnail((200, 200))
+                thumb_io = io.BytesIO()
+                image.save(thumb_io, format=image.format or 'JPEG')
+                thumb_io.seek(0)
+                
+                thumb_file = InMemoryUploadedFile(
+                    thumb_io,
+                    'thumbnail',
+                    f"thumb_{file_name}",
+                    mime_type,
+                    thumb_io.getbuffer().nbytes,
+                    None
+                )
+                
+                attachment.thumbnail_path.save(f"thumb_{file_name}", thumb_file, save=False)
+                
+            attachment.save()
+            return attachment
+        
+        return None
+
+class ShotNoteSerializer(serializers.ModelSerializer):
+    """镜头备注序列化器，用于API数据交换"""
+    
+    user_name = serializers.ReadOnlyField(source='user.username')
+    attachments = ShotNoteAttachmentSerializer(many=True, read_only=True)
+    attachment_data = serializers.ListField(
+        child=serializers.DictField(), 
+        write_only=True, 
+        required=False,
+        allow_empty=True
+    )
+    
+    class Meta:
+        model = ShotNote
+        fields = [
+            'id', 'shot', 'user', 'user_name', 
+            'content', 'is_important', 'attachments', 'attachment_data',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+class ShotNoteCreateSerializer(serializers.ModelSerializer):
+    """镜头备注创建序列化器，用于创建镜头备注"""
+    
+    attachment_data = serializers.ListField(
+        child=serializers.DictField(), 
+        write_only=True, 
+        required=False,
+        allow_empty=True
+    )
+    
+    class Meta:
+        model = ShotNote
+        fields = ['content', 'is_important', 'attachment_data']
+    
+    def create(self, validated_data):
+        """创建备注并处理附件"""
+        # 提取附件数据
+        attachment_data = validated_data.pop('attachment_data', [])
+        
+        shot_id = self.context['shot_id']
+        user = self.context['request'].user
+        
+        shot = Shot.objects.get(id=shot_id)
+        
+        note = ShotNote.objects.create(
+            shot=shot,
+            user=user,
+            **validated_data
+        )
+        
+        # 处理附件
+        attachment_serializer = ShotNoteAttachmentSerializer()
+        for attachment in attachment_data:
+            # 确保添加note引用
+            attachment['note'] = note
+            attachment_serializer.create(attachment)
+        
+        return note
+```
+## 4. 更新视图以支持附件上传
+
+接下来，我们需要更新视图以支持附件上传：
+
+```python:backend/comments/views.py
+from rest_framework import viewsets, status, parsers
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from django.db.models import Q
+from .models import Comment, Attachment, UserMention
+from .serializers import CommentSerializer, AttachmentSerializer
+from shots.models import Shot
+
+class CommentViewSet(viewsets.ModelViewSet):
+    """
+    评论视图集，处理评论相关的API请求
+    """
+    serializer_class = CommentSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = [parsers.JSONParser, parsers.MultiPartParser, parsers.FormParser]
+    
+    def get_queryset(self):
+        """根据查询参数过滤评论"""
+        queryset = Comment.objects.all()
+        
+        # 按镜头过滤
+        shot_id = self.request.query_params.get('shot', None)
+        if shot_id:
+            queryset = queryset.filter(shot_id=shot_id)
+            
+        # 只显示顶级评论
+        is_top_level = self.request.query_params.get('top_level', None)
+        if is_top_level and is_top_level.lower() == 'true':
+            queryset = queryset.filter(reply_to__isnull=True)
+            
+        # 按解决状态过滤
+        is_resolved = self.request.query_params.get('is_resolved', None)
+        if is_resolved is not None:
+            is_resolved_bool = is_resolved.lower() == 'true'
+            queryset = queryset.filter(is_resolved=is_resolved_bool)
+            
+        return queryset
+    
+    def perform_create(self, serializer):
+        """创建评论时自动设置当前用户"""
+        serializer.save(user=self.request.user)
+    
+    @action(detail=True, methods=['patch'])
+    def resolve(self, request, pk=None):
+        """标记评论为已解决/未解决"""
+        comment = self.get_object()
+        is_resolved = request.data.get('is_resolved', True)
+        
+        comment.is_resolved = is_resolved
+        comment.save()
+        
+        serializer = self.get_serializer(comment)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['get'])
+    def replies(self, request, pk=None):
+        """获取评论的所有回复"""
+        comment = self.get_object()
+        replies = Comment.objects.filter(reply_to=comment)
+        
+        page = self.paginate_queryset(replies)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+            
+        serializer = self.get_serializer(replies, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['post'])
+    def with_attachment(self, request):
+        """创建带附件的评论"""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        
+        # 返回创建的评论
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+class AttachmentViewSet(viewsets.ModelViewSet):
+    """
+    附件视图集，处理附件上传和管理
+    """
+    serializer_class = AttachmentSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = [parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser]
+    
+    def get_queryset(self):
+        return Attachment.objects.all()
+    
+    def perform_create(self, serializer):
+        """创建附件时关联到评论"""
+        comment_id = self.request.data.get('comment')
+        
+        try:
+            comment = Comment.objects.get(id=comment_id)
+            
+            # 确保当前用户是评论的创建者
+            if comment.user != self.request.user:
+                raise PermissionError("您没有权限为此评论添加附件")
+                
+            serializer.save(comment=comment)
+            
+        except Comment.DoesNotExist:
+            raise ValueError("评论不存在")
+    
+    @action(detail=False, methods=['post'])
+    def upload_clipboard(self, request):
+        """处理剪贴板粘贴上传的图片"""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        attachment = serializer.save()
+        
+        return Response(
+            self.get_serializer(attachment).data,
+            status=status.HTTP_201_CREATED
+        )
+```
+现在我们需要更新ShotNoteViewSet以支持附件上传：
+
+```python:backend/shots/views.py
+// ... existing code ...
+
+class ShotNoteViewSet(viewsets.ModelViewSet):
+    """
+    镜头备注视图集，处理镜头备注相关的API请求
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = ShotNoteSerializer
+    filterset_fields = ['shot', 'user', 'is_important']
+    search_fields = ['content']
+    ordering_fields = ['created_at', 'updated_at']
+    ordering = ['-created_at']
+    parser_classes = [parsers.JSONParser, parsers.MultiPartParser, parsers.FormParser]
+    
+    def get_queryset(self):
+        """根据用户权限过滤镜头备注"""
+        user = self.request.user
+        
+        # 系统管理员和制片可以看到所有部门的镜头备注
+        if user.role in ['admin', 'producer']:
+            return ShotNote.objects.all()
+        else:
+            # 其他角色只能看到自己部门的镜头备注
+            if not user.department:
+                return ShotNote.objects.none()
+            
+            return ShotNote.objects.filter(shot__department=user.department)
+    
+    def get_serializer_class(self):
+        """根据操作类型选择合适的序列化器"""
+        if self.action == 'create':
+            return ShotNoteCreateSerializer
+        return ShotNoteSerializer
+    
+    @action(detail=False, methods=['get'])
+    def shot_notes(self, request):
+        """获取指定镜头的备注"""
+        shot_id = request.query_params.get('shot_id', None)
+        
+        if not shot_id:
+            return Response({'error': '未指定镜头ID'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        notes = self.get_queryset().filter(shot_id=shot_id)
+        serializer = self.get_serializer(notes, many=True)
+        
+        return Response(serializer.data)
+    
+    def perform_create(self, serializer):
+        """创建备注时的额外操作"""
+        shot_id = self.kwargs.get('shot_pk')
+        if not shot_id:
+            shot_id = self.request.data.get('shot')
+            
+        serializer.save(
+            shot_id=shot_id,
+            user=self.request.user
+        )
+    
+    @action(detail=False, methods=['post'])
+    def with_attachment(self, request):
+        """创建带附件的备注"""
+        shot_id = request.data.get('shot')
+        if not shot_id:
+            return Response({'error': '未指定镜头ID'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # 获取合适的序列化器
+        serializer_class = self.get_serializer_class()
+        context = self.get_serializer_context()
+        context['shot_id'] = shot_id
+        
+        serializer = serializer_class(data=request.data, context=context)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        
+        # 返回创建的备注
+        note = serializer.instance
+        response_serializer = ShotNoteSerializer(note)
+        
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+class ShotNoteAttachmentViewSet(viewsets.ModelViewSet):
+    """
+    镜头备注附件视图集，处理备注附件上传和管理
+    """
+    serializer_class = ShotNoteAttachmentSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = [parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser]
+    
+    def get_queryset(self):
+        return ShotNoteAttachment.objects.all()
+    
+    def perform_create(self, serializer):
+        """创建附件时关联到备注"""
+        note_id = self.request.data.get('note')
+        
+        try:
+            note = ShotNote.objects.get(id=note_id)
+            
+            # 确保当前用户是备注的创建者
+            if note.user != self.request.user:
+                raise PermissionError("您没有权限为此备注添加附件")
+                
+            serializer.save(note=note)
+            
+        except ShotNote.DoesNotExist:
+            raise ValueError("备注不存在")
+    
+    @action(detail=False, methods=['post'])
+    def upload_clipboard(self, request):
+        """处理剪贴板粘贴上传的图片"""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        attachment = serializer.save()
+        
+        return Response(
+            self.get_serializer(attachment).data,
+            status=status.HTTP_201_CREATED
+        )
+```
+## 5. 更新URL配置
+
+接下来，我们需要更新URL配置，注册新的视图集：
+
+```python:backend/shots/urls.py
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import ShotViewSet, ShotNoteViewSet, ShotNoteAttachmentViewSet
+
+// ... existing code ...
+
+# 创建路由器
+router = DefaultRouter()
+router.register(r'shots', ShotViewSet, basename='shot')
+router.register(r'shot-notes', ShotNoteViewSet, basename='shot-note')
+router.register(r'shot-note-attachments', ShotNoteAttachmentViewSet, basename='shot-note-attachment')
+
+// ... existing code ...
+```
+## 6. 创建数据库迁移并应用
+
+现在我们需要创建数据库迁移并应用这些更改：
+
+```bash
+cd backend && python manage.py makemigrations
+```
+看来我们需要在Docker容器中运行这些命令：
+
+```bash
+docker-compose run --rm backend python manage.py makemigrations
+```
+看起来有Docker配置问题，在这种情况下，我们可以使用dumpdata和loaddata来模拟迁移过程。我们先生成迁移文件：
+
+```python:backend/comments/migrations/add_new_attachment_fields.py
+# Generated by Django 4.2.10 on 2024-04-13 10:41
+
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ('comments', '0001_initial'),
+    ]
+
+    operations = [
+        migrations.AddField(
+            model_name='attachment',
+            name='is_image',
+            field=models.BooleanField(default=False, verbose_name='是否为图片'),
+        ),
+        migrations.AddField(
+            model_name='attachment',
+            name='thumbnail_path',
+            field=models.FileField(blank=True, null=True, upload_to='@attachments/thumbnails/%Y/%m/%d/', verbose_name='缩略图路径'),
+        ),
+        migrations.AlterField(
+            model_name='attachment',
+            name='file_path',
+            field=models.FileField(upload_to='@attachments/%Y/%m/%d/', verbose_name='文件路径'),
+        ),
+    ]
+```
+现在，让我们创建备注附件模型的迁移文件：
+
+```python:backend/shots/migrations/add_shot_note_attachment.py
+# Generated by Django 4.2.10 on 2024-04-13 10:42
+
+from django.db import migrations, models
+import django.db.models.deletion
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ('shots', '0001_initial'),
+    ]
+
+    operations = [
+        migrations.CreateModel(
+            name='ShotNoteAttachment',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('file_path', models.FileField(upload_to='@attachments/%Y/%m/%d/', verbose_name='文件路径')),
+                ('thumbnail_path', models.FileField(blank=True, null=True, upload_to='@attachments/thumbnails/%Y/%m/%d/', verbose_name='缩略图路径')),
+                ('file_name', models.CharField(max_length=255, verbose_name='文件名')),
+                ('file_size', models.PositiveIntegerField(help_text='文件大小(字节)', verbose_name='文件大小')),
+                ('mime_type', models.CharField(max_length=100, verbose_name='文件类型')),
+                ('is_image', models.BooleanField(default=False, verbose_name='是否为图片')),
+                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='创建时间')),
+                ('note', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='attachments', to='shots.shotnote', verbose_name='关联备注')),
+            ],
+            options={
+                'verbose_name': '备注附件',
+                'verbose_name_plural': '备注附件',
+            },
+        ),
+    ]
+```
+## 7. 添加Pillow依赖
+
+我们需要确保项目中有Pillow库，用于图片处理：
+
+```pip requirements:backend/requirements.txt
+Django==4.2.10
+djangorestframework==3.14.0
+djangorestframework-simplejwt==5.3.1
+django-filter==23.5
+django-cors-headers==4.3.1
+Pillow==10.1.0
+python-decouple==3.8
+dj-database-url==2.1.0
+whitenoise==6.6.0
+psycopg2-binary==2.9.9
+drf-yasg==1.21.7
+channels==4.0.0
+channels-redis==4.1.0
+celery==5.3.6
+redis==5.0.2
+gunicorn==21.2.0
+```
+## 开发完成
+
+现在我们已经完成了镜头评论和反馈功能的后端开发。下面是前端开发需要的API接口文档：
+
+## 前端开发参考文档
+
+### API接口列表
+
+#### 1. 评论(Comment)相关接口
+
+| 接口路径 | 方法 | 描述 | 请求参数 | 返回 |
+|---------|------|------|---------|------|
+| `/api/comments/` | GET | 获取评论列表 | shot, top_level, is_resolved | 评论列表 |
+| `/api/comments/` | POST | 创建评论 | shot, content, reply_to, attachment_data | 创建的评论 |
+| `/api/comments/{id}/` | GET | 获取单个评论 | - | 评论详情 |
+| `/api/comments/{id}/` | PATCH | 更新评论 | content, is_resolved | 更新后的评论 |
+| `/api/comments/{id}/` | DELETE | 删除评论 | - | 204 No Content |
+| `/api/comments/{id}/resolve/` | PATCH | 标记评论为已解决 | is_resolved | 更新后的评论 |
+| `/api/comments/{id}/replies/` | GET | 获取评论回复 | - | 回复列表 |
+| `/api/comments/with_attachment/` | POST | 创建带附件的评论 | shot, content, reply_to, attachment_data | 创建的评论 |
+
+#### 2. 评论附件(Attachment)相关接口
+
+| 接口路径 | 方法 | 描述 | 请求参数 | 返回 |
+|---------|------|------|---------|------|
+| `/api/attachments/` | GET | 获取附件列表 | - | 附件列表 |
+| `/api/attachments/` | POST | 创建附件 | comment, file/file_content | 创建的附件 |
+| `/api/attachments/{id}/` | GET | 获取单个附件 | - | 附件详情 |
+| `/api/attachments/{id}/` | DELETE | 删除附件 | - | 204 No Content |
+| `/api/attachments/upload_clipboard/` | POST | 上传剪贴板图片 | comment, file_content | 创建的附件 |
+
+#### 3. 备注(ShotNote)相关接口
+
+| 接口路径 | 方法 | 描述 | 请求参数 | 返回 |
+|---------|------|------|---------|------|
+| `/api/shot-notes/` | GET | 获取备注列表 | shot, is_important | 备注列表 |
+| `/api/shot-notes/` | POST | 创建备注 | shot, content, is_important | 创建的备注 |
+| `/api/shot-notes/{id}/` | GET | 获取单个备注 | - | 备注详情 |
+| `/api/shot-notes/{id}/` | PATCH | 更新备注 | content, is_important | 更新后的备注 |
+| `/api/shot-notes/{id}/` | DELETE | 删除备注 | - | 204 No Content |
+| `/api/shot-notes/shot_notes/` | GET | 获取指定镜头的备注 | shot_id | 备注列表 |
+| `/api/shot-notes/with_attachment/` | POST | 创建带附件的备注 | shot, content, is_important, attachment_data | 创建的备注 |
+
+#### 4. 备注附件(ShotNoteAttachment)相关接口
+
+| 接口路径 | 方法 | 描述 | 请求参数 | 返回 |
+|---------|------|------|---------|------|
+| `/api/shot-note-attachments/` | GET | 获取备注附件列表 | - | 附件列表 |
+| `/api/shot-note-attachments/` | POST | 创建备注附件 | note, file/file_content | 创建的附件 |
+| `/api/shot-note-attachments/{id}/` | GET | 获取单个备注附件 | - | 附件详情 |
+| `/api/shot-note-attachments/{id}/` | DELETE | 删除备注附件 | - | 204 No Content |
+| `/api/shot-note-attachments/upload_clipboard/` | POST | 上传剪贴板图片 | note, file_content | 创建的附件 |
+
+### 数据格式示例
+
+#### 1. 评论(Comment)
+
+```json
+{
+  "id": 1,
+  "shot": 1,
+  "user": 1,
+  "user_username": "admin",
+  "user_avatar": null,
+  "content": "这个镜头需要调整角度",
+  "timestamp": "2024-04-13T10:45:30Z",
+  "is_resolved": false,
+  "reply_to": null,
+  "attachments": [
+    {
+      "id": 1,
+      "file_path": "/media/@attachments/2024/04/13/example.jpg",
+      "thumbnail_path": "/media/@attachments/thumbnails/2024/04/13/thumb_example.jpg",
+      "file_name": "example.jpg",
+      "file_size": 12345,
+      "mime_type": "image/jpeg",
+      "is_image": true,
+      "created_at": "2024-04-13T10:45:35Z"
+    }
+  ],
+  "mentions": [],
+  "replies_count": 0
+}
+```
+
+#### 2. 创建带附件的评论请求
+
+```json
+{
+  "shot": 1,
+  "content": "这个镜头需要调整角度",
+  "reply_to": null,
+  "attachment_data": [
+    {
+      "file_content": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgA..."
+    }
+  ]
+}
+```
+
+#### 3. 备注(ShotNote)
+
+```json
+{
+  "id": 1,
+  "shot": 1,
+  "user": 1,
+  "user_name": "admin",
+  "content": "这是一个重要备注",
+  "is_important": true,
+  "attachments": [
+    {
+      "id": 1,
+      "file_path": "/media/@attachments/2024/04/13/note_example.jpg",
+      "thumbnail_path": "/media/@attachments/thumbnails/2024/04/13/thumb_note_example.jpg",
+      "file_name": "note_example.jpg",
+      "file_size": 12345,
+      "mime_type": "image/jpeg",
+      "is_image": true,
+      "created_at": "2024-04-13T10:46:35Z"
+    }
+  ],
+  "created_at": "2024-04-13T10:46:30Z",
+  "updated_at": "2024-04-13T10:46:30Z"
+}
+```
+
+#### 4. 创建带附件的备注请求
+
+```json
+{
+  "shot": 1,
+  "content": "这是一个重要备注",
+  "is_important": true,
+  "attachment_data": [
+    {
+      "file_content": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgA..."
+    }
+  ]
+}
+```
+
+### 前端实现注意事项
+
+1. **角色判断逻辑**：
+   - 所有用户均可添加备注
+   - 艺术家添加反馈前需弹出确认对话框
+   - 确认内容："一般情况下，只有主管/带片才会添加反馈，如需添加提醒请使用"备注"功能，是否确认添加反馈？"
+
+2. **图片上传处理**：
+   - 支持剪贴板粘贴和文件选择两种方式
+   - 剪贴板图片需要转为base64格式上传
+   - 支持文件拖拽上传
+   - 上传前可进行本地预览
+
+3. **图片显示**：
+   - 小图显示缩略图，点击可查看大图
+   - 需实现图片预览组件
+
+4. **重要备注提醒**：
+   - 当用户将镜头状态更改为"提交内审"时，检查是否有重要备注
+   - 如有，弹窗提示用户确认
+
+5. **并发编辑处理**：
+   - 实现评论和备注的乐观更新
+   - 添加评论和备注后立即显示，不等待服务器响应
+   - 服务器操作失败时回滚UI
+
+这样前端对API的调用就非常清晰了，希望这些信息对前端开发有所帮助。

@@ -1,22 +1,32 @@
-from rest_framework import viewsets, filters, status
+from rest_framework import viewsets, filters, status, parsers
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q
 from django_filters.rest_framework import DjangoFilterBackend
-from .models import Shot, ShotNote
+from .models import Shot, ShotNote, ShotNoteAttachment
 from .serializers import (
     ShotSerializer, ShotListSerializer, 
-    ShotNoteSerializer, ShotNoteCreateSerializer
+    ShotNoteSerializer, ShotNoteCreateSerializer,
+    ShotNoteAttachmentSerializer
 )
 from projects.models import Project
 from django.utils import timezone
+
+# 定义一个标准分页类，明确允许 page_size 参数
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 100 # 如果前端不传 page_size，则默认为 100 (同 settings.py)
+    page_size_query_param = 'page_size' # 允许前端通过 'page_size' 参数覆盖
+    max_page_size = 1000 # 可选：设置每页最大记录数
 
 class ShotViewSet(viewsets.ModelViewSet):
     """
     镜头视图集，处理镜头相关的API请求
     """
     permission_classes = [IsAuthenticated]
+    # 显式设置分页类
+    pagination_class = StandardResultsSetPagination
     filterset_fields = ['status', 'project', 'department', 'prom_stage']
     search_fields = ['shot_code', 'description']
     ordering_fields = ['shot_code', 'status', 'deadline', 'created_at', 'updated_at', 'last_submit_date']
@@ -243,6 +253,7 @@ class ShotNoteViewSet(viewsets.ModelViewSet):
     search_fields = ['content']
     ordering_fields = ['created_at', 'updated_at']
     ordering = ['-created_at']
+    parser_classes = [parsers.JSONParser, parsers.MultiPartParser, parsers.FormParser]
     
     def get_queryset(self):
         """根据用户权限过滤镜头备注"""
@@ -260,7 +271,7 @@ class ShotNoteViewSet(viewsets.ModelViewSet):
     
     def get_serializer_class(self):
         """根据操作类型选择合适的序列化器"""
-        if self.action == 'create':
+        if self.action in ['create', 'with_attachment']:
             return ShotNoteCreateSerializer
         return ShotNoteSerializer
     
@@ -278,12 +289,74 @@ class ShotNoteViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
     
     def perform_create(self, serializer):
-        """创建备注时的额外操作"""
-        shot_id = self.kwargs.get('shot_pk')
+        """创建备注时的额外操作 - 现在主要由 ShotNoteCreateSerializer.create 处理"""
+        # 保留此方法以防万一，但主要逻辑移至序列化器
+        # 确保 user 在 context 中传递
+        if 'user' not in serializer.validated_data:
+             serializer.save(user=self.request.user)
+        else:
+             serializer.save()
+    
+    @action(detail=False, methods=['post'])
+    def with_attachment(self, request):
+        """创建带附件的备注"""
+        shot_id = request.data.get('shot')
         if not shot_id:
-            shot_id = self.request.data.get('shot')
+            return Response({'error': '未指定镜头ID'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # 获取合适的序列化器 (现在会正确返回 ShotNoteCreateSerializer)
+        serializer_class = self.get_serializer_class()
+        context = self.get_serializer_context()
+        # 确保 request 在 context 中，以便序列化器访问 request.user
+        context['request'] = request 
+        context['shot_id'] = shot_id
+        
+        serializer = serializer_class(data=request.data, context=context)
+        serializer.is_valid(raise_exception=True)
+        
+        # 直接调用 serializer.save()，它会调用 ShotNoteCreateSerializer.create
+        note = serializer.save() 
+        
+        # 返回创建的备注，使用 ShotNoteSerializer 以包含完整信息
+        response_serializer = ShotNoteSerializer(note, context=context)
+        
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+class ShotNoteAttachmentViewSet(viewsets.ModelViewSet):
+    """
+    镜头备注附件视图集，处理备注附件上传和管理
+    """
+    serializer_class = ShotNoteAttachmentSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = [parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser]
+    
+    def get_queryset(self):
+        return ShotNoteAttachment.objects.all()
+    
+    def perform_create(self, serializer):
+        """创建附件时关联到备注"""
+        note_id = self.request.data.get('note')
+        
+        try:
+            note = ShotNote.objects.get(id=note_id)
             
-        serializer.save(
-            shot_id=shot_id,
-            user=self.request.user
+            # 确保当前用户是备注的创建者
+            if note.user != self.request.user:
+                raise PermissionError("您没有权限为此备注添加附件")
+                
+            serializer.save(note=note)
+            
+        except ShotNote.DoesNotExist:
+            raise ValueError("备注不存在")
+    
+    @action(detail=False, methods=['post'])
+    def upload_clipboard(self, request):
+        """处理剪贴板粘贴上传的图片"""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        attachment = serializer.save()
+        
+        return Response(
+            self.get_serializer(attachment).data,
+            status=status.HTTP_201_CREATED
         ) 

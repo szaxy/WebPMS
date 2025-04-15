@@ -67,7 +67,10 @@ export const useShotStore = defineStore('shot', () => {
         if (response.data.results && Array.isArray(response.data.results)) {
           // 标准DRF分页格式
           shots.value = response.data.results
-          console.log('成功获取镜头数据(分页):', shots.value.length, '条记录')
+          console.log('成功获取镜头数据(分页):', shots.value.length, 
+            '条记录, 总数:', response.data.count, 
+            '页码:', params.page || 1, 
+            '每页:', params.page_size || 50)
           return response.data
         } 
         // 检查数组格式
@@ -91,7 +94,11 @@ export const useShotStore = defineStore('shot', () => {
             const shotResponse = await shotService.getShotsFromUrl(response.data.shots, params)
             if (shotResponse.data.results && Array.isArray(shotResponse.data.results)) {
               shots.value = shotResponse.data.results
-              console.log('第二次请求成功获取镜头数据(分页):', shots.value.length, '条记录')
+              console.log('第二次请求成功获取镜头数据(分页):', 
+                shots.value.length, '条记录, 总数:', 
+                shotResponse.data.count,
+                '页码:', params.page || 1,
+                '每页:', params.page_size || 50)
               return shotResponse.data
             } else if (Array.isArray(shotResponse.data)) {
               shots.value = shotResponse.data
@@ -428,13 +435,40 @@ export const useShotStore = defineStore('shot', () => {
       loading.value = true
       error.value = null
       
+      console.log('从store获取镜头ID为', shotId, '的备注')
       const response = await shotService.getShotNotes(shotId)
-      shotNotes.value = response.data
+      console.log('获取到备注响应:', response.data)
+      
+      // 确保兼容不同的API响应格式
+      if (Array.isArray(response.data)) {
+        shotNotes.value = response.data
+      } else if (response.data && response.data.results) {
+        shotNotes.value = response.data.results
+      } else if (response.data && typeof response.data === 'object') {
+        // 尝试处理其他可能的返回格式
+        shotNotes.value = Object.values(response.data).filter(item => typeof item === 'object')
+      } else {
+        shotNotes.value = []
+        console.warn('获取的备注数据格式不符合预期:', response.data)
+      }
+      
+      // 添加排序，确保最新的备注在前面
+      shotNotes.value.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
       
       return shotNotes.value
     } catch (err) {
-      console.error(`Error fetching shot notes for shot ${shotId}:`, err)
-      error.value = '获取镜头备注失败'
+      console.error(`获取镜头 ${shotId} 的备注失败:`, err)
+      if (err.response) {
+        console.error('错误状态码:', err.response.status)
+        console.error('错误响应数据:', err.response.data)
+        error.value = `获取镜头备注失败: ${err.response.status} - ${JSON.stringify(err.response.data)}`
+      } else if (err.request) {
+        console.error('请求未收到响应')
+        error.value = '服务器未响应，请检查网络连接'
+      } else {
+        error.value = `获取镜头备注失败: ${err.message}`
+      }
+      shotNotes.value = []
       return []
     } finally {
       loading.value = false
@@ -446,16 +480,27 @@ export const useShotStore = defineStore('shot', () => {
       loading.value = true
       error.value = null
       
+      console.log(`正在添加镜头 ${shotId} 的备注:`, noteData)
       const response = await shotService.addShotNote(shotId, noteData)
       const newNote = response.data
+      console.log('添加备注成功，服务器响应:', newNote)
       
       // 更新本地状态
       shotNotes.value.unshift(newNote) // 添加到开头
       
       return newNote
     } catch (err) {
-      console.error(`Error adding note to shot ${shotId}:`, err)
-      error.value = '添加镜头备注失败'
+      console.error(`添加镜头 ${shotId} 的备注失败:`, err)
+      if (err.response) {
+        console.error('错误状态码:', err.response.status)
+        console.error('错误响应数据:', err.response.data)
+        error.value = `添加镜头备注失败: ${err.response.status} - ${JSON.stringify(err.response.data)}`
+      } else if (err.request) {
+        console.error('请求未收到响应')
+        error.value = '服务器未响应，请检查网络连接'
+      } else {
+        error.value = `添加镜头备注失败: ${err.message}`
+      }
       return null
     } finally {
       loading.value = false

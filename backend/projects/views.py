@@ -6,6 +6,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q
 from .models import Project, ProjectDepartment
 from .serializers import ProjectSerializer, ProjectListSerializer
+import logging
 
 class ProjectViewSet(viewsets.ModelViewSet):
     """
@@ -69,6 +70,10 @@ class ProjectViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """创建项目时，如果没有指定部门，默认添加当前用户的部门"""
         data = serializer.validated_data
+        
+        # 记录请求数据，方便调试
+        logger = logging.getLogger(__name__)
+        logger.info(f"创建项目，请求数据: {data}")
         
         # 如果没有提供部门列表，且当前用户有部门，则自动添加当前用户部门
         if 'department_ids' not in data and self.request.user.department:

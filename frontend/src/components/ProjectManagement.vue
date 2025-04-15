@@ -145,11 +145,25 @@
         </el-form-item>
         
         <el-form-item label="开始日期" prop="start_date">
-          <el-date-picker v-model="projectForm.start_date" type="date" placeholder="选择日期" style="width: 100%" />
+          <el-date-picker 
+            v-model="projectForm.start_date" 
+            type="date" 
+            placeholder="选择日期（可选）" 
+            style="width: 100%" 
+            clearable
+            value-format="YYYY-MM-DD"
+          />
         </el-form-item>
         
         <el-form-item label="结束日期" prop="end_date">
-          <el-date-picker v-model="projectForm.end_date" type="date" placeholder="选择日期" style="width: 100%" />
+          <el-date-picker 
+            v-model="projectForm.end_date" 
+            type="date" 
+            placeholder="选择日期（可选）" 
+            style="width: 100%" 
+            clearable
+            value-format="YYYY-MM-DD"
+          />
         </el-form-item>
         
         <el-form-item label="项目部门" prop="department_ids">
@@ -240,7 +254,8 @@ const projectRules = {
     { required: true, message: '请输入项目代号', trigger: 'blur' },
     { pattern: /^[A-Za-z][A-Za-z0-9\-]{1,9}$/, message: '项目代号必须以字母开头，只含字母、数字和连字符，长度2-10', trigger: 'blur' }
   ],
-  status: [{ required: true, message: '请选择项目状态', trigger: 'change' }]
+  status: [{ required: true, message: '请选择项目状态', trigger: 'change' }],
+  department_ids: [{ required: true, message: '请选择至少一个部门', trigger: 'change' }]
 }
 
 // 计算属性
@@ -375,12 +390,13 @@ const confirmDeleteProject = (project) => {
 
 // 重置项目表单
 const resetProjectForm = () => {
+  // 重置所有字段为默认值
   projectForm.id = null
   projectForm.name = ''
   projectForm.code = ''
   projectForm.status = 'in_progress'
-  projectForm.start_date = ''
-  projectForm.end_date = ''
+  projectForm.start_date = null  // 使用null而不是空字符串
+  projectForm.end_date = null    // 使用null而不是空字符串
   projectForm.description = ''
   projectForm.department_ids = []
   
@@ -399,17 +415,37 @@ const submitProjectForm = async () => {
     
     isProcessing.value = true
     
+    // 准备提交数据，转换日期格式
+    const projectDataToSubmit = { ...projectForm }
+    
+    // 处理日期字段 - 如果有值则转换格式，如果没有则设为null
+    if (projectDataToSubmit.start_date) {
+      const startDate = new Date(projectDataToSubmit.start_date)
+      projectDataToSubmit.start_date = startDate.toISOString().split('T')[0]
+    } else {
+      projectDataToSubmit.start_date = null
+    }
+    
+    if (projectDataToSubmit.end_date) {
+      const endDate = new Date(projectDataToSubmit.end_date)
+      projectDataToSubmit.end_date = endDate.toISOString().split('T')[0]
+    } else {
+      projectDataToSubmit.end_date = null
+    }
+    
+    // 添加日志，打印表单数据
+    console.log('提交项目表单数据:', JSON.stringify(projectDataToSubmit))
+    
     if (isEditMode.value) {
       // 更新项目
-      const projectId = projectForm.id
-      const projectData = { ...projectForm }
-      delete projectData.id // 移除ID字段
+      const projectId = projectDataToSubmit.id
+      delete projectDataToSubmit.id // 移除ID字段
       
-      await projectStore.updateProject(projectId, projectData)
+      await projectStore.updateProject(projectId, projectDataToSubmit)
       ElMessage.success('项目更新成功')
     } else {
       // 创建项目
-      await projectStore.createProject(projectForm)
+      await projectStore.createProject(projectDataToSubmit)
       ElMessage.success('项目创建成功')
     }
     
@@ -418,7 +454,27 @@ const submitProjectForm = async () => {
     emit('refresh')
     await loadProjects() // 重新加载项目列表
   } catch (error) {
-    if (error.message) {
+    console.error('表单提交错误详情:', error)
+    if (error.response && error.response.data) {
+      // 显示服务器返回的具体错误信息
+      const errorData = error.response.data
+      const errorMessages = []
+      
+      // 从错误对象提取错误信息
+      for (const field in errorData) {
+        if (Array.isArray(errorData[field])) {
+          errorMessages.push(`${field}: ${errorData[field].join(', ')}`)
+        } else {
+          errorMessages.push(`${field}: ${errorData[field]}`)
+        }
+      }
+      
+      if (errorMessages.length > 0) {
+        ElMessage.error(errorMessages.join('\n'))
+      } else {
+        ElMessage.error(isEditMode.value ? '更新项目失败' : '创建项目失败')
+      }
+    } else if (error.message) {
       ElMessage.error(error.message)
     } else {
       ElMessage.error(isEditMode.value ? '更新项目失败' : '创建项目失败')

@@ -86,7 +86,7 @@
           <template #header>
             <div class="card-header">
               <span>镜头反馈</span>
-              <el-button v-if="canAddComment" type="primary" size="small" plain @click="showAddComment = true">
+              <el-button v-if="canAddComment" type="primary" size="small" plain @click="showAddCommentDialog">
                 <el-icon><Plus /></el-icon> 添加反馈
               </el-button>
             </div>
@@ -107,6 +107,25 @@
                 <div class="comment-time">{{ formatDateTime(comment.timestamp) }}</div>
               </div>
               <div class="comment-content">{{ comment.content }}</div>
+              
+              <!-- 附件显示 -->
+              <div v-if="comment.attachments && comment.attachments.length > 0" class="comment-attachments">
+                <div class="attachments-title">附件：</div>
+                <div class="attachments-list">
+                  <div v-for="attachment in comment.attachments" :key="attachment.id" class="attachment-item">
+                    <a v-if="attachment.is_image" :href="attachment.file_path" target="_blank" class="attachment-link">
+                      <img :src="attachment.thumbnail_path || attachment.file_path" :alt="attachment.file_name" class="attachment-thumbnail" />
+                    </a>
+                    <a v-else :href="attachment.file_path" target="_blank" class="attachment-link">
+                      <div class="attachment-file">
+                        <el-icon><Document /></el-icon>
+                        <span class="attachment-name">{{ attachment.file_name }}</span>
+                      </div>
+                    </a>
+                  </div>
+                </div>
+              </div>
+              
               <div v-if="comment.is_resolved" class="comment-status">
                 <el-tag size="small" type="success">已解决</el-tag>
               </div>
@@ -124,23 +143,45 @@
             title="添加反馈"
             width="500px"
             :close-on-click-modal="false"
+            :before-close="handleCommentDialogClose"
           >
-            <el-form ref="commentForm" :model="commentForm" :rules="commentRules">
+            <el-form ref="commentFormRef" :model="commentForm" :rules="commentRules">
               <el-form-item prop="content" label="反馈内容">
                 <el-input
                   v-model="commentForm.content"
                   type="textarea"
                   :rows="4"
                   placeholder="请输入反馈内容"
+                  maxlength="500"
+                  show-word-limit
                 />
+              </el-form-item>
+              <el-form-item label="附件">
+                <el-upload
+                  class="upload-demo"
+                  action="#"
+                  :auto-upload="false"
+                  :on-change="handleCommentFileChange"
+                  :on-remove="handleCommentFileRemove"
+                  multiple
+                  :file-list="commentFileList"
+                >
+                  <el-button type="primary">选择文件</el-button>
+                  <template #tip>
+                    <div class="el-upload__tip">
+                      支持任意类型文件，图片将生成缩略图
+                    </div>
+                  </template>
+                </el-upload>
               </el-form-item>
             </el-form>
             <template #footer>
-              <el-button @click="showAddComment = false">取消</el-button>
+              <el-button @click="closeCommentDialog">取消</el-button>
               <el-button 
                 type="primary" 
                 :loading="commentSubmitting"
                 @click="submitComment"
+                :disabled="!commentForm.content || !commentForm.content.trim()"
               >
                 提交
               </el-button>
@@ -153,7 +194,7 @@
           <template #header>
             <div class="card-header">
               <span>镜头备注</span>
-              <el-button type="primary" size="small" plain @click="showAddNote = true">
+              <el-button type="primary" size="small" plain @click="showAddNoteDialog">
                 <el-icon><Plus /></el-icon> 添加备注
               </el-button>
             </div>
@@ -177,8 +218,27 @@
                 <el-tag v-if="note.is_important" type="danger" size="small" class="important-tag">重要提示</el-tag>
                 {{ note.content }}
               </div>
+              
+              <!-- 附件显示 -->
+              <div v-if="note.attachments && note.attachments.length > 0" class="note-attachments">
+                <div class="attachments-title">附件：</div>
+                <div class="attachments-list">
+                  <div v-for="attachment in note.attachments" :key="attachment.id" class="attachment-item">
+                    <a v-if="attachment.is_image" :href="attachment.file_path" target="_blank" class="attachment-link">
+                      <img :src="attachment.thumbnail_path || attachment.file_path" :alt="attachment.file_name" class="attachment-thumbnail" />
+                    </a>
+                    <a v-else :href="attachment.file_path" target="_blank" class="attachment-link">
+                      <div class="attachment-file">
+                        <el-icon><Document /></el-icon>
+                        <span class="attachment-name">{{ attachment.file_name }}</span>
+                      </div>
+                    </a>
+                  </div>
+                </div>
+              </div>
+              
               <div v-if="canDeleteNote(note)" class="note-actions">
-                <el-button type="text" size="small" @click="deleteNote(note.id)">
+                <el-button type="link" size="small" @click="deleteNote(note.id)">
                   删除
                 </el-button>
               </div>
@@ -191,14 +251,17 @@
             title="添加备注"
             width="500px"
             :close-on-click-modal="false"
+            :before-close="handleNoteDialogClose"
           >
-            <el-form ref="noteForm" :model="noteForm" :rules="noteRules">
+            <el-form ref="noteFormRef" :model="noteForm" :rules="noteRules">
               <el-form-item prop="content" label="备注内容">
                 <el-input
                   v-model="noteForm.content"
                   type="textarea"
                   :rows="4"
                   placeholder="请输入备注内容"
+                  maxlength="500"
+                  show-word-limit
                 />
               </el-form-item>
               <el-form-item>
@@ -206,13 +269,32 @@
                   标记为重要提示 <span class="important-hint">(提交状态变更时将提示确认)</span>
                 </el-checkbox>
               </el-form-item>
+              <el-form-item label="附件">
+                <el-upload
+                  class="upload-demo"
+                  action="#"
+                  :auto-upload="false"
+                  :on-change="handleNoteFileChange"
+                  :on-remove="handleNoteFileRemove"
+                  multiple
+                  :file-list="noteFileList"
+                >
+                  <el-button type="primary">选择文件</el-button>
+                  <template #tip>
+                    <div class="el-upload__tip">
+                      支持任意类型文件，图片将生成缩略图
+                    </div>
+                  </template>
+                </el-upload>
+              </el-form-item>
             </el-form>
             <template #footer>
-              <el-button @click="showAddNote = false">取消</el-button>
+              <el-button @click="closeNoteDialog">取消</el-button>
               <el-button 
                 type="primary" 
                 :loading="noteSubmitting"
                 @click="submitNote"
+                :disabled="!noteForm.content || !noteForm.content.trim()"
               >
                 提交
               </el-button>
@@ -274,9 +356,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Close, Edit, Plus, RefreshRight } from '@element-plus/icons-vue'
+import { Close, Edit, Plus, RefreshRight, Document } from '@element-plus/icons-vue'
 import { useShotStore } from '@/stores/shotStore'
 import { useAuthStore } from '@/stores/authStore'
 import shotService from '@/services/shotService'
@@ -310,16 +392,173 @@ const showAddComment = ref(false)
 const showAddNote = ref(false)
 const newStatus = ref('')
 const statusDialogVisible = ref(false)
+const commentFormRef = ref(null)
+const noteFormRef = ref(null)
+const commentFileList = ref([])
+const noteFileList = ref([])
 
 // 表单
 const commentForm = ref({
-  content: ''
+  content: '',
+  attachment_data: []
 })
 
 const noteForm = ref({
   content: '',
-  is_important: false
+  is_important: false,
+  attachment_data: []
 })
+
+// 对话框处理
+const handleCommentDialogClose = (done) => {
+  if (commentSubmitting.value) {
+    return
+  }
+  closeCommentDialog()
+  done()
+}
+
+const handleNoteDialogClose = (done) => {
+  if (noteSubmitting.value) {
+    return
+  }
+  closeNoteDialog()
+  done()
+}
+
+const closeCommentDialog = () => {
+  showAddComment.value = false
+  commentFileList.value = []
+  commentForm.value = {
+    content: '',
+    attachment_data: []
+  }
+}
+
+const closeNoteDialog = () => {
+  showAddNote.value = false
+  noteFileList.value = []
+  noteForm.value = {
+    content: '',
+    is_important: false,
+    attachment_data: []
+  }
+}
+
+// 文件处理函数
+const handleCommentFileChange = (file) => {
+  if (!file || !file.raw) {
+    console.error('文件对象无效', file)
+    return
+  }
+
+  // 如果文件过大，提示并返回
+  const maxSizeInBytes = 5 * 1024 * 1024 // 5MB，压缩后端允许的大小
+  if (file.size > maxSizeInBytes) {
+    ElMessage.warning(`文件大小不能超过5MB：${file.name}`)
+    return
+  }
+
+  try {
+    // 处理上传的文件
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      try {
+        if (!e.target || !e.target.result) {
+          console.error('读取文件失败：无结果')
+          return
+        }
+        
+        const fileData = {
+          file_name: file.name,
+          file_content: e.target.result,
+          file_size: file.size
+        }
+        commentForm.value.attachment_data.push(fileData)
+        console.log('文件处理成功，大小:', Math.round(file.size / 1024), 'KB')
+      } catch (error) {
+        console.error('处理文件数据错误', error)
+        ElMessage.error(`处理文件出错: ${file.name}`)
+      }
+    }
+    reader.onerror = (error) => {
+      console.error('读取文件错误', error)
+      ElMessage.error(`读取文件失败: ${file.name}`)
+    }
+    reader.readAsDataURL(file.raw)
+  } catch (error) {
+    console.error('文件上传预处理错误', error)
+    ElMessage.error(`文件处理错误: ${file.name}`)
+  }
+}
+
+const handleCommentFileRemove = (file) => {
+  try {
+    const index = commentForm.value.attachment_data.findIndex(f => f.file_name === file.name)
+    if (index !== -1) {
+      commentForm.value.attachment_data.splice(index, 1)
+    }
+  } catch (error) {
+    console.error('移除文件错误', error)
+  }
+}
+
+const handleNoteFileChange = (file) => {
+  if (!file || !file.raw) {
+    console.error('文件对象无效', file)
+    return
+  }
+
+  // 如果文件过大，提示并返回
+  const maxSizeInBytes = 5 * 1024 * 1024 // 5MB，压缩后端允许的大小
+  if (file.size > maxSizeInBytes) {
+    ElMessage.warning(`文件大小不能超过5MB：${file.name}`)
+    return
+  }
+
+  try {
+    // 处理上传的文件
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      try {
+        if (!e.target || !e.target.result) {
+          console.error('读取文件失败：无结果')
+          return
+        }
+        
+        const fileData = {
+          file_name: file.name,
+          file_content: e.target.result,
+          file_size: file.size
+        }
+        noteForm.value.attachment_data.push(fileData)
+        console.log('文件处理成功，大小:', Math.round(file.size / 1024), 'KB')
+      } catch (error) {
+        console.error('处理文件数据错误', error)
+        ElMessage.error(`处理文件出错: ${file.name}`)
+      }
+    }
+    reader.onerror = (error) => {
+      console.error('读取文件错误', error)
+      ElMessage.error(`读取文件失败: ${file.name}`)
+    }
+    reader.readAsDataURL(file.raw)
+  } catch (error) {
+    console.error('文件上传预处理错误', error)
+    ElMessage.error(`文件处理错误: ${file.name}`)
+  }
+}
+
+const handleNoteFileRemove = (file) => {
+  try {
+    const index = noteForm.value.attachment_data.findIndex(f => f.file_name === file.name)
+    if (index !== -1) {
+      noteForm.value.attachment_data.splice(index, 1)
+    }
+  } catch (error) {
+    console.error('移除文件错误', error)
+  }
+}
 
 // 表单验证规则
 const commentRules = {
@@ -338,16 +577,16 @@ const noteRules = {
 
 // 权限控制
 const canEdit = computed(() => {
-  return authStore.isAdmin || authStore.isManager
+  return authStore.canEditShot(props.shot)
 })
 
 const canAddComment = computed(() => {
-  return authStore.isAdmin || authStore.isManager
+  // 所有登录用户都可以添加反馈
+  return true
 })
 
 const canUpdateStatus = computed(() => {
-  const isArtist = props.shot.artist === authStore.user?.id
-  return authStore.isAdmin || authStore.isManager || isArtist
+  return authStore.canEditShot(props.shot)
 })
 
 const canResolveComment = (comment) => {
@@ -363,7 +602,7 @@ const loadComments = async () => {
   commentsLoading.value = true
   try {
     const response = await shotService.getShotComments(props.shot.id)
-    comments.value = response.data
+    comments.value = response.data.results || response.data
   } catch (error) {
     console.error('加载镜头反馈失败', error)
     ElMessage.error('加载镜头反馈失败')
@@ -376,10 +615,16 @@ const loadComments = async () => {
 const loadNotes = async () => {
   notesLoading.value = true
   try {
+    console.log('加载镜头ID为', props.shot.id, '的备注')
     const response = await shotService.getShotNotes(props.shot.id)
-    notes.value = response.data
+    // 检查响应格式
+    console.log('获取到备注响应:', response.data)
+    notes.value = Array.isArray(response.data) ? response.data : (response.data.results || [])
   } catch (error) {
     console.error('加载镜头备注失败', error)
+    if (error.response) {
+      console.error('错误响应数据:', error.response.data)
+    }
     ElMessage.error('加载镜头备注失败')
   } finally {
     notesLoading.value = false
@@ -388,19 +633,31 @@ const loadNotes = async () => {
 
 // 提交反馈
 const submitComment = async () => {
-  // 表单验证
+  if (!commentForm.value.content || !commentForm.value.content.trim()) {
+    ElMessage.warning('请输入反馈内容')
+    return
+  }
+
   try {
     commentSubmitting.value = true
     
+    // 准备提交数据
     const data = {
-      content: commentForm.value.content
+      content: commentForm.value.content.trim()
     }
     
-    await shotService.addShotComment(props.shot.id, data)
+    // 如果有附件数据，且不为空，才添加到请求中
+    if (commentForm.value.attachment_data && commentForm.value.attachment_data.length > 0) {
+      data.attachment_data = commentForm.value.attachment_data
+    }
     
-    // 清空表单
-    commentForm.value.content = ''
-    showAddComment.value = false
+    // 提交到后端
+    console.log('提交反馈数据:', JSON.stringify(data, null, 2))
+    const response = await shotService.addShotComment(props.shot.id, data)
+    console.log('反馈提交成功:', response.data)
+    
+    // 关闭对话框并清空表单
+    closeCommentDialog()
     
     // 重新加载反馈
     await loadComments()
@@ -408,7 +665,18 @@ const submitComment = async () => {
     ElMessage.success('反馈添加成功')
   } catch (error) {
     console.error('添加反馈失败', error)
-    ElMessage.error('添加反馈失败')
+    let errorMsg = '未知错误'
+    if (error.response) {
+      console.error('错误响应:', error.response.data)
+      errorMsg = error.response.data?.detail || 
+                error.response.data?.message || 
+                `服务器错误: ${error.response.status}`
+    } else if (error.request) {
+      errorMsg = '服务器未响应，请检查网络连接'
+    } else {
+      errorMsg = error.message || '请求配置错误'
+    }
+    ElMessage.error('添加反馈失败: ' + errorMsg)
   } finally {
     commentSubmitting.value = false
   }
@@ -434,32 +702,63 @@ const resolveComment = async (commentId) => {
 
 // 提交备注
 const submitNote = async () => {
+  if (!noteForm.value.content || !noteForm.value.content.trim()) {
+    ElMessage.warning('请输入备注内容')
+    return
+  }
+
   try {
     noteSubmitting.value = true
     
+    // 准备提交数据，不包含shot字段，因为已经在URL中
     const data = {
-      content: noteForm.value.content,
+      content: noteForm.value.content.trim(),
       is_important: noteForm.value.is_important
     }
     
-    await shotService.addShotNote(props.shot.id, data)
+    // 如果有附件数据，且不为空，才添加到请求中
+    if (noteForm.value.attachment_data && noteForm.value.attachment_data.length > 0) {
+      data.attachment_data = noteForm.value.attachment_data
+    }
     
-    // 清空表单
-    noteForm.value.content = ''
-    noteForm.value.is_important = false
-    showAddNote.value = false
+    // 提交到后端
+    console.log('提交备注数据:', JSON.stringify(data, null, 2))
+    const response = await shotService.addShotNote(props.shot.id, data)
+    console.log('备注提交成功:', response.data)
     
-    // 重新加载备注
+    closeNoteDialog()
     await loadNotes()
     
-    // 可能需要刷新镜头数据，更新指示器
-    const updatedShot = await shotStore.fetchShot(props.shot.id)
-    emit('update', updatedShot)
+    // 尝试获取更新后的镜头数据
+    try {
+      const updatedShot = await shotStore.fetchShot(props.shot.id)
+      // 仅在成功获取到 updatedShot 后才 emit 事件
+      if (updatedShot) {
+        emit('update', updatedShot)
+      } else {
+        console.warn('获取更新后的镜头数据失败，未触发 update 事件')
+      }
+    } catch (fetchError) {
+      console.error('获取更新后的镜头数据时出错:', fetchError)
+      // 即使获取失败，也提示备注添加成功，但可能不会立即更新列表中的某些信息
+    }
     
     ElMessage.success('备注添加成功')
   } catch (error) {
     console.error('添加备注失败', error)
-    ElMessage.error('添加备注失败')
+    let errorMsg = '未知错误'
+    if (error.response) {
+      console.error('错误响应:', error.response.data)
+      errorMsg = error.response.data?.detail || 
+                error.response.data?.message || 
+                error.response.data || 
+                `服务器错误: ${error.response.status}`
+    } else if (error.request) {
+      errorMsg = '服务器未响应，请检查网络连接'
+    } else {
+      errorMsg = error.message || '请求配置错误'
+    }
+    ElMessage.error('添加备注失败: ' + errorMsg)
   } finally {
     noteSubmitting.value = false
   }
@@ -544,6 +843,35 @@ const updateShotStatus = async () => {
 // 关闭详情面板
 const closeDetails = () => {
   emit('close')
+}
+
+// 打开添加反馈对话框
+const showAddCommentDialog = () => {
+  // 重置表单
+  commentForm.value = {
+    content: '',
+    attachment_data: []
+  }
+  commentFileList.value = []
+  // 延迟一帧后显示对话框，确保DOM更新
+  nextTick(() => {
+    showAddComment.value = true
+  })
+}
+
+// 打开添加备注对话框
+const showAddNoteDialog = () => {
+  // 重置表单
+  noteForm.value = {
+    content: '',
+    is_important: false,
+    attachment_data: []
+  }
+  noteFileList.value = []
+  // 延迟一帧后显示对话框，确保DOM更新
+  nextTick(() => {
+    showAddNote.value = true
+  })
 }
 
 // 监听镜头变化
@@ -755,5 +1083,71 @@ onMounted(() => {
   padding: 0 6px;
   height: 22px;
   line-height: 20px;
+}
+
+.comment-attachments,
+.note-attachments {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed #ebeef5;
+}
+
+.attachments-title {
+  font-size: 12px;
+  color: #909399;
+  margin-bottom: 8px;
+}
+
+.attachments-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.attachment-item {
+  width: 80px;
+  height: 80px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.attachment-thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.attachment-file {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background-color: #f5f7fa;
+}
+
+.attachment-name {
+  font-size: 10px;
+  margin-top: 4px;
+  text-align: center;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 4px;
+}
+
+.attachment-link {
+  display: block;
+  width: 100%;
+  height: 100%;
+  text-decoration: none;
+  color: inherit;
 }
 </style> 

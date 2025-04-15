@@ -47,10 +47,12 @@ class Attachment(models.Model):
         related_name='attachments',
         verbose_name=_('关联反馈')
     )
-    file_path = models.FileField(_('文件路径'), upload_to='attachments/')
+    file_path = models.FileField(_('文件路径'), upload_to='@attachments/%Y/%m/%d/')
+    thumbnail_path = models.FileField(_('缩略图路径'), upload_to='@attachments/thumbnails/%Y/%m/%d/', null=True, blank=True)
     file_name = models.CharField(_('文件名'), max_length=255)
     file_size = models.PositiveIntegerField(_('文件大小'), help_text=_('文件大小(字节)'))
     mime_type = models.CharField(_('文件类型'), max_length=100)
+    is_image = models.BooleanField(_('是否为图片'), default=False)
     created_at = models.DateTimeField(_('创建时间'), auto_now_add=True)
     
     class Meta:

@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import ShotViewSet, ShotNoteViewSet
+from .views import ShotViewSet, ShotNoteViewSet, ShotNoteAttachmentViewSet
 
 # 后续会添加镜头视图
 # from .views import ShotViewSet
@@ -11,6 +11,7 @@ from .views import ShotViewSet, ShotNoteViewSet
 router = DefaultRouter()
 router.register(r'shots', ShotViewSet, basename='shot')
 router.register(r'shot-notes', ShotNoteViewSet, basename='shot-note')
+router.register(r'shot-note-attachments', ShotNoteAttachmentViewSet, basename='shot-note-attachment')
 
 # 自定义路由
 custom_urls = [

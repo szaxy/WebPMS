@@ -91,7 +91,10 @@ export const useProjectStore = defineStore('project', () => {
       loading.value = true
       error.value = null
       
+      console.log('创建项目API请求数据:', JSON.stringify(projectData))
       const response = await projectService.createProject(projectData)
+      console.log('创建项目API响应:', response)
+      
       const newProject = response.data
       
       // 更新本地状态
@@ -100,8 +103,12 @@ export const useProjectStore = defineStore('project', () => {
       return newProject
     } catch (err) {
       console.error('Error creating project:', err)
+      if (err.response) {
+        console.error('服务器返回错误状态:', err.response.status)
+        console.error('服务器返回错误数据:', err.response.data)
+      }
       error.value = '创建项目失败'
-      return null
+      throw err; // 将错误向上传递，让组件处理具体错误信息
     } finally {
       loading.value = false
     }
@@ -112,7 +119,10 @@ export const useProjectStore = defineStore('project', () => {
       loading.value = true
       error.value = null
       
+      console.log('更新项目API请求数据:', JSON.stringify(projectData))
       const response = await projectService.updateProject(id, projectData)
+      console.log('更新项目API响应:', response)
+      
       const updatedProject = response.data
       
       // 更新本地状态
@@ -128,8 +138,12 @@ export const useProjectStore = defineStore('project', () => {
       return updatedProject
     } catch (err) {
       console.error(`Error updating project ${id}:`, err)
+      if (err.response) {
+        console.error('服务器返回错误状态:', err.response.status)
+        console.error('服务器返回错误数据:', err.response.data)
+      }
       error.value = '更新项目失败'
-      return null
+      throw err; // 将错误向上传递
     } finally {
       loading.value = false
     }

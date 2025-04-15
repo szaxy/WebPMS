@@ -8,14 +8,69 @@
         <div class="filters-container">
           <div class="page-header">
             <h1 class="page-title">镜头管理</h1>
-            <el-button 
-              type="primary" 
-              size="small" 
-              @click="goToHome"
-              class="home-button"
-            >
-              <el-icon><Back /></el-icon> 返回主页
-            </el-button>
+            <div class="header-actions">
+              <div class="filter-actions">
+                <!-- 批量操作工具栏 - 显示在高级筛选按钮左侧 -->
+                <div class="batch-actions" v-if="shotStore.selectedShotIds.length > 0">
+                  <span class="selected-info">
+                    已选择 <strong>{{ shotStore.selectedShotIds.length }}</strong> 个镜头
+                  </span>
+                  <el-button type="danger" @click="confirmBatchDelete" size="small" class="compact-btn">
+                    <el-icon class="small-icon"><Delete /></el-icon>删除
+                  </el-button>
+                  <el-button type="info" @click="clearSelection" size="small" class="compact-btn">
+                    <el-icon class="small-icon"><Close /></el-icon>取消
+                  </el-button>
+                </div>
+              
+                <!-- 高级筛选按钮 -->
+                <el-dropdown @command="handleAdvancedFilter" trigger="click">
+                  <el-button type="primary" plain size="small">
+                    高级筛选
+                    <el-icon class="el-icon--right"><arrow-down /></el-icon>
+                  </el-button>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item command="hasComments">有反馈的镜头</el-dropdown-item>
+                      <el-dropdown-item command="hasNotes">有备注的镜头</el-dropdown-item>
+                      <el-dropdown-item command="hasImportantNotes">有重要备注的镜头</el-dropdown-item>
+                      <el-dropdown-item command="overdueDeadline">已逾期镜头</el-dropdown-item>
+                      <el-dropdown-item command="upcomingDeadline">临近截止日期镜头</el-dropdown-item>
+                      <el-dropdown-item command="clearAll">清除所有筛选</el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
+                
+                <!-- 展示项按钮 -->
+                <el-button size="small" @click="columnDialogVisible = true">
+                  展示项
+                </el-button>
+              </div>
+              
+              <!-- 原有的按钮组 -->
+              <el-button-group>
+                <el-button @click="openAddShotDialog" title="添加" size="small">
+                  <el-icon><Plus /></el-icon>
+                </el-button>
+                <el-button @click="openProjectManagement" title="项目" size="small">
+                  <el-icon><Briefcase /></el-icon>
+                </el-button>
+                <el-button @click="refreshShots" title="刷新" size="small">
+                  <el-icon><Refresh /></el-icon>
+                </el-button>
+                <el-button @click="exportShots" title="导出" size="small">
+                  <el-icon><Download /></el-icon>
+                </el-button>
+              </el-button-group>
+              <el-button 
+                type="primary" 
+                size="small" 
+                @click="goToHome"
+                class="home-button"
+              >
+                <el-icon><Back /></el-icon> 返回主页
+              </el-button>
+            </div>
           </div>
           
           <div class="filters">
@@ -27,6 +82,7 @@
               @change="handleProjectChange"
               class="filter-item"
               size="small"
+              style="width: 100px; font-size: 12px;"
             >
               <el-option
                 v-for="project in projects.filter(p => p && p.id)"
@@ -45,6 +101,7 @@
               @change="applyFilters"
               class="filter-item"
               size="small"
+              style="width: 100px; font-size: 12px;"
             >
               <el-option label="动画部门" value="animation" />
               <el-option label="解算部门" value="fx" />
@@ -60,6 +117,7 @@
               @change="applyFilters"
               class="filter-item"
               size="small"
+              style="width: 100px; font-size: 12px;"
             >
               <el-option label="Layout" value="LAY" />
               <el-option label="Block" value="BLK" />
@@ -75,6 +133,7 @@
               @change="applyFilters"
               class="filter-item"
               size="small"
+              style="width: 100px; font-size: 12px;"
             >
               <el-option label="等待开始" value="waiting" />
               <el-option label="正在制作" value="in_progress" />
@@ -98,81 +157,19 @@
               @input="applyFilters"
               class="filter-item search-input"
               size="small"
+              style="width: 120px; font-size: 12px;"
             >
               <template #prefix>
                 <el-icon><Search /></el-icon>
               </template>
             </el-input>
-
-            <!-- 高级筛选按钮 -->
-            <el-dropdown @command="handleAdvancedFilter" trigger="click">
-              <el-button type="primary" plain size="small">
-                高级筛选
-                <el-icon class="el-icon--right"><arrow-down /></el-icon>
-              </el-button>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item command="hasComments">有反馈的镜头</el-dropdown-item>
-                  <el-dropdown-item command="hasNotes">有备注的镜头</el-dropdown-item>
-                  <el-dropdown-item command="hasImportantNotes">有重要备注的镜头</el-dropdown-item>
-                  <el-dropdown-item command="overdueDeadline">已逾期镜头</el-dropdown-item>
-                  <el-dropdown-item command="upcomingDeadline">临近截止日期镜头</el-dropdown-item>
-                  <el-dropdown-item command="clearAll">清除所有筛选</el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
-            
-            <!-- 展示项按钮 -->
-            <el-button size="small" @click="columnDialogVisible = true">
-              展示项
-            </el-button>
           </div>
         </div>
 
         <!-- 镜头列表区域 -->
         <div class="shot-list-area">
-          <el-card class="shot-list-card">
-            <template #header>
-              <div class="list-header">
-                <div class="list-title">
-                  镜头列表
-                  <el-tag v-if="filteredShots.length">{{ filteredShots.length }}个镜头</el-tag>
-                </div>
-                <div class="list-actions">
-                  <el-button-group>
-                    <el-button @click="openAddShotDialog" title="添加" size="small">
-                      <el-icon><Plus /></el-icon>
-                    </el-button>
-                    <el-button @click="openProjectManagement" title="项目" size="small">
-                      <el-icon><Briefcase /></el-icon>
-                    </el-button>
-                    <el-button @click="refreshShots" title="刷新" size="small">
-                      <el-icon><Refresh /></el-icon>
-                    </el-button>
-                    <el-button @click="exportShots" title="导出" size="small">
-                      <el-icon><Download /></el-icon>
-                    </el-button>
-                  </el-button-group>
-                </div>
-              </div>
-              
-              <!-- 批量操作工具栏 -->
-              <div class="batch-actions" v-if="shotStore.selectedShotIds.length > 0">
-                <div class="selected-info">
-                  已选择 <strong>{{ shotStore.selectedShotIds.length }}</strong> 个镜头
-                </div>
-                <div class="action-buttons">
-                  <el-button type="danger" @click="confirmBatchDelete" size="small">
-                    <el-icon><Delete /></el-icon> 删除
-                  </el-button>
-                  <el-button type="info" @click="clearSelection" size="small">
-                    <el-icon><Close /></el-icon> 取消选择
-                  </el-button>
-                </div>
-              </div>
-            </template>
-
-            <!-- 镜头表格 -->
+          <!-- 镜头表格 -->
+          <div class="table-container">
             <el-table
               ref="shotTable"
               v-loading="loading"
@@ -180,11 +177,12 @@
               @row-click="handleRowClick"
               :highlight-current-row="true"
               style="width: 100%"
-              :max-height="tableHeight"
               stripe
               border
               @selection-change="handleSelectionChange"
               table-layout="fixed"
+              :row-key="row => row.id"
+              :selected-rows="tableSelection"
             >
               <!-- 诊断信息 -->
               <template v-if="filteredShots.length === 0 && !loading" #empty>
@@ -292,20 +290,22 @@
                 </template>
               </el-table-column>
             </el-table>
+          </div>
 
-            <!-- 分页 -->
-            <div class="pagination-container">
-              <el-pagination
-                v-model:current-page="currentPage"
-                v-model:page-size="pageSize"
-                :page-sizes="[20, 50, 100, 200]"
-                layout="total, sizes, prev, pager, next, jumper"
-                :total="totalShotsCount"
-                @size-change="handleSizeChange"
-                @current-change="handleCurrentChange"
-              />
-            </div>
-          </el-card>
+          <!-- 分页 -->
+          <div class="pagination-container" v-if="!loading && totalShotsCount > 0">
+            <el-pagination
+              v-model:current-page="currentPage"
+              v-model:page-size="pageSize"
+              :page-sizes="[20, 50, 100, 200]"
+              :layout="'total, sizes, pager, jumper'"
+              :total="totalShotsCount"
+              @size-change="handleSizeChange"
+              @current-change="handleCurrentChange"
+              size="small"
+              class="mini-pagination"
+            />
+          </div>
         </div>
       </div>
 
@@ -616,7 +616,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { ref, computed, watch, reactive, toRefs, onMounted, onUnmounted, nextTick } from 'vue'
 import { Search, Refresh, Download, ArrowDown, Delete, Close, Plus, Connection, Back, Briefcase } from '@element-plus/icons-vue'
 import { useShotStore } from '@/stores/shotStore'
 import { useProjectStore } from '@/stores/projectStore'
@@ -645,7 +645,6 @@ const selectedProject = ref(null)
 const searchQuery = ref('')
 const selectedShot = ref(null)
 const shotTable = ref(null)
-const tableHeight = ref(600)
 const currentPage = ref(1)
 const pageSize = ref(50)
 const totalShotsCount = ref(0)
@@ -815,11 +814,11 @@ const loadShots = async () => {
   try {
     console.log('开始加载镜头，项目ID:', selectedProject.value)
     
-    // 构建基本参数
+    // 构建基本参数，确保正确传递分页参数
     const params = {
       project: selectedProject.value,
-      limit: pageSize.value,
-      offset: (currentPage.value - 1) * pageSize.value,
+      page_size: pageSize.value,
+      page: currentPage.value,
       search: searchQuery.value || undefined,
     }
     
@@ -837,12 +836,19 @@ const loadShots = async () => {
       params.department = accessibleDepartment
     }
     
-    console.log('请求参数:', params)
+    console.log('请求参数，包含分页:', params)
     
     const response = await shotStore.fetchShots(params)
     console.log('API响应:', response)
     
-    totalShotsCount.value = response?.count || 0
+    // 检查响应格式，确保正确设置总数
+    if (response && typeof response.count !== 'undefined') {
+      totalShotsCount.value = response.count
+      console.log(`总记录数: ${totalShotsCount.value}, 当前页: ${currentPage.value}, 每页条数: ${pageSize.value}`)
+    } else {
+      console.warn('响应中缺少count字段:', response)
+      totalShotsCount.value = Array.isArray(shotStore.shots) ? shotStore.shots.length : 0
+    }
     
     if (shotStore.shots.length === 0) {
       console.log('没有找到镜头，用户角色:', permissions.currentUserRole.value, '用户部门:', permissions.currentUserDepartment.value)
@@ -851,7 +857,7 @@ const loadShots = async () => {
         type: 'info' 
       })
     } else {
-      console.log(`成功加载 ${shotStore.shots.length} 个镜头，用户部门: ${permissions.currentUserDepartment.value}`)
+      console.log(`成功加载 ${shotStore.shots.length} 个镜头，第 ${currentPage.value} 页，共 ${Math.ceil(totalShotsCount.value / pageSize.value)} 页`)
     }
   } catch (error) {
     console.error('加载镜头失败', error)
@@ -868,7 +874,8 @@ const loadShots = async () => {
 
 // 过滤后的镜头列表
 const filteredShots = computed(() => {
-  return shotStore.shots
+  // 应用服务器端分页，直接返回shotStore中的shots
+  return shotStore.shots;
 })
 
 // 处理项目变更
@@ -897,12 +904,182 @@ const exportShots = () => {
   })
 }
 
+// 添加在setup函数中，其他ref变量声明附近
+const lastSelectedShotId = ref(null);
+const isShiftKeyPressed = ref(false);
+
+// 添加一个变量跟踪当前表格中shots的索引映射
+const shotIndexMap = computed(() => {
+  const map = new Map();
+  shotStore.shots.forEach((shot, index) => {
+    map.set(shot.id, index);
+  });
+  return map;
+});
+
+// 添加标志变量，防止选择事件递归
+const isProcessingSelection = ref(false);
+
+// 监听全局的keydown和keyup事件
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown);
+  window.addEventListener('keyup', handleKeyUp);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown);
+  window.removeEventListener('keyup', handleKeyUp);
+});
+
+// 处理键盘按下事件
+const handleKeyDown = (event) => {
+  if (event.key === 'Shift') {
+    isShiftKeyPressed.value = true;
+  }
+};
+
+// 处理键盘释放事件
+const handleKeyUp = (event) => {
+  if (event.key === 'Shift') {
+    isShiftKeyPressed.value = false;
+  }
+};
+
 // 表格行选择变化
 const handleSelectionChange = (selection) => {
-  shotStore.selectAllShots(false) // 先清空
-  selection.forEach(shot => {
-    shotStore.selectShot(shot.id)
-  })
+  // 如果正在处理选择，则忽略此次事件
+  if (isProcessingSelection.value) {
+    return;
+  }
+  
+  // 如果没有按下shift键，或没有上一次选择记录，或选择为空
+  if (!isShiftKeyPressed.value || !lastSelectedShotId.value || selection.length === 0) {
+    shotStore.selectAllShots(false); // 先清空
+    selection.forEach(shot => {
+      shotStore.selectShot(shot.id);
+    });
+    
+    // 如果有选择，更新最后选择的ID
+    if (selection.length > 0) {
+      // 找到当前选择中与之前不同的那个ID（新选择的）
+      const newlySelectedShot = selection.find(shot => !shotStore.selectedShotIds.includes(shot.id));
+      if (newlySelectedShot) {
+        lastSelectedShotId.value = newlySelectedShot.id;
+      } else if (selection.length > 0) {
+        // 如果没找到（例如取消选择的情况），使用最后一个
+        lastSelectedShotId.value = selection[selection.length - 1].id;
+      }
+    } else {
+      lastSelectedShotId.value = null;
+    }
+    return;
+  }
+  
+  try {
+    // 设置处理标志，防止递归调用
+    isProcessingSelection.value = true;
+    
+    // 查找当前新选择的镜头ID
+    let currentSelectedId = null;
+    for (const shot of selection) {
+      if (!shotStore.selectedShotIds.includes(shot.id)) {
+        currentSelectedId = shot.id;
+        break;
+      }
+    }
+    
+    // 如果没有找到新选择的ID，可能是取消选择的情况，直接更新store状态
+    if (!currentSelectedId) {
+      shotStore.selectAllShots(false);
+      selection.forEach(shot => {
+        shotStore.selectShot(shot.id);
+      });
+      
+      if (selection.length > 0) {
+        lastSelectedShotId.value = selection[selection.length - 1].id;
+      } else {
+        lastSelectedShotId.value = null;
+      }
+      return;
+    }
+    
+    // 确保两个索引都存在于当前数据中
+    if (shotIndexMap.value.has(lastSelectedShotId.value) && shotIndexMap.value.has(currentSelectedId)) {
+      const lastIndex = shotIndexMap.value.get(lastSelectedShotId.value);
+      const currentIndex = shotIndexMap.value.get(currentSelectedId);
+      
+      // 确定范围
+      const startIndex = Math.min(lastIndex, currentIndex);
+      const endIndex = Math.max(lastIndex, currentIndex);
+      
+      console.log(`Shift选择: 从索引${startIndex}到${endIndex}`);
+      
+      // 将要选择的所有行索引
+      const rowsToSelect = [];
+      for (let i = startIndex; i <= endIndex; i++) {
+        rowsToSelect.push(i);
+      }
+      
+      // 在下一个渲染周期中更新UI和状态
+      nextTick(() => {
+        try {
+          // 保存当前已选择的镜头ID（复制一份以避免引用问题）
+          const currentSelectedIds = [...shotStore.selectedShotIds];
+          
+          // 添加范围内的所有镜头ID到选择中
+          const rangeIds = rowsToSelect.map(i => shotStore.shots[i].id);
+          
+          // 合并当前选择和范围选择，确保不重复
+          const newSelectedIds = Array.from(new Set([...currentSelectedIds, ...rangeIds]));
+          
+          // 清除当前选择状态并重新设置
+          shotStore.selectAllShots(false);
+          
+          // 更新选择状态
+          newSelectedIds.forEach(id => {
+            shotStore.selectShot(id);
+          });
+          
+          // 更新表格UI
+          shotTable.value.clearSelection();
+          // 为所有选中的ID设置表格选中状态
+          shotStore.shots.forEach(shot => {
+            if (newSelectedIds.includes(shot.id)) {
+              shotTable.value.toggleRowSelection(shot, true);
+            }
+          });
+          
+          // 更新最后选择的ID
+          lastSelectedShotId.value = currentSelectedId;
+        } finally {
+          // 确保处理完成后重置标志
+          setTimeout(() => {
+            isProcessingSelection.value = false;
+          }, 100);
+        }
+      });
+    } else {
+      // 索引不存在，回退到普通选择
+      shotStore.selectAllShots(false);
+      selection.forEach(shot => {
+        shotStore.selectShot(shot.id);
+      });
+      
+      // 更新最后选择的ID
+      lastSelectedShotId.value = currentSelectedId;
+      
+      // 重置标志
+      setTimeout(() => {
+        isProcessingSelection.value = false;
+      }, 100);
+    }
+  } catch (error) {
+    console.error('Shift多选处理错误:', error);
+    // 发生错误时重置标志
+    setTimeout(() => {
+      isProcessingSelection.value = false;
+    }, 100);
+  }
 }
 
 // 处理行点击
@@ -930,6 +1107,12 @@ const editShot = (shot) => {
 // 处理镜头更新
 const handleShotUpdate = (updatedShot) => {
   try {
+    // 增加对 updatedShot 的有效性检查
+    if (!updatedShot || !updatedShot.id) {
+      console.warn('handleShotUpdate 接收到无效的 updatedShot', updatedShot)
+      return // 如果数据无效，则不执行更新
+    }
+    
     // 刷新当前选中的镜头数据
     if (selectedShot.value && selectedShot.value.id === updatedShot.id) {
       selectedShot.value = updatedShot
@@ -989,15 +1172,23 @@ const handleAdvancedFilter = (command) => {
 
 // 处理页码变更
 const handleCurrentChange = async (page) => {
-  currentPage.value = page
-  await loadShots()
+  console.log('页码变更为:', page);
+  currentPage.value = page;
+  await loadShots();
 }
 
 // 处理每页条数变更
 const handleSizeChange = async (size) => {
-  pageSize.value = size
-  currentPage.value = 1
-  await loadShots()
+  console.log('页面大小变更为:', size);
+  pageSize.value = size;
+  // 当每页条数变化时，需要重置页码为1，避免超出范围
+  currentPage.value = 1;
+  
+  // 保存页面设置到localStorage
+  localStorage.setItem('shotPageSize', size.toString());
+  
+  // 重新加载数据
+  await loadShots();
 }
 
 // 列可见性
@@ -1020,17 +1211,9 @@ const loadColumnSettings = () => {
 
 // 表格调整高度
 const resizeTable = () => {
-  nextTick(() => {
-    // 动态计算表格高度，考虑页面其他元素的高度
-    const windowHeight = window.innerHeight
-    // 减去其他UI元素的高度 (头部、分页、内边距等)
-    const otherElementsHeight = 240 
-    tableHeight.value = windowHeight - otherElementsHeight
-  })
+  // 不再需要手动计算高度，依靠flex布局自适应
+  console.log('使用flex布局自适应表格高度');
 }
-
-// 添加窗口大小变化的监听器
-window.addEventListener('resize', resizeTable)
 
 // 生命周期钩子
 onMounted(async () => {
@@ -1040,8 +1223,18 @@ onMounted(async () => {
       await authStore.fetchCurrentUser()
     }
     
+    // 从localStorage加载页面大小设置
+    const savedPageSize = localStorage.getItem('shotPageSize');
+    if (savedPageSize) {
+      pageSize.value = parseInt(savedPageSize, 10);
+      console.log('从localStorage加载页面大小设置:', pageSize.value);
+    }
+    
     // 加载项目和镜头数据
     await loadProjects()
+    
+    // 加载完成后，确保应用正确的页面大小
+    console.log('初始化完成，当前页面大小:', pageSize.value);
   } catch (error) {
     console.error('初始化失败:', error)
     ElMessage({
@@ -1052,8 +1245,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  // 清理监听器
-  window.removeEventListener('resize', resizeTable)
+  // 清理工作（无需移除resize监听器，因为我们不再使用它）
 })
 
 // 处理镜头保存
@@ -1657,6 +1849,12 @@ const handleBatchSubmitDateChange = (val) => {
     console.log('最终批量提交日期值:', batchShotForm.last_submit_date)
   }
 }
+
+// 计算属性：当前选中的行对象数组，用于表格UI显示
+const tableSelection = computed(() => {
+  if (!shotStore.shots || !shotStore.selectedShotIds.length) return [];
+  return shotStore.shots.filter(shot => shotStore.selectedShotIds.includes(shot.id));
+});
 </script>
 
 <style scoped>
@@ -1665,79 +1863,295 @@ const handleBatchSubmitDateChange = (val) => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background-color: #f5f7fa;
 }
 
 .shot-management-content {
   display: flex;
-  height: calc(100vh - 20px);
-  padding: 10px;
-  gap: 10px;
+  height: calc(100vh - 10px);
+  padding: 5px;
+  gap: 5px;
   overflow: hidden;
 }
 
 .left-panel {
-  flex: 3;
+  flex: 4;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  gap: 5px;
 }
 
 .right-panel {
   flex: 2;
   overflow: hidden;
-  background-color: #f5f7fa;
-  border-radius: 4px;
+  background-color: #fff;
+  border-radius: 2px;
+  border: 1px solid #e4e7ed;
 }
 
 .filters-container {
-  padding: 10px;
-  background-color: #f5f7fa;
-  border-radius: 4px;
-  margin-bottom: 10px;
+  padding: 8px;
+  background-color: #fff;
+  border-radius: 2px;
+  margin-bottom: 0;
+  flex-shrink: 0;
+  border: 1px solid #e4e7ed;
 }
 
 .page-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
 }
 
-.home-button {
-  margin-left: auto;
-}
-
-.page-title {
-  font-size: 18px;
-  margin: 0 0 10px 0;
-}
-
-.filters {
+.header-actions {
   display: flex;
-  flex-wrap: wrap;
   gap: 8px;
   align-items: center;
 }
 
+.filter-actions {
+  display: flex;
+  gap: 8px;
+  margin-right: 10px;
+}
+
+.home-button {
+  margin-left: 8px;
+}
+
+.page-title {
+  font-size: 18px;
+  margin: 0;
+}
+
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+
 .filter-item {
-  width: 120px;
+  flex: 1;
+  min-width: 0; /* 防止flex项溢出 */
+  margin-right: 0 !important; /* 覆盖原有的margin */
 }
 
 .search-input {
-  width: 150px;
+  flex: 1.2; /* 搜索框稍微宽一点 */
+  min-width: 0;
 }
 
 .shot-list-area {
   flex: 1;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  gap: 5px;
 }
 
-.shot-list-card {
+.table-container {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid #e4e7ed;
+  border-radius: 2px;
+  background-color: #fff;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* 表格样式调整 */
+:deep(.el-table) {
+  margin: 0;
+  border: none;
   height: 100%;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  flex: 1;
+  width: 100% !important;
+}
+
+:deep(.el-table__inner-wrapper) {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100% !important;
+}
+
+:deep(.el-table__header-wrapper) {
+  flex-shrink: 0;
+  width: 100% !important;
+}
+
+:deep(.el-table__header) {
+  width: 100% !important;
+  table-layout: fixed !important;
+}
+
+:deep(.el-table__body-wrapper) {
+  flex: 1;
+  overflow-y: auto;
+  height: auto !important; /* 强制高度自适应 */
+  width: 100% !important;
+}
+
+:deep(.el-table__body) {
+  width: 100% !important;
+  table-layout: fixed !important;
+}
+
+:deep(.el-table__fixed-header-wrapper) {
+  width: 100% !important;
+}
+
+:deep(.el-table__fixed-body-wrapper) {
+  top: auto !important; /* 修复固定列高度 */
+  height: auto !important;
+  bottom: 0;
+}
+
+:deep(.el-table__fixed-right) {
+  height: 100% !important; /* 固定右列高度 */
+  bottom: 0;
+}
+
+:deep(.el-table__fixed) {
+  height: 100% !important; /* 固定左列高度 */
+  bottom: 0;
+}
+
+:deep(.el-table__append-wrapper) {
+  flex-shrink: 0;
+}
+
+:deep(.el-table__column-resize-proxy) {
+  height: 100% !important;
+}
+
+:deep(.el-table::before) {
+  display: none; /* 移除表格底部的线 */
+}
+
+/* 调整分页组件的样式 */
+:deep(.mini-pagination) {
+  transform: none;
+  font-size: 12px;
+  justify-content: center;
+  width: 100%;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+}
+
+:deep(.el-pagination__total) {
+  margin-right: 16px !important;
+  order: 1;
+}
+
+:deep(.el-pagination__sizes) {
+  margin-right: 16px !important;
+  order: 2;
+}
+
+:deep(.el-pagination .btn-prev),
+:deep(.el-pagination .btn-next) {
+  display: none;
+}
+
+:deep(.el-pagination .el-pager) {
+  order: 3;
+  margin: 0 16px 0 0 !important;
+}
+
+:deep(.el-pagination__jump) {
+  order: 4;
+  margin: 0 !important;
+}
+
+/* 批量操作工具栏样式 */
+.batch-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px; /* 进一步缩小间距 */
+  margin-right: 8px;
+  background-color: #f0f9eb;
+  padding: 0px 6px;
+  border-radius: 4px;
+  border: 1px solid #e1f3d8;
+  height: 24px; /* 进一步降低高度与高级筛选按钮完全一致 */
+  box-sizing: border-box;
+}
+
+.selected-info {
+  font-size: 12px;
+  color: #606266;
+  margin-right: 4px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+:deep(.compact-btn) {
+  padding: 0px 5px !important;
+  height: 20px !important;
+  line-height: 1 !important;
+  font-size: 11px !important;
+  min-height: 20px !important;
+  border-radius: 3px !important;
+}
+
+.small-icon {
+  font-size: 11px;
+  margin-right: 1px;
+}
+
+:deep(.compact-btn .el-icon) {
+  margin-right: 1px;
+  font-size: 11px;
+}
+
+:deep(.compact-btn .el-button__text) {
+  font-size: 11px;
+  line-height: 1;
+}
+
+:deep(.batch-actions .el-button.el-button--small) {
+  --el-button-size: 20px;
+  margin: 0 2px !important;
+  font-weight: normal !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+:deep(.batch-actions .el-button--small .el-icon) {
+  font-size: 11px;
+}
+
+/* 确保高度与高级筛选按钮匹配 */
+:deep(.filter-actions .el-button--small) {
+  height: 24px;
+}
+
+/* 覆盖Element Plus的按钮内边距，确保内容居中 */
+:deep(.compact-btn.el-button) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.column-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
 }
 
 .shot-details-container {
@@ -1791,38 +2205,6 @@ const handleBatchSubmitDateChange = (val) => {
   color: #E6A23C;
 }
 
-.pagination-container {
-  margin-top: 10px;
-  display: flex;
-  justify-content: center;
-}
-
-.batch-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px;
-  background-color: #f0f0f0;
-  margin-top: 8px;
-}
-
-.selected-info {
-  font-size: 12px;
-  color: #606266;
-}
-
-.action-buttons {
-  display: flex;
-  gap: 8px;
-}
-
-.column-options {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-}
-
-/* 添加以下新样式 */
 .shot-code-container {
   display: flex;
   align-items: center;
@@ -1878,5 +2260,61 @@ const handleBatchSubmitDateChange = (val) => {
   text-align: center;
   padding: 20px 0;
   font-size: 14px;
+}
+
+.pagination-container {
+  flex: none;
+  height: 46px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #fff;
+  border-radius: 2px;
+  padding: 0;
+  position: relative;
+  z-index: 1;
+  border: 1px solid #e4e7ed;
+}
+
+:deep(.el-table__empty-block) {
+  width: 100% !important;
+  margin-top: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  height: auto !important;
+}
+
+:deep(.el-table__empty-text) {
+  line-height: 1.5;
+  width: 100%;
+}
+
+/* 修复表格边界对齐问题 */
+:deep(.el-table__body) {
+  width: 100% !important;
+}
+
+/* 确保分页组件居中，并设置元素间距 */
+:deep(.mini-pagination) {
+  transform: none;
+  font-size: 12px;
+  justify-content: center;
+  width: 100%;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+}
+
+.debug-info {
+  font-size: 10px;
+  color: #999;
+  padding: 5px;
+  background-color: #f5f5f5;
+  text-align: center;
 }
 </style> 

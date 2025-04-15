@@ -100,7 +100,7 @@ services:
       - "${FRONTEND_PORT:-3000}:${FRONTEND_PORT:-3000}"
     environment:
       - NODE_ENV=development
-      - VITE_API_URL=http://localhost:${BACKEND_PORT:-8000}/api
+      - VITE_API_URL=${VITE_API_URL}
       - FRONTEND_PORT=${FRONTEND_PORT:-3000}
       - BACKEND_PORT=${BACKEND_PORT:-8000}
     env_file:

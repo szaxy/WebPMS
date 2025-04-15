@@ -1,0 +1,252 @@
+shotService.js:91 
+            
+            
+            GET http://localhost:9704/api/shots/818/ 405 (Method Not Allowed)
+dispatchXhrRequest @ xhr.js:195
+xhr @ xhr.js:15
+dispatchRequest @ dispatchRequest.js:51
+Promise.then
+_request @ Axios.js:163
+request @ Axios.js:40
+Axios.<computed> @ Axios.js:213
+wrap @ bind.js:5
+getShot @ shotService.js:91
+fetchShot @ shotStore.js:163
+wrappedAction @ pinia.mjs:1399
+store.<computed> @ pinia.mjs:932
+deleteNote @ ShotDetails.vue:782
+await in deleteNote
+onClick @ ShotDetails.vue:241
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+emit @ runtime-core.esm-bundler.js:6386
+(匿名) @ runtime-core.esm-bundler.js:8099
+handleClick @ use-button.ts:61
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+invoker @ runtime-dom.esm-bundler.js:729
+shotStore.js:168  Error fetching shot 818: AxiosError {message: 'Request failed with status code 405', name: 'AxiosError', code: 'ERR_BAD_REQUEST', config: {…}, request: XMLHttpRequest, …}
+fetchShot @ shotStore.js:168
+await in fetchShot
+wrappedAction @ pinia.mjs:1399
+store.<computed> @ pinia.mjs:932
+deleteNote @ ShotDetails.vue:782
+await in deleteNote
+onClick @ ShotDetails.vue:241
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+emit @ runtime-core.esm-bundler.js:6386
+(匿名) @ runtime-core.esm-bundler.js:8099
+handleClick @ use-button.ts:61
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+invoker @ runtime-dom.esm-bundler.js:729
+ShotManagement.vue:935  handleShotUpdate 接收到无效的 updatedShot null
+handleShotUpdate @ ShotManagement.vue:935
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+emit @ runtime-core.esm-bundler.js:6386
+(匿名) @ runtime-core.esm-bundler.js:8099
+deleteNote @ ShotDetails.vue:783
+await in deleteNote
+onClick @ ShotDetails.vue:241
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+emit @ runtime-core.esm-bundler.js:6386
+(匿名) @ runtime-core.esm-bundler.js:8099
+handleClick @ use-button.ts:61
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+invoker @ runtime-dom.esm-bundler.js:729
+ShotDetails.vue:725 提交备注数据: {
+  "content": "测试备注",
+  "is_important": true
+}
+shotService.js:238 正在添加镜头 818 的备注: {content: '测试备注', is_important: true, shot: 818}
+shotService.js:243 成功添加镜头 818 的备注: {id: 10, shot: 818, user: 1, user_name: 'admin', content: '测试备注', …}
+ShotDetails.vue:727 备注提交成功: {id: 10, shot: 818, user: 1, user_name: 'admin', content: '测试备注', …}
+ShotDetails.vue:618 加载镜头ID为 818 的备注
+shotService.js:206 正在获取镜头 818 的备注
+shotService.js:209 成功获取镜头 818 的备注: {count: 1, next: null, previous: null, results: Array(1)}
+ShotDetails.vue:621 获取到备注响应: {count: 1, next: null, previous: null, results: Array(1)}
+runtime.ts:26  [Vue warn]: Invalid prop: validation failed for prop "type". Expected one of ["default", "primary", "success", "warning", "info", "danger", "text", ""], got value "link". 
+  at <ElButton type="link" size="small" onClick=fn<onClick> > 
+  at <ElCard class="detail-card" > 
+  at <ElScrollbar height="calc(100vh - 60px)" > 
+  at <ShotDetails shot= {id: 818, project: 7, project_code: 'HQ1', shot_code: 'TEST0010', department: 'animation', …} onUpdate=fn<handleShotUpdate> onClose=fn > 
+  at <ShotManagement onVnodeUnmounted=fn<onVnodeUnmounted> ref=Ref< Proxy(Object) {__v_skip: true} > > 
+  at <RouterView> 
+  at <App>
+warn$1 @ runtime-core.esm-bundler.js:51
+_validator @ runtime.ts:26
+validateProp @ runtime-core.esm-bundler.js:4386
+validateProps @ runtime-core.esm-bundler.js:4354
+initProps @ runtime-core.esm-bundler.js:4055
+setupComponent @ runtime-core.esm-bundler.js:7866
+mountComponent @ runtime-core.esm-bundler.js:5216
+processComponent @ runtime-core.esm-bundler.js:5182
+patch @ runtime-core.esm-bundler.js:4700
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+mountChildren @ runtime-core.esm-bundler.js:4932
+processFragment @ runtime-core.esm-bundler.js:5112
+patch @ runtime-core.esm-bundler.js:4674
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+patchBlockChildren @ runtime-core.esm-bundler.js:5054
+processFragment @ runtime-core.esm-bundler.js:5130
+patch @ runtime-core.esm-bundler.js:4674
+patchBlockChildren @ runtime-core.esm-bundler.js:5054
+patchElement @ runtime-core.esm-bundler.js:4972
+processElement @ runtime-core.esm-bundler.js:4831
+patch @ runtime-core.esm-bundler.js:4688
+componentUpdateFn @ runtime-core.esm-bundler.js:5406
+run @ reactivity.esm-bundler.js:225
+runIfDirty @ reactivity.esm-bundler.js:263
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+flushJobs @ runtime-core.esm-bundler.js:408
+Promise.then
+queueFlush @ runtime-core.esm-bundler.js:322
+queueJob @ runtime-core.esm-bundler.js:317
+effect2.scheduler @ runtime-core.esm-bundler.js:5448
+trigger @ reactivity.esm-bundler.js:253
+endBatch @ reactivity.esm-bundler.js:311
+notify @ reactivity.esm-bundler.js:597
+trigger @ reactivity.esm-bundler.js:571
+set value @ reactivity.esm-bundler.js:1448
+loadNotes @ ShotDetails.vue:630
+await in loadNotes
+submitNote @ ShotDetails.vue:730
+await in submitNote
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+emit @ runtime-core.esm-bundler.js:6386
+(匿名) @ runtime-core.esm-bundler.js:8099
+handleClick @ use-button.ts:61
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+invoker @ runtime-dom.esm-bundler.js:729
+ShotDetails.vue:630  [Vue warn]: Invalid prop: custom validator check failed for prop "type". 
+  at <ElButton type="link" size="small" onClick=fn<onClick> > 
+  at <ElCard class="detail-card" > 
+  at <ElScrollbar height="calc(100vh - 60px)" > 
+  at <ShotDetails shot= {id: 818, project: 7, project_code: 'HQ1', shot_code: 'TEST0010', department: 'animation', …} onUpdate=fn<handleShotUpdate> onClose=fn > 
+  at <ShotManagement onVnodeUnmounted=fn<onVnodeUnmounted> ref=Ref< Proxy(Object) {__v_skip: true} > > 
+  at <RouterView> 
+  at <App>
+warn$1 @ runtime-core.esm-bundler.js:51
+validateProp @ runtime-core.esm-bundler.js:4387
+validateProps @ runtime-core.esm-bundler.js:4354
+initProps @ runtime-core.esm-bundler.js:4055
+setupComponent @ runtime-core.esm-bundler.js:7866
+mountComponent @ runtime-core.esm-bundler.js:5216
+processComponent @ runtime-core.esm-bundler.js:5182
+patch @ runtime-core.esm-bundler.js:4700
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+mountChildren @ runtime-core.esm-bundler.js:4932
+processFragment @ runtime-core.esm-bundler.js:5112
+patch @ runtime-core.esm-bundler.js:4674
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+patchBlockChildren @ runtime-core.esm-bundler.js:5054
+processFragment @ runtime-core.esm-bundler.js:5130
+patch @ runtime-core.esm-bundler.js:4674
+patchBlockChildren @ runtime-core.esm-bundler.js:5054
+patchElement @ runtime-core.esm-bundler.js:4972
+processElement @ runtime-core.esm-bundler.js:4831
+patch @ runtime-core.esm-bundler.js:4688
+componentUpdateFn @ runtime-core.esm-bundler.js:5406
+run @ reactivity.esm-bundler.js:225
+runIfDirty @ reactivity.esm-bundler.js:263
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+flushJobs @ runtime-core.esm-bundler.js:408
+Promise.then
+queueFlush @ runtime-core.esm-bundler.js:322
+queueJob @ runtime-core.esm-bundler.js:317
+effect2.scheduler @ runtime-core.esm-bundler.js:5448
+trigger @ reactivity.esm-bundler.js:253
+endBatch @ reactivity.esm-bundler.js:311
+notify @ reactivity.esm-bundler.js:597
+trigger @ reactivity.esm-bundler.js:571
+set value @ reactivity.esm-bundler.js:1448
+loadNotes @ ShotDetails.vue:630
+await in loadNotes
+submitNote @ ShotDetails.vue:730
+await in submitNote
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+emit @ runtime-core.esm-bundler.js:6386
+(匿名) @ runtime-core.esm-bundler.js:8099
+handleClick @ use-button.ts:61
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+invoker @ runtime-dom.esm-bundler.js:729
+shotService.js:91 
+            
+            
+            GET http://localhost:9704/api/shots/818/ 405 (Method Not Allowed)
+dispatchXhrRequest @ xhr.js:195
+xhr @ xhr.js:15
+dispatchRequest @ dispatchRequest.js:51
+Promise.then
+_request @ Axios.js:163
+request @ Axios.js:40
+Axios.<computed> @ Axios.js:213
+wrap @ bind.js:5
+getShot @ shotService.js:91
+fetchShot @ shotStore.js:163
+wrappedAction @ pinia.mjs:1399
+store.<computed> @ pinia.mjs:932
+submitNote @ ShotDetails.vue:734
+await in submitNote
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+emit @ runtime-core.esm-bundler.js:6386
+(匿名) @ runtime-core.esm-bundler.js:8099
+handleClick @ use-button.ts:61
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+invoker @ runtime-dom.esm-bundler.js:729
+shotStore.js:168  Error fetching shot 818: AxiosError {message: 'Request failed with status code 405', name: 'AxiosError', code: 'ERR_BAD_REQUEST', config: {…}, request: XMLHttpRequest, …}
+fetchShot @ shotStore.js:168
+await in fetchShot
+wrappedAction @ pinia.mjs:1399
+store.<computed> @ pinia.mjs:932
+submitNote @ ShotDetails.vue:734
+await in submitNote
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+emit @ runtime-core.esm-bundler.js:6386
+(匿名) @ runtime-core.esm-bundler.js:8099
+handleClick @ use-button.ts:61
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+invoker @ runtime-dom.esm-bundler.js:729
+ShotDetails.vue:739  获取更新后的镜头数据失败，未触发 update 事件
+submitNote @ ShotDetails.vue:739
+await in submitNote
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+emit @ runtime-core.esm-bundler.js:6386
+(匿名) @ runtime-core.esm-bundler.js:8099
+handleClick @ use-button.ts:61
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+invoker @ runtime-dom.esm-bundler.js:729

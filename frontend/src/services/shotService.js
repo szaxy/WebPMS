@@ -42,13 +42,41 @@ export default {
   getShots(params = {}) {
     console.log('获取镜头列表，参数:', params)
     
+    // 参数处理，确保分页参数名称正确
+    const apiParams = { ...params }
+    
+    // 确保分页参数正确传递
+    if (apiParams.page_size) {
+      // 有些后端API使用limit/offset而不是page/page_size
+      // 根据你的API格式选择正确的参数名称
+      
+      // 如果后端使用limit/offset格式，则转换page/page_size
+      // apiParams.limit = apiParams.page_size
+      // apiParams.offset = (apiParams.page - 1) * apiParams.page_size
+      // delete apiParams.page_size
+      // delete apiParams.page
+      
+      // 或者保持page_size/page格式
+      // 确保数值类型正确
+      apiParams.page_size = parseInt(apiParams.page_size, 10)
+      if (apiParams.page) {
+        apiParams.page = parseInt(apiParams.page, 10)
+      }
+    }
+    
+    console.log('转换后的API参数:', apiParams)
+    
     // 直接使用标准shots端点获取列表
-    return apiClient.get('/shots/', { params })
+    return apiClient.get('/shots/', { params: apiParams })
       .then(response => {
         console.log('镜头列表响应状态:', response.status)
         console.log('镜头列表数据类型:', typeof response.data, Array.isArray(response.data) ? '是数组' : '不是数组')
         if (typeof response.data === 'object' && !Array.isArray(response.data)) {
           console.log('响应对象属性:', Object.keys(response.data))
+          if (response.data.results) {
+            console.log('获取到分页结果，共', response.data.results.length, '条，总数:', response.data.count)
+            console.log('分页信息: 页码', apiParams.page || 1, '每页', apiParams.page_size || '默认')
+          }
         }
         return response
       })
@@ -202,24 +230,64 @@ export default {
   
   // 获取镜头备注列表
   getShotNotes(shotId) {
-    return apiClient.get(`/shots/${shotId}/notes/`)
+    // 使用shot-notes端点并以查询参数传递shot_id
+    console.log(`正在获取镜头 ${shotId} 的备注`)
+    return apiClient.get(`/shot-notes/`, { params: { shot: shotId } })
+      .then(response => {
+        console.log(`成功获取镜头 ${shotId} 的备注:`, response.data)
+        return response
+      })
+      .catch(error => {
+        console.error(`获取镜头 ${shotId} 备注失败:`, error)
+        if (error.response) {
+          console.error('错误状态:', error.response.status)
+          console.error('错误数据:', error.response.data)
+        }
+        throw error
+      })
   },
   
   // 添加镜头备注
   addShotNote(shotId, data) {
-    return apiClient.post('/shot-notes/', {
-      shot: shotId,
-      content: data.content,
-      is_important: data.isImportant || false
-    })
+    // 创建备注数据，确保添加shot字段
+    const noteData = { ...data, shot: shotId }
+    
+    // 注释掉或删除以下逻辑，保留attachment_data字段，即使它是空数组
+    /*
+    // 只在有附件时添加attachment_data字段
+    if (data.attachment_data && data.attachment_data.length > 0) {
+      // 保留原有的attachment_data
+    } else {
+      // 如果没有附件数据，确保不发送空数组
+      delete noteData.attachment_data
+    }
+    */
+    
+    console.log(`正在添加镜头 ${shotId} 的备注:`, noteData)
+    
+    // 修改API路径，使用 with_attachment 端点
+    return apiClient.post(`/shot-notes/with_attachment/`, noteData)
+      .then(response => {
+        console.log(`成功添加镜头 ${shotId} 的备注:`, response.data)
+        return response
+      })
+      .catch(error => {
+        console.error(`添加镜头 ${shotId} 的备注失败:`, error)
+        if (error.response) {
+          console.error('错误状态:', error.response.status)
+          console.error('错误数据:', error.response.data)
+        }
+        throw error
+      })
   },
   
   // 更新镜头备注
   updateShotNote(noteId, data) {
-    return apiClient.patch(`/shot-notes/${noteId}/`, {
-      content: data.content,
-      is_important: data.isImportant
-    })
+    const noteData = {}
+    if (data.content !== undefined) noteData.content = data.content
+    if (data.is_important !== undefined) noteData.is_important = data.is_important
+    
+    return apiClient.patch(`/shot-notes/${noteId}/`, noteData)
   },
   
   // 删除镜头备注
@@ -234,11 +302,31 @@ export default {
   
   // 获取镜头反馈列表
   getShotComments(id) {
-    return apiClient.get(`/shots/${id}/comments/`)
+    return apiClient.get(`/comments/comments/`, { params: { shot: id } })
   },
   
   // 添加镜头反馈
   addShotComment(id, data) {
-    return apiClient.post(`/shots/${id}/comments/`, data)
+    const commentData = {
+      shot: id,
+      content: data.content
+    }
+    
+    // 如果有附件数据，添加到请求中
+    if (data.attachment_data) {
+      commentData.attachment_data = data.attachment_data
+    }
+    
+    return apiClient.post(`/comments/comments/`, commentData)
+  },
+  
+  // 更新反馈状态（标记为已解决/未解决）
+  updateComment(commentId, data) {
+    return apiClient.patch(`/comments/comments/${commentId}/`, data)
+  },
+  
+  // 删除反馈
+  deleteComment(commentId) {
+    return apiClient.delete(`/comments/comments/${commentId}/`)
   }
 } 
