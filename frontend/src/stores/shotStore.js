@@ -243,6 +243,33 @@ export const useShotStore = defineStore('shot', () => {
     }
   }
   
+  async function batchCreateShots(data) {
+    try {
+      loading.value = true
+      error.value = null
+      
+      console.log('批量创建镜头，参数:', data)
+      const response = await shotService.batchCreateShots({ shots: data })
+      console.log('批量创建镜头成功:', response.data)
+      
+      return response.data
+    } catch (err) {
+      console.error('批量创建镜头失败:', err)
+      if (err.response) {
+        console.error('错误状态码:', err.response.status)
+        console.error('错误详情:', err.response.data)
+        error.value = `批量创建镜头失败: ${JSON.stringify(err.response.data)}`
+      } else if (err.request) {
+        error.value = '服务器未响应，请检查网络连接'
+      } else {
+        error.value = `批量创建镜头失败: ${err.message}`
+      }
+      return null
+    } finally {
+      loading.value = false
+    }
+  }
+  
   async function updateShot(id, shotData) {
     try {
       loading.value = true
@@ -350,40 +377,38 @@ export const useShotStore = defineStore('shot', () => {
       
       console.log(`正在批量删除 ${ids.length} 个镜头，ID列表:`, ids)
       
-      // 批量删除逻辑 - 使用Promise.allSettled而不是Promise.all允许部分成功
-      const results = await Promise.allSettled(ids.map(id => shotService.deleteShot(id)))
-      
-      // 统计成功和失败
-      const successResults = results.filter(r => r.status === 'fulfilled')
-      const failedResults = results.filter(r => r.status === 'rejected')
+      // 使用批量删除API
+      const response = await shotService.batchDeleteShots(ids)
+      const result = response.data
       
       // 移除成功删除的镜头
-      const successIds = successResults.map((_, index) => ids[index])
+      const deletedIds = result.deleted_shots.map(shot => shot.id)
       
       // 更新本地状态
-      shots.value = shots.value.filter(shot => !successIds.includes(shot.id))
+      shots.value = shots.value.filter(shot => !deletedIds.includes(shot.id))
       
       // 清除已选择的镜头
-      selectedShotIds.value = selectedShotIds.value.filter(shotId => !successIds.includes(shotId))
+      selectedShotIds.value = selectedShotIds.value.filter(shotId => !deletedIds.includes(shotId))
       
       // 清除当前镜头
-      if (currentShot.value && successIds.includes(currentShot.value.id)) {
+      if (currentShot.value && deletedIds.includes(currentShot.value.id)) {
         currentShot.value = null
       }
       
-      if (failedResults.length > 0) {
-        console.error(`有 ${failedResults.length} 个镜头删除失败:`, failedResults)
-        error.value = `有 ${failedResults.length} 个镜头删除失败`
-      }
+      console.log(`成功删除 ${result.deleted_count} 个镜头`)
       
       return {
-        message: `成功删除 ${successResults.length} 个镜头`,
-        deleted_count: successResults.length,
-        failed_count: failedResults.length
+        message: `成功删除 ${result.deleted_count} 个镜头`,
+        deleted_count: result.deleted_count,
+        deleted_shots: result.deleted_shots
       }
     } catch (err) {
       console.error('批量删除镜头失败:', err)
-      error.value = '批量删除镜头失败'
+      if (err.response) {
+        error.value = `批量删除镜头失败: ${JSON.stringify(err.response.data)}`
+      } else {
+        error.value = '批量删除镜头失败'
+      }
       return null
     } finally {
       loading.value = false
@@ -603,6 +628,7 @@ export const useShotStore = defineStore('shot', () => {
     fetchShots,
     fetchShot,
     createShot,
+    batchCreateShots,
     updateShot,
     updateShotStatus,
     deleteShot,

@@ -4,6 +4,7 @@
     title="项目管理"
     width="900px"
     :close-on-click-modal="false"
+    :top="'5vh'"
   >
     <div class="project-management">
       <!-- 工具栏 -->
@@ -30,8 +31,11 @@
         style="width: 100%"
         stripe
         border
+        size="small"
+        :header-cell-style="{ fontSize: '13px', padding: '5px 0' }" 
+        :cell-style="{ fontSize: '13px', padding: '3px 0' }"
       >
-        <el-table-column prop="name" label="项目名称" sortable min-width="180">
+        <el-table-column prop="name" label="项目名称" sortable min-width="120">
           <template #default="{ row }">
             <div class="project-name">
               {{ row.name }}
@@ -39,17 +43,17 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="code" label="项目代号" width="120" sortable />
+        <el-table-column prop="code" label="项目代号" min-width="80" sortable />
 
-        <el-table-column label="状态" width="100">
+        <el-table-column label="状态" min-width="80">
           <template #default="{ row }">
-            <el-tag :type="getStatusTagType(row.status)">
+            <el-tag :type="getStatusTagType(row.status)" size="small">
               {{ getStatusDisplay(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
 
-        <el-table-column label="部门" width="180">
+        <el-table-column label="部门" min-width="120">
           <template #default="{ row }">
             <div class="departments-list">
               <el-tag
@@ -65,7 +69,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="日期" width="180">
+        <el-table-column label="日期" min-width="100">
           <template #default="{ row }">
             <div class="date-info">
               <div v-if="row.start_date">开始: {{ formatDate(row.start_date) }}</div>
@@ -74,7 +78,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column label="操作" width="90" fixed="right">
           <template #default="{ row }">
             <div class="action-buttons">
               <el-button
@@ -83,6 +87,7 @@
                 title="编辑"
                 @click="editProject(row)"
                 :disabled="isProcessing"
+                circle
               >
                 <el-icon><Edit /></el-icon>
               </el-button>
@@ -92,6 +97,7 @@
                 title="删除"
                 @click="confirmDeleteProject(row)"
                 :disabled="isProcessing"
+                circle
               >
                 <el-icon><Delete /></el-icon>
               </el-button>
@@ -276,8 +282,18 @@ const filteredProjects = computed(() => {
     )
   }
   
-  // 排序 - 默认按创建时间倒序
+  // 排序 - 按项目状态优先级（进行中 > 已暂停 > 已归档），然后按创建时间倒序
   result.sort((a, b) => {
+    // 按状态排序
+    const statusOrder = { 'in_progress': 0, 'paused': 1, 'archived': 2 }
+    const statusA = statusOrder[a.status] !== undefined ? statusOrder[a.status] : 999
+    const statusB = statusOrder[b.status] !== undefined ? statusOrder[b.status] : 999
+    
+    if (statusA !== statusB) {
+      return statusA - statusB
+    }
+    
+    // 状态相同时，按创建时间倒序
     return new Date(b.created_at || 0) - new Date(a.created_at || 0)
   })
   
@@ -502,13 +518,14 @@ watchEffect(() => {
 .project-management {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 5px;
 }
 
 .toolbar {
   display: flex;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 5px;
+  height: 32px;
 }
 
 .spacer {
@@ -518,27 +535,30 @@ watchEffect(() => {
 .departments-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 2px;
 }
 
 .department-tag {
-  margin: 2px;
+  margin: 1px;
+  font-size: 11px;
 }
 
 .action-buttons {
   display: flex;
-  gap: 8px;
+  gap: 4px;
+  justify-content: center;
 }
 
 .date-info {
-  font-size: 13px;
+  font-size: 8px; /* 缩小至原来的约60% */
   color: #606266;
+  line-height: 1.2;
 }
 
 .pagination {
   display: flex;
   justify-content: flex-end;
-  margin-top: 16px;
+  margin-top: 5px;
 }
 
 .form-hint {
@@ -549,5 +569,32 @@ watchEffect(() => {
 
 .project-name {
   font-weight: 500;
+  font-size: 13px;
+}
+
+/* 覆盖分页组件的默认样式 */
+:deep(.el-pagination) {
+  font-size: 13px;
+  --el-pagination-button-width: 28px;
+  --el-pagination-button-height: 28px;
+}
+
+/* 覆盖表格按钮的默认样式 */
+:deep(.el-button.is-circle) {
+  padding: 4px;
+}
+
+/* 覆盖对话框的默认样式 */
+:deep(.el-dialog__header) {
+  padding: 10px 20px;
+  margin-right: 0;
+}
+
+:deep(.el-dialog__body) {
+  padding: 10px 20px;
+}
+
+:deep(.el-dialog__footer) {
+  padding: 10px 20px;
 }
 </style> 

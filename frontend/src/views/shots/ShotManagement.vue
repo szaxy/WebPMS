@@ -501,7 +501,7 @@
               </div>
               <div style="display: flex; flex-direction: column; gap: 5px;">
                 <span>数量</span>
-                <el-input-number v-model="batchShotForm.count" :min="1" :max="100" />
+                <el-input-number v-model="batchShotForm.count" :min="1" :max="9999" />
               </div>
             </div>
           </el-form-item>
@@ -1322,43 +1322,25 @@ const confirmBatchDelete = () => {
       try {
         loading.value = true
         
-        // 逐个删除，提高成功率
-        let successCount = 0
-        let failCount = 0
-        const totalCount = shotStore.selectedShotIds.length
-        
-        // 复制一份ID列表以避免在循环中修改
+        // 使用批量删除API
         const idsToDelete = [...shotStore.selectedShotIds]
-        
         console.log(`开始批量删除 ${idsToDelete.length} 个镜头...`)
-        for (const id of idsToDelete) {
-          try {
-            const success = await shotStore.deleteShot(id)
-            if (success) {
-              successCount++
-            } else {
-              failCount++
-            }
-          } catch (err) {
-            console.error(`删除镜头 ${id} 时发生错误:`, err)
-            failCount++
+        
+        const result = await shotStore.batchDeleteShots(idsToDelete)
+        if (result) {
+          ElMessage.success(result.message)
+          
+          // 清空选择
+          shotStore.selectAllShots(false)
+          if (shotTable.value) {
+            shotTable.value.clearSelection()
           }
+          
+          // 刷新列表
+          await refreshShots()
+        } else {
+          ElMessage.error('批量删除失败')
         }
-        
-        // 汇总结果
-        if (successCount > 0) {
-          ElMessage.success(`成功删除 ${successCount} 个镜头`)
-        }
-        
-        if (failCount > 0) {
-          ElMessage.warning(`有 ${failCount} 个镜头删除失败`)
-        }
-        
-        // 清空选择
-        shotStore.selectAllShots(false)
-        
-        // 刷新列表
-        await refreshShots()
       } catch (error) {
         console.error('批量删除过程中发生错误:', error)
         ElMessage.error('批量删除过程中发生错误，请检查控制台日志')
@@ -1535,8 +1517,8 @@ const submitAddShot = async () => {
       ElMessage.error('请输入有效的起始编号')
       return
     }
-    if (!batchShotForm.count || batchShotForm.count <= 0 || batchShotForm.count > 100) {
-      ElMessage.error('请输入有效的数量（1-100）')
+    if (!batchShotForm.count || batchShotForm.count <= 0) {
+      ElMessage.error('请输入有效的数量（大于0）')
       return
     }
     if (!batchShotForm.digit_count || batchShotForm.digit_count <= 0) {
@@ -1555,84 +1537,52 @@ const submitAddShot = async () => {
     // 确保日期数据的正确性 - 处理批量表单
     const batchFormData = { ...batchShotForm }
     
-    // 确保日期格式正确
+    // 确保日期格式正确，无效或空则设为null
     if (batchFormData.deadline) {
-      // 验证日期格式
+      let formattedDate = null
       if (typeof batchFormData.deadline === 'string') {
         const dateMatch = batchFormData.deadline.match(/^(\d{4})-(\d{2})-(\d{2})$/)
         if (dateMatch) {
-          // 保持格式不变，但确保是合法日期
           const year = parseInt(dateMatch[1])
-          const month = parseInt(dateMatch[2]) - 1 // JS月份从0开始
+          const month = parseInt(dateMatch[2]) - 1
           const day = parseInt(dateMatch[3])
-          
           const dateObj = new Date(year, month, day)
-          if (
-            dateObj.getFullYear() === year &&
-            dateObj.getMonth() === month &&
-            dateObj.getDate() === day
-          ) {
-            // 日期有效，重新格式化确保一致
-            batchFormData.deadline = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-          } else {
-            console.error('批量日期无效:', batchFormData.deadline)
-            delete batchFormData.deadline
+          if (dateObj.getFullYear() === year && dateObj.getMonth() === month && dateObj.getDate() === day) {
+            formattedDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
           }
-        } else {
-          console.error('批量日期格式错误:', batchFormData.deadline)
-          delete batchFormData.deadline
         }
       } else if (batchFormData.deadline instanceof Date) {
         if (!isNaN(batchFormData.deadline.getTime())) {
-          batchFormData.deadline = batchFormData.deadline.toISOString().split('T')[0]
-        } else {
-          console.error('批量日期对象无效:', batchFormData.deadline)
-          delete batchFormData.deadline
+          formattedDate = batchFormData.deadline.toISOString().split('T')[0]
         }
-      } else {
-        console.error('未知批量日期类型:', typeof batchFormData.deadline)
-        delete batchFormData.deadline
       }
+      batchFormData.deadline = formattedDate // Set to formatted date or null
+    } else {
+      batchFormData.deadline = null // Ensure empty/falsy is null
     }
     
-    // 同样处理最近提交日期
+    // 同样处理最近提交日期，无效或空则设为null
     if (batchFormData.last_submit_date) {
-      // 验证日期格式
+      let formattedSubmitDate = null
       if (typeof batchFormData.last_submit_date === 'string') {
         const dateMatch = batchFormData.last_submit_date.match(/^(\d{4})-(\d{2})-(\d{2})$/)
         if (dateMatch) {
-          // 保持格式不变，但确保是合法日期
           const year = parseInt(dateMatch[1])
-          const month = parseInt(dateMatch[2]) - 1 // JS月份从0开始
+          const month = parseInt(dateMatch[2]) - 1
           const day = parseInt(dateMatch[3])
-          
           const dateObj = new Date(year, month, day)
-          if (
-            dateObj.getFullYear() === year &&
-            dateObj.getMonth() === month &&
-            dateObj.getDate() === day
-          ) {
-            // 日期有效，重新格式化确保一致
-            batchFormData.last_submit_date = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-          } else {
-            console.error('批量提交日期无效:', batchFormData.last_submit_date)
-            delete batchFormData.last_submit_date
+          if (dateObj.getFullYear() === year && dateObj.getMonth() === month && dateObj.getDate() === day) {
+            formattedSubmitDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
           }
-        } else {
-          console.error('批量提交日期格式错误:', batchFormData.last_submit_date)
-          delete batchFormData.last_submit_date
         }
       } else if (batchFormData.last_submit_date instanceof Date) {
         if (!isNaN(batchFormData.last_submit_date.getTime())) {
-          batchFormData.last_submit_date = batchFormData.last_submit_date.toISOString().split('T')[0]
-        } else {
-          console.error('批量提交日期对象无效:', batchFormData.last_submit_date)
-          delete batchFormData.last_submit_date
+          formattedSubmitDate = batchFormData.last_submit_date.toISOString().split('T')[0]
         }
-      } else {
-        console.error('未知批量提交日期类型:', typeof batchFormData.last_submit_date)
-        delete batchFormData.last_submit_date
       }
+      batchFormData.last_submit_date = formattedSubmitDate // Set to formatted date or null
+    } else {
+        batchFormData.last_submit_date = null // Ensure empty/falsy is null
     }
     
     // 调试日期值
@@ -1657,41 +1607,20 @@ const submitAddShot = async () => {
         prefix: batchFormData.prefix,
         start: batchFormData.start_num,
         count: batchFormData.count,
-        digit_count: batchFormData.digit_count
+        digit_count: batchFormData.digit_count,
+        step: batchFormData.step,
+        suffix: batchFormData.suffix
       }
       
-      let successCount = 0
-      let failCount = 0
-
-      // 逐个创建镜头
-      for (const shotName of batchShotNamePreview.value) {
-        try {
-          const shotData = {
-            ...batchData,
-            shot_code: shotName
-          }
-          
-          const newShot = await shotStore.createShot(shotData)
-          if (newShot) {
-            successCount++
-          } else {
-            failCount++
-          }
-        } catch (error) {
-          console.error(`创建镜头 ${shotName} 失败:`, error)
-          failCount++
-        }
+      // 使用批量创建API
+      const result = await shotStore.batchCreateShots(batchData)
+      
+      if (result) {
+        ElMessage.success(`成功创建 ${result.created_count} 个镜头`)
+        await refreshShots()
+      } else {
+        ElMessage.error('批量创建镜头失败')
       }
-
-      // 显示结果
-      if (successCount > 0) {
-        ElMessage.success(`成功创建 ${successCount} 个镜头`)
-      }
-      if (failCount > 0) {
-        ElMessage.warning(`有 ${failCount} 个镜头创建失败`)
-      }
-
-      await refreshShots()
     } catch (error) {
       console.error('批量创建镜头失败:', error)
       ElMessage.error('批量创建镜头失败: ' + (error.message || '未知错误'))

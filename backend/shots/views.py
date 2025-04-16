@@ -199,6 +199,95 @@ class ShotViewSet(viewsets.ModelViewSet):
             'renamed_shots': renamed_shots
         })
         
+    @action(detail=False, methods=['post'])
+    def batch_create(self, request):
+        """批量创建镜头"""
+        shots_data = request.data.get('shots', [])
+        
+        if not shots_data:
+            return Response({'error': '未提供镜头数据'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # 如果shots_data是字典形式的批量生成数据
+        if isinstance(shots_data, dict):
+            # 解析批量生成参数
+            project_id = shots_data.get('project')
+            prefix = shots_data.get('prefix', '')
+            start_num = shots_data.get('start', 10)
+            count = shots_data.get('count', 5)
+            digit_count = shots_data.get('digit_count', 3)
+            suffix = shots_data.get('suffix', '')
+            step = shots_data.get('step', 10)
+            
+            # 其他共用字段
+            common_fields = {k: v for k, v in shots_data.items() 
+                           if k not in ['project', 'prefix', 'start', 'count', 'digit_count', 'suffix', 'step']}
+            
+            # 生成实际的镜头列表数据
+            bulk_shots_data = []
+            for i in range(count):
+                num = start_num + (i * step)
+                shot_code = f"{prefix}{str(num).zfill(digit_count)}{suffix}"
+                
+                shot_data = {
+                    'project': project_id,
+                    'shot_code': shot_code,
+                    **common_fields
+                }
+                bulk_shots_data.append(shot_data)
+                
+            shots_data = bulk_shots_data
+        
+        # 创建序列化器用于验证
+        serializer = self.get_serializer(data=shots_data, many=True)
+        
+        try:
+            serializer.is_valid(raise_exception=True)
+        except Exception as e:
+            return Response({'error': f'验证失败: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        # 高效批量创建
+        try:
+            shots = serializer.save()
+            
+            return Response({
+                'message': f'成功创建 {len(shots)} 个镜头',
+                'created_count': len(shots),
+                'created_shots': self.get_serializer(shots, many=True).data
+            })
+        except Exception as e:
+            return Response({'error': f'创建镜头失败: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    @action(detail=False, methods=['post'])
+    def batch_delete(self, request):
+        """批量删除镜头"""
+        shot_ids = request.data.get('ids', [])
+        
+        if not shot_ids:
+            return Response({'error': '未指定镜头IDs'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # 获取用户有权限访问的镜头
+        queryset = self.get_queryset().filter(id__in=shot_ids)
+        
+        # 检查是否所有镜头都有访问权限
+        if len(queryset) != len(shot_ids):
+            return Response({
+                'error': '包含无权限访问的镜头',
+                'requested_count': len(shot_ids),
+                'accessible_count': len(queryset)
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # 获取镜头编号用于响应
+        shot_data = list(queryset.values('id', 'shot_code'))
+        
+        # 执行批量删除
+        deleted_count, _ = queryset.delete()
+        
+        return Response({
+            'message': f'成功删除{deleted_count}个镜头',
+            'deleted_count': deleted_count,
+            'deleted_shots': shot_data
+        })
+        
     def perform_create(self, serializer):
         """创建镜头时的额外操作"""
         # 可以在这里添加创建镜头时的额外逻辑

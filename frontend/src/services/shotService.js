@@ -216,6 +216,20 @@ export default {
     return apiClient.post('/shots/batch-update/', { ids, fields })
   },
   
+  // 批量创建镜头
+  batchCreateShots(data) {
+    console.log('API调用批量创建镜头，数据:', data)
+    // 使用 DefaultRouter 生成的路径
+    return apiClient.post('/shots/batch_create/', data)
+  },
+  
+  // 批量删除镜头
+  batchDeleteShots(ids) {
+    console.log('API调用批量删除镜头，ID:', ids)
+    // 使用 DefaultRouter 生成的路径
+    return apiClient.post('/shots/batch_delete/', { ids })
+  },
+  
   // 批量重命名镜头
   batchRenameShots(ids, options) {
     return apiClient.post('/shots/batch-rename/', { 
