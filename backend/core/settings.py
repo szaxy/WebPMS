@@ -75,10 +75,35 @@ ASGI_APPLICATION = 'core.asgi.application'
 
 # Database
 DATABASES = {
-    'default': dj_database_url.config(
-        default=f"postgres://{config('DB_USER')}:{config('DB_PASSWORD')}@{config('DB_HOST')}:{config('DB_PORT')}/{config('DB_NAME')}",
-        conn_max_age=600,
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'webpms',
+        'USER': 'postgres',
+        'PASSWORD': 'jaden123456',
+        'HOST': 'localhost',
+        'PORT': '15432',
+    }
+}
+
+# Redis配置
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://localhost:6379/0",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+
+# Channels配置
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("localhost", 6379)],
+        },
+    },
 }
 
 # Password validation
@@ -148,18 +173,8 @@ frontend_alt_port = config('FRONTEND_ALT_PORT', default='3001')
 default_cors = f'http://localhost:{frontend_port},http://localhost:{frontend_alt_port}'
 CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default=default_cors, cast=Csv())
 
-# Channels Settings
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            'hosts': [(config('REDIS_HOST'), config('REDIS_PORT', cast=int))],
-        },
-    },
-}
-
 # Celery Settings
-CELERY_BROKER_URL = f"redis://{config('REDIS_HOST')}:{config('REDIS_PORT')}/{config('REDIS_DB')}"
+CELERY_BROKER_URL = f"redis://localhost:6379/0"
 CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
@@ -167,9 +182,9 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 
 # CGTeamwork API Settings
-CGTW_API_URL = config('CGTW_API_URL')
-CGTW_USERNAME = config('CGTW_USERNAME')
-CGTW_PASSWORD = config('CGTW_PASSWORD')
+CGTW_API_URL = config('CGTW_API_URL', default='http://localhost:8080/api')
+CGTW_USERNAME = config('CGTW_USERNAME', default='admin')
+CGTW_PASSWORD = config('CGTW_PASSWORD', default='admin')
 
 # Email Settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

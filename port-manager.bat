@@ -34,12 +34,12 @@ if exist .env.ports (
         echo # 修改此文件以自定义服务端口
         echo.
         echo # 前端服务端口
-        echo FRONTEND_PORT=3000
-        echo FRONTEND_ALT_PORT=3001
+        echo FRONTEND_PORT=9527
+        echo FRONTEND_ALT_PORT=9528
         echo.
         echo # 后端服务端口
-        echo BACKEND_PORT=8000
-        echo BACKEND_ALT_PORT=8001
+        echo BACKEND_PORT=9803
+        echo BACKEND_ALT_PORT=9804
         echo.
         echo # 数据库端口
         echo DB_PORT=15432
@@ -51,21 +51,21 @@ if exist .env.ports (
         echo AUTO_PORT_SWITCH=1
         echo.
         echo # 可用的前端端口池(用空格分隔^)
-        echo FRONTEND_PORT_POOL="3000 3001 3002 8080 8081 9527 9528"
+        echo FRONTEND_PORT_POOL="9527 9528 9529 9530 9531 9532 9533"
         echo.
         echo # 可用的后端端口池(用空格分隔^)
-        echo BACKEND_PORT_POOL="8000 8001 8002 8003 9000 9001"
+        echo BACKEND_PORT_POOL="9803 9804 9805 9806 9807 9808 9809"
     ) > .env.ports
     
-    set FRONTEND_PORT=3000
-    set FRONTEND_ALT_PORT=3001
-    set BACKEND_PORT=8000
-    set BACKEND_ALT_PORT=8001
+    set FRONTEND_PORT=9527
+    set FRONTEND_ALT_PORT=9528
+    set BACKEND_PORT=9803
+    set BACKEND_ALT_PORT=9804
     set DB_PORT=15432
     set REDIS_PORT=6379
     set AUTO_PORT_SWITCH=1
-    set FRONTEND_PORT_POOL="3000 3001 3002 8080 8081 9527 9528"
-    set BACKEND_PORT_POOL="8000 8001 8002 8003 9000 9001"
+    set FRONTEND_PORT_POOL="9527 9528 9529 9530 9531 9532 9533"
+    set BACKEND_PORT_POOL="9803 9804 9805 9806 9807 9808 9809"
 )
 
 echo.

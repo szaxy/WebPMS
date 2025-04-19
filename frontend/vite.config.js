@@ -7,19 +7,19 @@ export default defineConfig({
   plugins: [vue()],
   server: {
     host: '0.0.0.0',
-    port: parseInt(process.env.FRONTEND_PORT || 3000),
+    port: parseInt(process.env.FRONTEND_PORT || 9527),
     strictPort: false, // 允许自动寻找可用端口
     proxy: {
       '/api': {
-        target: `http://backend:${process.env.BACKEND_PORT || 8000}`,
+        target: `http://localhost:${process.env.BACKEND_PORT || 9803}`,
         changeOrigin: true,
       },
       '/media': {
-        target: `http://backend:${process.env.BACKEND_PORT || 8000}`,
+        target: `http://localhost:${process.env.BACKEND_PORT || 9803}`,
         changeOrigin: true,
       },
       '/ws': {
-        target: `ws://backend:${process.env.BACKEND_PORT || 8000}`,
+        target: `ws://localhost:${process.env.BACKEND_PORT || 9803}`,
         ws: true,
       },
     },

@@ -8,11 +8,7 @@ const CLOSED = 3
 
 // 获取WebSocket URL，根据环境变量或当前域名
 const getWebSocketUrl = () => {
-  const apiUrl = import.meta.env.VITE_API_URL || ''
-  if (apiUrl) {
-    return apiUrl.replace(/^http/, 'ws') + '/ws/'
-  }
-  
+  // 使用当前域名构建WebSocket URL
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
   return `${protocol}//${window.location.host}/ws/`
 }

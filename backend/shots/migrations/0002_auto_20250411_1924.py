@@ -10,11 +10,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='shot',
-            name='department',
-            field=models.CharField(choices=[('DH', '动画'), ('JS', '解算'), ('HQ', '后期')], default='DH', max_length=2, verbose_name='所属部门'),
-        ),
         migrations.AlterField(
             model_name='shot',
             name='duration_frame',
@@ -30,20 +25,5 @@ class Migration(migrations.Migration):
             name='status',
             field=models.CharField(choices=[('waiting', '等待开始'), ('in_progress', '正在制作'), ('submit_review', '提交内审'), ('revising', '正在修改'), ('internal_approved', '内审通过'), ('client_review', '客户审核'), ('client_rejected', '客户退回'), ('client_approved', '客户通过'), ('client_revision', '客户返修'), ('deleted_merged', '已删除或合并'), ('suspended', '暂停制作'), ('completed', '已完结')], default='waiting', max_length=20, verbose_name='制作状态'),
         ),
-        migrations.AddIndex(
-            model_name='shot',
-            index=models.Index(fields=['shot_code'], name='shots_shot_shot_co_a1b55f_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='shot',
-            index=models.Index(fields=['status'], name='shots_shot_status_dcf03a_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='shot',
-            index=models.Index(fields=['department'], name='shots_shot_departm_6b841a_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='shot',
-            index=models.Index(fields=['deadline'], name='shots_shot_deadlin_ba0e5a_idx'),
-        ),
+
     ]

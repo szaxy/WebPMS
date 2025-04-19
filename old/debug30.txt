@@ -1,0 +1,281 @@
+client:536  WebSocket connection to 'ws://localhost:8754/?token=UwbR8elEm1p8' failed: Error during WebSocket handshake: Unexpected response code: 200
+setupWebSocket @ client:536
+(匿名) @ client:531
+[新] 使用 Edge 中的 Copilot 来解释控制台错误: 单击
+         
+         以说明错误。
+        了解更多信息
+        不再显示
+client:523 [vite] Direct websocket connection fallback. Check out https://vite.dev/config/server-options.html#server-hmr to remove the previous connection error.
+authStore.js:44 用户信息初始化成功: admin
+favicon.ico:1 
+            
+            
+            GET http://localhost:8754/favicon.ico 404 (Not Found)
+projectStore.js:30 正在获取项目列表...
+projectService.js:30 项目API调用，参数: {}
+projectStore.js:30 正在获取项目列表...
+projectService.js:30 项目API调用，参数: {}
+ShotManagement.vue:758 开始加载项目列表
+projectStore.js:30 正在获取项目列表...
+projectService.js:30 项目API调用，参数: {}
+projectService.js:33 项目API响应状态: 200
+projectService.js:34 项目API响应数据类型: object 不是数组
+projectService.js:38 项目分页数据 - 总数: 1 当前页数量: 1
+projectStore.js:32 项目API响应: {data: {…}, status: 200, statusText: 'OK', headers: AxiosHeaders, config: {…}, …}
+projectStore.js:37 检测到分页响应，共有 1 个项目
+projectService.js:33 项目API响应状态: 200
+projectService.js:34 项目API响应数据类型: object 不是数组
+projectService.js:38 项目分页数据 - 总数: 1 当前页数量: 1
+projectStore.js:32 项目API响应: {data: {…}, status: 200, statusText: 'OK', headers: AxiosHeaders, config: {…}, …}
+projectStore.js:37 检测到分页响应，共有 1 个项目
+projectService.js:33 项目API响应状态: 200
+projectService.js:34 项目API响应数据类型: object 不是数组
+projectService.js:38 项目分页数据 - 总数: 1 当前页数量: 1
+projectStore.js:32 项目API响应: {data: {…}, status: 200, statusText: 'OK', headers: AxiosHeaders, config: {…}, …}
+projectStore.js:37 检测到分页响应，共有 1 个项目
+ShotManagement.vue:760 原始项目数据: Proxy(Array) {0: {…}}
+ShotManagement.vue:765 过滤后的项目列表: Proxy(Array) {0: Proxy(Object)}
+ShotManagement.vue:777 自动选择第一个项目: Proxy(Object) {id: 1, name: '测试项目1', code: 'Test1', status: 'in_progress', start_date: '2025-04-19', …}
+ShotManagement.vue:815 开始加载镜头，项目ID: 1
+ShotManagement.vue:839 请求参数，包含分页: {project: 1, page_size: 50, page: 1, search: undefined}
+shotStore.js:60 fetchShots开始请求，参数: {project: 1, page_size: 50, page: 1, search: undefined}
+shotService.js:43 获取镜头列表，参数: {project: 1, page_size: 50, page: 1, search: undefined}
+shotService.js:67 转换后的API参数: {project: 1, page_size: 50, page: 1, search: undefined}
+shotService.js:72 镜头列表响应状态: 200
+shotService.js:73 镜头列表数据类型: object 不是数组
+shotService.js:75 响应对象属性: (4) ['count', 'next', 'previous', 'results']
+shotService.js:77 获取到分页结果，共 50 条，总数: 200
+shotService.js:78 分页信息: 页码 1 每页 50
+shotStore.js:62 镜头API响应数据类型: object
+shotStore.js:70 成功获取镜头数据(分页): 50 条记录, 总数: 200 页码: 1 每页: 50
+ShotManagement.vue:842 API响应: {count: 200, next: 'http://localhost/api/shots/?page=2&page_size=50&project=1', previous: null, results: Array(50)}
+ShotManagement.vue:847 总记录数: 200, 当前页: 1, 每页条数: 50
+ShotManagement.vue:860 成功加载 50 个镜头，第 1 页，共 4 页
+ShotManagement.vue:1237 初始化完成，当前页面大小: 50
+ShotDetails.vue:609 加载镜头ID为 1 的备注
+shotService.js:248 正在获取镜头 1 的备注
+ShotDetails.vue:609 加载镜头ID为 1 的备注
+shotService.js:248 正在获取镜头 1 的备注
+ShotDetails.vue:614 获取到备注响应: {count: 1, next: null, previous: null, results: Array(1)}
+ShotDetails.vue:117 Comment Attachment SRC: http://localhost/media/%40attachments/thumbnails/2025/04/19/thumb_clipboard_d0f6fda874524cc7ba3cd88bc52574c6.png
+shotService.js:251 成功获取镜头 1 的备注: {count: 2, next: null, previous: null, results: Array(2)}
+ShotDetails.vue:230 Note Attachment SRC: http://localhost/media/%40attachments/thumbnails/2025/04/19/thumb_note_clipboard_397b93854b3a4d749f9d6ceda211eced.png
+ShotDetails.vue:614 获取到备注响应: {count: 1, next: null, previous: null, results: Array(1)}
+ShotDetails.vue:117 Comment Attachment SRC: http://localhost/media/%40attachments/thumbnails/2025/04/19/thumb_clipboard_d0f6fda874524cc7ba3cd88bc52574c6.png
+shotService.js:251 成功获取镜头 1 的备注: {count: 2, next: null, previous: null, results: Array(2)}
+ShotDetails.vue:230 Note Attachment SRC: http://localhost/media/%40attachments/thumbnails/2025/04/19/thumb_note_clipboard_397b93854b3a4d749f9d6ceda211eced.png
+/media/%40attachments/thumbnails/2025/04/19/thumb_clipboard_d0f6fda874524cc7ba3cd88bc52574c6.png:1 
+            
+            
+            GET http://localhost/media/%40attachments/thumbnails/2025/04/19/thumb_clipboard_d0f6fda874524cc7ba3cd88bc52574c6.png net::ERR_CONNECTION_REFUSED
+Image
+patchDOMProp @ runtime-dom.esm-bundler.js:667
+patchProp @ runtime-dom.esm-bundler.js:778
+mountElement @ runtime-core.esm-bundler.js:4873
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+mountChildren @ runtime-core.esm-bundler.js:4932
+processFragment @ runtime-core.esm-bundler.js:5112
+patch @ runtime-core.esm-bundler.js:4674
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+mountChildren @ runtime-core.esm-bundler.js:4932
+processFragment @ runtime-core.esm-bundler.js:5112
+patch @ runtime-core.esm-bundler.js:4674
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+patchBlockChildren @ runtime-core.esm-bundler.js:5054
+processFragment @ runtime-core.esm-bundler.js:5130
+patch @ runtime-core.esm-bundler.js:4674
+patchBlockChildren @ runtime-core.esm-bundler.js:5054
+patchElement @ runtime-core.esm-bundler.js:4972
+processElement @ runtime-core.esm-bundler.js:4831
+patch @ runtime-core.esm-bundler.js:4688
+componentUpdateFn @ runtime-core.esm-bundler.js:5406
+run @ reactivity.esm-bundler.js:225
+runIfDirty @ reactivity.esm-bundler.js:263
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+flushJobs @ runtime-core.esm-bundler.js:408
+Promise.then
+queueFlush @ runtime-core.esm-bundler.js:322
+queueJob @ runtime-core.esm-bundler.js:317
+effect2.scheduler @ runtime-core.esm-bundler.js:5448
+trigger @ reactivity.esm-bundler.js:253
+endBatch @ reactivity.esm-bundler.js:311
+notify @ reactivity.esm-bundler.js:597
+trigger @ reactivity.esm-bundler.js:571
+set value @ reactivity.esm-bundler.js:1448
+loadComments @ ShotDetails.vue:630
+await in loadComments
+watch.immediate @ ShotDetails.vue:907
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+baseWatchOptions.call @ runtime-core.esm-bundler.js:6193
+job @ reactivity.esm-bundler.js:1813
+watch @ reactivity.esm-bundler.js:1849
+doWatch @ runtime-core.esm-bundler.js:6221
+watch2 @ runtime-core.esm-bundler.js:6154
+setup @ ShotDetails.vue:905
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+setupStatefulComponent @ runtime-core.esm-bundler.js:7907
+setupComponent @ runtime-core.esm-bundler.js:7868
+mountComponent @ runtime-core.esm-bundler.js:5216
+processComponent @ runtime-core.esm-bundler.js:5182
+patch @ runtime-core.esm-bundler.js:4700
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+patchBlockChildren @ runtime-core.esm-bundler.js:5054
+processFragment @ runtime-core.esm-bundler.js:5130
+patch @ runtime-core.esm-bundler.js:4674
+componentUpdateFn @ runtime-core.esm-bundler.js:5406
+run @ reactivity.esm-bundler.js:225
+runIfDirty @ reactivity.esm-bundler.js:263
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+flushJobs @ runtime-core.esm-bundler.js:408
+Promise.then
+queueFlush @ runtime-core.esm-bundler.js:322
+queueJob @ runtime-core.esm-bundler.js:317
+effect2.scheduler @ runtime-core.esm-bundler.js:5448
+trigger @ reactivity.esm-bundler.js:253
+endBatch @ reactivity.esm-bundler.js:311
+notify @ reactivity.esm-bundler.js:597
+trigger @ reactivity.esm-bundler.js:571
+set value @ reactivity.esm-bundler.js:1448
+updateCurrentRow @ current.ts:28
+setCurrentRow @ index.ts:163
+commit @ index.ts:169
+handleClick @ events-helper.ts:38
+onClick @ render-helper.ts:57
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+invoker @ runtime-dom.esm-bundler.js:729
+/media/%40attachments/thumbnails/2025/04/19/thumb_note_clipboard_397b93854b3a4d749f9d6ceda211eced.png:1 
+            
+            
+            GET http://localhost/media/%40attachments/thumbnails/2025/04/19/thumb_note_clipboard_397b93854b3a4d749f9d6ceda211eced.png net::ERR_CONNECTION_REFUSED
+Image
+patchDOMProp @ runtime-dom.esm-bundler.js:667
+patchProp @ runtime-dom.esm-bundler.js:778
+mountElement @ runtime-core.esm-bundler.js:4873
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+mountChildren @ runtime-core.esm-bundler.js:4932
+processFragment @ runtime-core.esm-bundler.js:5112
+patch @ runtime-core.esm-bundler.js:4674
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+mountChildren @ runtime-core.esm-bundler.js:4932
+processFragment @ runtime-core.esm-bundler.js:5112
+patch @ runtime-core.esm-bundler.js:4674
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+patchBlockChildren @ runtime-core.esm-bundler.js:5054
+processFragment @ runtime-core.esm-bundler.js:5130
+patch @ runtime-core.esm-bundler.js:4674
+patchBlockChildren @ runtime-core.esm-bundler.js:5054
+patchElement @ runtime-core.esm-bundler.js:4972
+processElement @ runtime-core.esm-bundler.js:4831
+patch @ runtime-core.esm-bundler.js:4688
+componentUpdateFn @ runtime-core.esm-bundler.js:5406
+run @ reactivity.esm-bundler.js:225
+runIfDirty @ reactivity.esm-bundler.js:263
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+flushJobs @ runtime-core.esm-bundler.js:408
+Promise.then
+queueFlush @ runtime-core.esm-bundler.js:322
+queueJob @ runtime-core.esm-bundler.js:317
+effect2.scheduler @ runtime-core.esm-bundler.js:5448
+trigger @ reactivity.esm-bundler.js:253
+endBatch @ reactivity.esm-bundler.js:311
+notify @ reactivity.esm-bundler.js:597
+trigger @ reactivity.esm-bundler.js:571
+set value @ reactivity.esm-bundler.js:1448
+loadNotes @ ShotDetails.vue:657
+await in loadNotes
+watch.immediate @ ShotDetails.vue:908
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+baseWatchOptions.call @ runtime-core.esm-bundler.js:6193
+job @ reactivity.esm-bundler.js:1813
+watch @ reactivity.esm-bundler.js:1849
+doWatch @ runtime-core.esm-bundler.js:6221
+watch2 @ runtime-core.esm-bundler.js:6154
+setup @ ShotDetails.vue:905
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+setupStatefulComponent @ runtime-core.esm-bundler.js:7907
+setupComponent @ runtime-core.esm-bundler.js:7868
+mountComponent @ runtime-core.esm-bundler.js:5216
+processComponent @ runtime-core.esm-bundler.js:5182
+patch @ runtime-core.esm-bundler.js:4700
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+patchBlockChildren @ runtime-core.esm-bundler.js:5054
+processFragment @ runtime-core.esm-bundler.js:5130
+patch @ runtime-core.esm-bundler.js:4674
+componentUpdateFn @ runtime-core.esm-bundler.js:5406
+run @ reactivity.esm-bundler.js:225
+runIfDirty @ reactivity.esm-bundler.js:263
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+flushJobs @ runtime-core.esm-bundler.js:408
+Promise.then
+queueFlush @ runtime-core.esm-bundler.js:322
+queueJob @ runtime-core.esm-bundler.js:317
+effect2.scheduler @ runtime-core.esm-bundler.js:5448
+trigger @ reactivity.esm-bundler.js:253
+endBatch @ reactivity.esm-bundler.js:311
+notify @ reactivity.esm-bundler.js:597
+trigger @ reactivity.esm-bundler.js:571
+set value @ reactivity.esm-bundler.js:1448
+updateCurrentRow @ current.ts:28
+setCurrentRow @ index.ts:163
+commit @ index.ts:169
+handleClick @ events-helper.ts:38
+onClick @ render-helper.ts:57
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+invoker @ runtime-dom.esm-bundler.js:729

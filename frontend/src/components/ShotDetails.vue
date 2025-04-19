@@ -113,6 +113,8 @@
                 <div class="attachments-title">附件：</div>
                 <div class="attachments-list">
                   <div v-for="attachment in comment.attachments" :key="attachment.id" class="attachment-item">
+                    <!-- 添加日志 -->
+                    {{ console.log('Comment Attachment SRC:', attachment.thumbnail_path || attachment.file_path) }}
                     <a v-if="attachment.is_image" :href="attachment.file_path" target="_blank" class="attachment-link">
                       <img :src="attachment.thumbnail_path || attachment.file_path" :alt="attachment.file_name" class="attachment-thumbnail" />
                     </a>
@@ -224,6 +226,8 @@
                 <div class="attachments-title">附件：</div>
                 <div class="attachments-list">
                   <div v-for="attachment in note.attachments" :key="attachment.id" class="attachment-item">
+                    <!-- 添加日志 -->
+                    {{ console.log('Note Attachment SRC:', attachment.thumbnail_path || attachment.file_path) }}
                     <a v-if="attachment.is_image" :href="attachment.file_path" target="_blank" class="attachment-link">
                       <img :src="attachment.thumbnail_path || attachment.file_path" :alt="attachment.file_name" class="attachment-thumbnail" />
                     </a>
@@ -364,6 +368,7 @@ import { useAuthStore } from '@/stores/authStore'
 import shotService from '@/services/shotService'
 import { formatDate, formatDateTime, getDeadlineClass, getSubmitDateClass } from '@/utils/dateUtils'
 import { getStatusTagType, getStageTagType } from '@/utils/statusUtils'
+import { formatAttachments } from '@/utils/mediaHelper'
 
 // Props
 const props = defineProps({
@@ -597,35 +602,57 @@ const canDeleteNote = (note) => {
   return authStore.isAdmin || authStore.isManager || note.user === authStore.user?.id
 }
 
-// 加载镜头反馈
+// 加载评论
 const loadComments = async () => {
+  if (!props.shot || !props.shot.id) return
+  
+  console.log('加载镜头ID为', props.shot.id, '的备注')
   commentsLoading.value = true
+  
   try {
     const response = await shotService.getShotComments(props.shot.id)
-    comments.value = response.data.results || response.data
+    console.log('获取到备注响应:', response.data)
+    
+    // 处理附件URL，确保使用正确的协议和端口
+    if (response.data && response.data.results) {
+      response.data.results.forEach(comment => {
+        if (comment.attachments && comment.attachments.length > 0) {
+          comment.attachments = formatAttachments(comment.attachments);
+        }
+      });
+    }
+    
+    comments.value = response.data.results || []
   } catch (error) {
-    console.error('加载镜头反馈失败', error)
-    ElMessage.error('加载镜头反馈失败')
+    console.error('获取镜头备注失败', error)
+    ElMessage.error('获取镜头备注失败')
   } finally {
     commentsLoading.value = false
   }
 }
 
-// 加载镜头备注
+// 加载备注
 const loadNotes = async () => {
+  if (!props.shot || !props.shot.id) return
+  
   notesLoading.value = true
+  
   try {
-    console.log('加载镜头ID为', props.shot.id, '的备注')
     const response = await shotService.getShotNotes(props.shot.id)
-    // 检查响应格式
-    console.log('获取到备注响应:', response.data)
-    notes.value = Array.isArray(response.data) ? response.data : (response.data.results || [])
-  } catch (error) {
-    console.error('加载镜头备注失败', error)
-    if (error.response) {
-      console.error('错误响应数据:', error.response.data)
+    
+    // 处理附件URL，确保使用正确的协议和端口
+    if (response.data && response.data.results) {
+      response.data.results.forEach(note => {
+        if (note.attachments && note.attachments.length > 0) {
+          note.attachments = formatAttachments(note.attachments);
+        }
+      });
     }
-    ElMessage.error('加载镜头备注失败')
+    
+    notes.value = response.data.results || []
+  } catch (error) {
+    console.error('获取镜头备注失败', error)
+    ElMessage.error('获取镜头备注失败')
   } finally {
     notesLoading.value = false
   }
