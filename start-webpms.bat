@@ -2,167 +2,269 @@
 chcp 65001 > nul
 setlocal enabledelayedexpansion
 
-echo =====================================================
-echo   WebPMS Platform - 智能启动程序
-echo =====================================================
+title WebPMS一键启动脚本
 
-echo [步骤 1] 停止运行中的容器...
-docker-compose -f docker-compose.postgres.yml down 2>nul
-timeout /t 2 /nobreak > nul
+echo ========================================================
+echo                WebPMS 一键启动脚本
+echo ========================================================
+echo.
 
-echo [步骤 2] 运行端口管理器检查端口占用情况...
-call port-manager.bat check
-if errorlevel 1 (
-    echo 端口管理器出错，将使用默认端口配置继续...
-) else (
-    echo 端口配置已更新.
-)
+REM 定义路径变量
+set "WEBPMS_ROOT=%~dp0"
+set "BACKEND_DIR=%WEBPMS_ROOT%backend"
+set "FRONTEND_DIR=%WEBPMS_ROOT%frontend"
+set "NGINX_DIR=%WEBPMS_ROOT%nginx-1.26.3"
+set "VENV_ACTIVATE=%BACKEND_DIR%\venv\Scripts\activate.bat"
 
-REM 加载端口配置
-for /f "tokens=1,* delims==" %%a in (.env.ports) do (
-    if not "%%a"=="" (
-        set "%%a=%%b"
-    )
-)
-
-echo 当前端口配置:
-echo - 前端端口: %FRONTEND_PORT%
-echo - 后端端口: %BACKEND_PORT%
-echo - 数据库端口: %DB_PORT%
-echo - Redis端口: %REDIS_PORT%
-
-REM +++ 新增：设置 VITE_API_URL 环境变量 +++
-    set "VITE_API_URL=http://localhost:%BACKEND_PORT%/api"
-    echo 设置前端 API 地址: %VITE_API_URL%
-    REM +++++++++++++++++++++++++++++++++++++++++
-
-echo [步骤 3] 检查必要的离线资源...
-if not exist "offline-resources\python-packages\py3\tomli-2.0.0-py3-none-any.whl" (
-    echo 错误: Python离线包不存在!
-    echo 请确保离线资源目录结构正确。
+REM 检查必要文件是否存在
+if not exist "%VENV_ACTIVATE%" (
+    echo [错误] 找不到Python虚拟环境: %VENV_ACTIVATE%
+    echo 请确保已正确设置虚拟环境
     pause
     exit /b 1
 )
 
-if not exist "offline-resources\npm-packages\node_modules.tar.gz" (
-    echo 警告: 前端离线依赖包不存在!
-    echo 将尝试在线安装，可能会失败。
-    echo 建议先运行pack-frontend-deps.bat创建离线包。
-    echo.
-    choice /C YN /M "是否继续?"
-    if errorlevel 2 (
-        exit /b 0
+if not exist "%NGINX_DIR%\nginx.exe" (
+    echo [错误] 找不到Nginx: %NGINX_DIR%\nginx.exe
+    echo 请确保Nginx已正确安装
+    pause
+    exit /b 1
+)
+
+REM 加载端口配置
+if exist "%WEBPMS_ROOT%\.env.ports" (
+    echo 正在读取端口配置...
+    for /f "tokens=1,* delims==" %%a in (%WEBPMS_ROOT%\.env.ports) do (
+        if not "%%a"=="" (
+            if not "%%a:~0,1%"=="#" (
+                set "%%a=%%b"
+            )
+        )
     )
 ) else (
-    echo 前端离线依赖包检查通过。
+    echo [警告] 未找到端口配置文件，使用默认端口
+    set "FRONTEND_PORT=9527"
+    set "BACKEND_PORT=9803"
+    set "REDIS_PORT=6379"
 )
 
-echo [步骤 4] 加载Docker镜像(如需)...
-echo 检查PostgreSQL镜像...
-docker images | findstr postgres:14.15 > nul
-if errorlevel 1 (
-    echo 加载PostgreSQL镜像...
-    docker load -i docker\images\postgres-14.15.tar
-)
+echo.
+echo 当前服务端口配置:
+echo - 前端服务: %FRONTEND_PORT%
+echo - 后端服务: %BACKEND_PORT%
+echo - Redis服务: %REDIS_PORT%
+echo.
 
-echo 检查Redis镜像...
-docker images | findstr redis:alpine > nul
-if errorlevel 1 (
-    echo 加载Redis镜像...
-    docker load -i docker\images\redis-alpine.tar
-)
+REM 检查端口占用
+echo 正在检查端口占用情况...
 
-echo 检查Python镜像...
-docker images | findstr python:3.10-slim > nul
-if errorlevel 1 (
-    echo 加载Python镜像...
-    docker load -i docker\images\python-slim.tar
-)
+set FRONTEND_BUSY=0
+set BACKEND_BUSY=0
+set REDIS_BUSY=0
 
-echo 检查Node.js镜像...
-docker images | findstr node:18-alpine > nul
-if errorlevel 1 (
-    echo 加载Node.js镜像...
-    docker load -i docker\images\node-alpine.tar
-)
-
-echo [步骤 5] 设置环境变量...
-set "FRONTEND_PORT_ENV=FRONTEND_PORT=%FRONTEND_PORT%"
-set "BACKEND_PORT_ENV=BACKEND_PORT=%BACKEND_PORT%"
-set "DB_PORT_ENV=DB_PORT=%DB_PORT%"
-set "REDIS_PORT_ENV=REDIS_PORT=%REDIS_PORT%"
-
-echo [步骤 6] 启动后端服务(数据库, redis, 后端)...
-set "COMPOSE_COMMAND=docker-compose -f docker-compose.postgres.yml"
-REM 注意：确保在执行 up 命令时 VITE_API_URL 环境变量可用
-REM docker-compose 默认会读取执行命令的 shell 的环境变量
-%COMPOSE_COMMAND% up -d db redis backend
-echo 等待后端服务初始化...
-timeout /t 15 /nobreak > nul
-
-echo [步骤 7] 检查并应用数据库迁移...
-echo 检查数据库迁移状态...
-docker exec -it webpms-backend-1 python manage.py showmigrations | findstr "\[ \]" > nul
-if errorlevel 1 (
-    echo 所有迁移已应用.
+REM 检查前端端口
+netstat -ano | findstr ":%FRONTEND_PORT% " > nul
+if %errorlevel% equ 0 (
+    set FRONTEND_BUSY=1
+    for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%FRONTEND_PORT% "') do (
+        set FRONTEND_PID=%%p
+        echo [警告] 前端端口 %FRONTEND_PORT% 被PID为 !FRONTEND_PID! 的进程占用
+    )
 ) else (
-    echo 发现未应用的迁移，正在应用...
-    echo --- 生成迁移文件 ---
-    docker exec -it webpms-backend-1 python manage.py makemigrations
-    
-    echo --- 应用所有迁移 ---
-    docker exec -it webpms-backend-1 python manage.py migrate
-    
-    echo 数据库迁移完成.
+    echo [正常] 前端端口 %FRONTEND_PORT% 可用
 )
 
-echo [步骤 8] 启动前端服务...
-REM docker-compose up 会读取 VITE_API_URL
-%COMPOSE_COMMAND% up -d frontend
-echo 等待前端初始化(可能需要1-2分钟)...
-echo 正在解压前端依赖包并启动Vite服务器...
-timeout /t 90 /nobreak > nul
-
-echo [步骤 9] 检查容器状态...
-%COMPOSE_COMMAND% ps
-
-echo =====================================================
-echo   WebPMS平台现已启动!
-echo   - 前端: http://localhost:%FRONTEND_PORT%
-echo   - API: http://localhost:%BACKEND_PORT%/api
-echo   - 管理后台: http://localhost:%BACKEND_PORT%/admin
-echo   - 数据库: localhost:%DB_PORT% (PostgreSQL)
-echo =====================================================
-echo 注意: 如果前端显示"localhost未发送任何数据"，Vite服务器
-echo       可能仍在启动中。请再等待30-60秒并刷新页面。
-echo =====================================================
-echo 查看前端启动进度:
-echo docker logs -f webpms-frontend-1
-echo.
-echo 创建管理员用户:
-echo docker exec -it webpms-backend-1 sh -c "cd /app && python manage.py createsuperuser"
-echo.
-echo 停止所有服务:
-echo docker-compose -f docker-compose.postgres.yml down
-echo.
-echo 查看后端日志:
-echo docker-compose -f docker-compose.postgres.yml logs -f backend
-echo.
-echo 查看前端日志:
-echo docker-compose -f docker-compose.postgres.yml logs -f frontend
-echo.
-echo 端口管理:
-echo port-manager.bat
-echo.
-echo 创建固定入口:
-echo 如果您希望创建一个固定访问入口(不会随端口变化)，请输入 'y'
-choice /C YN /M "是否创建固定入口? [Y/N]: "
-if errorlevel 2 goto :skip_shortcut
-if errorlevel 1 (
-    echo 正在创建固定入口...
-    call create-shortcut.bat
+REM 检查后端端口
+netstat -ano | findstr ":%BACKEND_PORT% " > nul
+if %errorlevel% equ 0 (
+    set BACKEND_BUSY=1
+    for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%BACKEND_PORT% "') do (
+        set BACKEND_PID=%%p
+        echo [警告] 后端端口 %BACKEND_PORT% 被PID为 !BACKEND_PID! 的进程占用
+    )
+) else (
+    echo [正常] 后端端口 %BACKEND_PORT% 可用
 )
 
-:skip_shortcut
+REM 检查Redis端口
+netstat -ano | findstr ":%REDIS_PORT% " > nul
+if %errorlevel% equ 0 (
+    set REDIS_BUSY=1
+    for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%REDIS_PORT% "') do (
+        set REDIS_PID=%%p
+        echo [警告] Redis端口 %REDIS_PORT% 被PID为 !REDIS_PID! 的进程占用
+    )
+) else (
+    echo [正常] Redis端口 %REDIS_PORT% 可用
+)
 
-pause 
+echo.
+
+REM 处理端口占用
+if %FRONTEND_BUSY%==1 (
+    choice /c yn /m "是否终止占用前端端口的进程(PID:!FRONTEND_PID!)?"
+    if errorlevel 2 (
+        echo 请手动修改前端端口配置后重试
+        goto port_error
+    ) else (
+        echo 正在终止进程PID:!FRONTEND_PID!...
+        taskkill /f /pid !FRONTEND_PID!
+        if !errorlevel! neq 0 (
+            echo [错误] 无法终止进程!
+            goto port_error
+        ) else (
+            echo 进程已终止
+        )
+    )
+)
+
+if %BACKEND_BUSY%==1 (
+    choice /c yn /m "是否终止占用后端端口的进程(PID:!BACKEND_PID!)?"
+    if errorlevel 2 (
+        echo 请手动修改后端端口配置后重试
+        goto port_error
+    ) else (
+        echo 正在终止进程PID:!BACKEND_PID!...
+        taskkill /f /pid !BACKEND_PID!
+        if !errorlevel! neq 0 (
+            echo [错误] 无法终止进程!
+            goto port_error
+        ) else (
+            echo 进程已终止
+        )
+    )
+)
+
+if %REDIS_BUSY%==1 (
+    choice /c yn /m "是否终止占用Redis端口的进程(PID:!REDIS_PID!)?"
+    if errorlevel 2 (
+        echo 请手动修改Redis端口配置后重试
+        goto port_error
+    ) else (
+        echo 正在终止进程PID:!REDIS_PID!...
+        taskkill /f /pid !REDIS_PID!
+        if !errorlevel! neq 0 (
+            echo [错误] 无法终止进程!
+            goto port_error
+        ) else (
+            echo 进程已终止
+        )
+    )
+)
+
+echo.
+echo 所有端口检查完毕，继续启动服务...
+echo.
+
+REM 更新Nginx配置文件中的端口
+echo 正在更新Nginx配置...
+set "NGINX_CONF=%WEBPMS_ROOT%nginx.conf"
+set "NGINX_CONF_TEMP=%WEBPMS_ROOT%nginx.conf.temp"
+
+if exist "%NGINX_CONF%" (
+    type nul > "%NGINX_CONF_TEMP%"
+    for /f "usebackq delims=" %%a in ("%NGINX_CONF%") do (
+        set "line=%%a"
+        
+        REM 替换前端端口
+        set "line=!line:proxy_pass http://localhost:9527=proxy_pass http://localhost:%FRONTEND_PORT%!"
+        
+        REM 替换后端端口
+        set "line=!line:proxy_pass http://localhost:9803=proxy_pass http://localhost:%BACKEND_PORT%!"
+        set "line=!line:proxy_pass http://localhost:9803/ws/=proxy_pass http://localhost:%BACKEND_PORT%/ws/!"
+        
+        echo !line!>> "%NGINX_CONF_TEMP%"
+    )
+    
+    REM 替换原配置文件
+    move /y "%NGINX_CONF_TEMP%" "%NGINX_CONF%" > nul
+    echo Nginx配置已更新为使用前端端口%FRONTEND_PORT%和后端端口%BACKEND_PORT%
+)
+
+REM 停止可能运行的Nginx
+echo 正在检查并停止运行中的Nginx...
+tasklist /fi "imagename eq nginx.exe" | find "nginx.exe" > nul
+if %errorlevel% equ 0 (
+    cd /d "%NGINX_DIR%"
+    "%NGINX_DIR%\nginx.exe" -s stop
+    timeout /t 2 > nul
+)
+
+echo.
+echo ========================================================
+echo                  正在启动所有服务...
+echo ========================================================
+echo.
+
+REM 启动Redis服务
+echo [1/4] 正在启动Redis服务...
+start "WebPMS Redis" redis-server --port %REDIS_PORT%
+timeout /t 2 > nul
+
+REM 启动Django后端
+echo [2/4] 正在启动Django后端服务(端口:%BACKEND_PORT%)...
+start "WebPMS 后端" cmd /c "cd /d "%BACKEND_DIR%" && call "%VENV_ACTIVATE%" && python manage.py runserver %BACKEND_PORT%"
+timeout /t 5 > nul
+
+REM 启动前端
+echo [3/4] 正在启动Vue前端服务(端口:%FRONTEND_PORT%)...
+start "WebPMS 前端" cmd /c "cd /d "%FRONTEND_DIR%" && npm run dev -- --port %FRONTEND_PORT% --host 0.0.0.0"
+timeout /t 5 > nul
+
+REM 启动Nginx
+echo [4/4] 正在启动Nginx反向代理...
+echo 复制Nginx配置...
+copy /y "%NGINX_CONF%" "%NGINX_DIR%\conf\nginx.conf" > nul
+cd /d "%NGINX_DIR%"
+start "" "%NGINX_DIR%\nginx.exe"
+
+REM 检查Nginx是否成功启动
+timeout /t 2 > nul
+tasklist /fi "imagename eq nginx.exe" | find "nginx.exe" > nul
+if %errorlevel% equ 0 (
+    echo Nginx已成功启动
+) else (
+    echo [错误] Nginx启动失败，请检查配置或日志
+    goto nginx_error
+)
+
+echo.
+echo ========================================================
+echo                WebPMS 服务已全部启动
+echo ========================================================
+echo.
+echo 您可以通过以下地址访问WebPMS:
+echo   * 本地访问: http://localhost:8754
+echo   * 局域网访问: http://172.16.10.12:8754
+echo.
+echo 服务端口信息:
+echo   * 前端服务: %FRONTEND_PORT%
+echo   * 后端服务: %BACKEND_PORT%
+echo   * Redis服务: %REDIS_PORT%
+echo   * Nginx代理: 8754
+echo.
+echo 提示: 按任意键退出此窗口不会关闭已启动的服务
+echo 如需停止服务，请运行 stop-webpms.bat 或关闭各服务窗口
+echo ========================================================
+echo.
+goto end
+
+:port_error
+echo.
+echo [错误] 端口占用问题未解决，无法启动服务
+echo 请检查端口配置或手动结束占用进程后重试
+echo.
+pause
+exit /b 1
+
+:nginx_error
+echo.
+echo [错误] Nginx启动失败
+echo 请检查Nginx配置文件或错误日志: %NGINX_DIR%\logs\error.log
+echo.
+pause
+exit /b 1
+
+:end
+pause
+exit /b 0 

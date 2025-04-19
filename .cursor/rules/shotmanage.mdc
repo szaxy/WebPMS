@@ -1,6 +1,11 @@
 ---
 description: 
 globs: 
+alwaysApply: false
+---
+---
+description: 
+globs: 
 alwaysApply: true
 ---
 基于项目现有架构和需求分析，我将为镜头管理功能制定开发规范和步骤。
