@@ -27,7 +27,7 @@ export function getFullMediaUrl(relativeUrl) {
 
   // 构建完整URL
   const fullUrl = `${protocol}//${host}:${port}${normalizedUrl}`;
-  console.log(`[mediaHelper] Input: ${relativeUrl}, Path: ${pathOnly}, Output URL: ${fullUrl}`); // 增加日志
+  console.log(`[mediaHelper] URL: ${fullUrl}`); // 日志记录
   return fullUrl;
 }
 

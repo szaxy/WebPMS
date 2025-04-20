@@ -34,6 +34,5 @@ urlpatterns = [
     path('api/sync/', include('integrations.cgtw.urls')),
 ]
 
-# 开发环境静态文件服务
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) 
+# 媒体文件服务 - 确保在任何环境下都可以提供媒体文件
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) 

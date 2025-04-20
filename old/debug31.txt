@@ -1,0 +1,339 @@
+client:536  WebSocket connection to 'ws://localhost:8754/?token=QnwxEIIAe9pS' failed: Error during WebSocket handshake: Unexpected response code: 200
+setupWebSocket @ client:536
+client:523 [vite] Direct websocket connection fallback. Check out https://vite.dev/config/server-options.html#server-hmr to remove the previous connection error.
+authStore.js:44 用户信息初始化成功: admin
+projectStore.js:30 正在获取项目列表...
+projectService.js:30 项目API调用，参数: Object
+projectStore.js:30 正在获取项目列表...
+projectService.js:30 项目API调用，参数: Object
+ShotManagement.vue:758 开始加载项目列表
+projectStore.js:30 正在获取项目列表...
+projectService.js:30 项目API调用，参数: Object
+projectService.js:33 项目API响应状态: 200
+projectService.js:34 项目API响应数据类型: object 不是数组
+projectService.js:38 项目分页数据 - 总数: 1 当前页数量: 1
+projectStore.js:32 项目API响应: Object
+projectStore.js:37 检测到分页响应，共有 1 个项目
+projectService.js:33 项目API响应状态: 200
+projectService.js:34 项目API响应数据类型: object 不是数组
+projectService.js:38 项目分页数据 - 总数: 1 当前页数量: 1
+projectStore.js:32 项目API响应: Object
+projectStore.js:37 检测到分页响应，共有 1 个项目
+projectService.js:33 项目API响应状态: 200
+projectService.js:34 项目API响应数据类型: object 不是数组
+projectService.js:38 项目分页数据 - 总数: 1 当前页数量: 1
+projectStore.js:32 项目API响应: Object
+projectStore.js:37 检测到分页响应，共有 1 个项目
+ShotManagement.vue:760 原始项目数据: Proxy(Array)
+ShotManagement.vue:765 过滤后的项目列表: Proxy(Array)
+ShotManagement.vue:777 自动选择第一个项目: Proxy(Object)
+ShotManagement.vue:815 开始加载镜头，项目ID: 1
+ShotManagement.vue:839 请求参数，包含分页: Object
+shotStore.js:60 fetchShots开始请求，参数: Object
+shotService.js:43 获取镜头列表，参数: Object
+shotService.js:67 转换后的API参数: Object
+shotService.js:72 镜头列表响应状态: 200
+shotService.js:73 镜头列表数据类型: object 不是数组
+shotService.js:75 响应对象属性: Array(4)
+shotService.js:77 获取到分页结果，共 50 条，总数: 200
+shotService.js:78 分页信息: 页码 1 每页 50
+shotStore.js:62 镜头API响应数据类型: object
+shotStore.js:70 成功获取镜头数据(分页): 50 条记录, 总数: 200 页码: 1 每页: 50
+ShotManagement.vue:842 API响应: Object
+ShotManagement.vue:847 总记录数: 200, 当前页: 1, 每页条数: 50
+ShotManagement.vue:860 成功加载 50 个镜头，第 1 页，共 4 页
+ShotManagement.vue:1237 初始化完成，当前页面大小: 50
+ShotDetails.vue:609 加载镜头ID为 1 的备注
+shotService.js:248 正在获取镜头 1 的备注
+error.ts:14  ElementPlusError: [props] [API] type.text is about to be deprecated in version 3.0.0, please use link instead.
+For more detail, please visit: https://element-plus.org/en-US/component/button.html#button-attributes
+
+    at debugWarn (error.ts:13:37)
+    at watch.immediate (index.ts:6:7)
+    at callWithErrorHandling (runtime-core.esm-bundler.js:199:19)
+    at callWithAsyncErrorHandling (runtime-core.esm-bundler.js:206:17)
+    at baseWatchOptions.call (runtime-core.esm-bundler.js:6193:47)
+    at job (reactivity.esm-bundler.js:1813:18)
+    at watch (reactivity.esm-bundler.js:1849:7)
+    at doWatch (runtime-core.esm-bundler.js:6221:23)
+    at watch2 (runtime-core.esm-bundler.js:6154:10)
+    at useDeprecated (index.ts:4:3)
+debugWarn @ error.ts:14
+ShotDetails.vue:609 加载镜头ID为 1 的备注
+shotService.js:248 正在获取镜头 1 的备注
+shotService.js:251 成功获取镜头 1 的备注: Object
+ShotDetails.vue:614 获取到备注响应: Object
+mediaHelper.js:30 [mediaHelper] Input: http://localhost/media/%40attachments/2025/04/19/clipboard_fb39d6fe6783481c8e5ab786769b1d4d.jpg, Path: /media/%40attachments/2025/04/19/clipboard_fb39d6fe6783481c8e5ab786769b1d4d.jpg, Output URL: http://localhost:8754/media/%40attachments/2025/04/19/clipboard_fb39d6fe6783481c8e5ab786769b1d4d.jpg
+mediaHelper.js:30 [mediaHelper] Input: http://localhost/media/%40attachments/thumbnails/2025/04/19/thumb_clipboard_fb39d6fe6783481c8e5ab786769b1d4d.jpg, Path: /media/%40attachments/thumbnails/2025/04/19/thumb_clipboard_fb39d6fe6783481c8e5ab786769b1d4d.jpg, Output URL: http://localhost:8754/media/%40attachments/thumbnails/2025/04/19/thumb_clipboard_fb39d6fe6783481c8e5ab786769b1d4d.jpg
+ShotDetails.vue:117 Comment Attachment SRC: http://localhost:8754/media/%40attachments/thumbnails/2025/04/19/thumb_clipboard_fb39d6fe6783481c8e5ab786769b1d4d.jpg
+error.ts:14  ElementPlusError: [props] [API] type.text is about to be deprecated in version 3.0.0, please use link instead.
+For more detail, please visit: https://element-plus.org/en-US/component/button.html#button-attributes
+
+    at debugWarn (error.ts:13:37)
+    at watch.immediate (index.ts:6:7)
+    at callWithErrorHandling (runtime-core.esm-bundler.js:199:19)
+    at callWithAsyncErrorHandling (runtime-core.esm-bundler.js:206:17)
+    at baseWatchOptions.call (runtime-core.esm-bundler.js:6193:47)
+    at job (reactivity.esm-bundler.js:1813:18)
+    at watch (reactivity.esm-bundler.js:1849:7)
+    at doWatch (runtime-core.esm-bundler.js:6221:23)
+    at watch2 (runtime-core.esm-bundler.js:6154:10)
+    at useDeprecated (index.ts:4:3)
+debugWarn @ error.ts:14
+thumb_clipboard_fb39d6fe6783481c8e5ab786769b1d4d.jpg:1 
+            
+            
+            Failed to load resource: the server responded with a status of 404 (Not Found)
+shotService.js:251 成功获取镜头 1 的备注: Object
+ShotDetails.vue:614 获取到备注响应: Object
+mediaHelper.js:30 [mediaHelper] Input: http://localhost/media/%40attachments/2025/04/19/clipboard_fb39d6fe6783481c8e5ab786769b1d4d.jpg, Path: /media/%40attachments/2025/04/19/clipboard_fb39d6fe6783481c8e5ab786769b1d4d.jpg, Output URL: http://localhost:8754/media/%40attachments/2025/04/19/clipboard_fb39d6fe6783481c8e5ab786769b1d4d.jpg
+mediaHelper.js:30 [mediaHelper] Input: http://localhost/media/%40attachments/thumbnails/2025/04/19/thumb_clipboard_fb39d6fe6783481c8e5ab786769b1d4d.jpg, Path: /media/%40attachments/thumbnails/2025/04/19/thumb_clipboard_fb39d6fe6783481c8e5ab786769b1d4d.jpg, Output URL: http://localhost:8754/media/%40attachments/thumbnails/2025/04/19/thumb_clipboard_fb39d6fe6783481c8e5ab786769b1d4d.jpg
+ShotDetails.vue:117 Comment Attachment SRC: http://localhost:8754/media/%40attachments/thumbnails/2025/04/19/thumb_clipboard_fb39d6fe6783481c8e5ab786769b1d4d.jpg
+[新] 使用 Edge 中的 Copilot 来解释控制台错误: 单击
+         
+         以说明错误。
+        了解更多信息
+        不再显示
+ShotDetails.vue:117 Comment Attachment SRC: http://localhost:8754/media/%40attachments/thumbnails/2025/04/19/thumb_clipboard_fb39d6fe6783481c8e5ab786769b1d4d.jpg
+ShotDetails.vue:117 Comment Attachment SRC: http://localhost:8754/media/%40attachments/thumbnails/2025/04/19/thumb_clipboard_fb39d6fe6783481c8e5ab786769b1d4d.jpg
+ShotDetails.vue:483 文件处理成功，大小: 186 KB
+ShotDetails.vue:682 提交反馈数据: {
+  "content": "测试反馈2",
+  "attachment_data": [
+    {
+      "file_name": "头像1.png",
+      "file_content": "data:image/png;base64,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
+ShotDetails.vue:684 反馈提交成功: {id: 2, shot: 1, user: 1, user_username: 'admin', user_avatar: null, …}
+ShotDetails.vue:609 加载镜头ID为 1 的备注
+ShotDetails.vue:614 获取到备注响应: {count: 2, next: null, previous: null, results: Array(2)}
+mediaHelper.js:30 [mediaHelper] Input: http://localhost/media/%40attachments/2025/04/19/clipboard_de6a6022e5f7409b9d1af549c74ea5d4.png, Path: /media/%40attachments/2025/04/19/clipboard_de6a6022e5f7409b9d1af549c74ea5d4.png, Output URL: http://localhost:8754/media/%40attachments/2025/04/19/clipboard_de6a6022e5f7409b9d1af549c74ea5d4.png
+mediaHelper.js:30 [mediaHelper] Input: http://localhost/media/%40attachments/thumbnails/2025/04/19/thumb_clipboard_de6a6022e5f7409b9d1af549c74ea5d4.png, Path: /media/%40attachments/thumbnails/2025/04/19/thumb_clipboard_de6a6022e5f7409b9d1af549c74ea5d4.png, Output URL: http://localhost:8754/media/%40attachments/thumbnails/2025/04/19/thumb_clipboard_de6a6022e5f7409b9d1af549c74ea5d4.png
+mediaHelper.js:30 [mediaHelper] Input: http://localhost/media/%40attachments/2025/04/19/clipboard_fb39d6fe6783481c8e5ab786769b1d4d.jpg, Path: /media/%40attachments/2025/04/19/clipboard_fb39d6fe6783481c8e5ab786769b1d4d.jpg, Output URL: http://localhost:8754/media/%40attachments/2025/04/19/clipboard_fb39d6fe6783481c8e5ab786769b1d4d.jpg
+mediaHelper.js:30 [mediaHelper] Input: http://localhost/media/%40attachments/thumbnails/2025/04/19/thumb_clipboard_fb39d6fe6783481c8e5ab786769b1d4d.jpg, Path: /media/%40attachments/thumbnails/2025/04/19/thumb_clipboard_fb39d6fe6783481c8e5ab786769b1d4d.jpg, Output URL: http://localhost:8754/media/%40attachments/thumbnails/2025/04/19/thumb_clipboard_fb39d6fe6783481c8e5ab786769b1d4d.jpg
+ShotDetails.vue:117 Comment Attachment SRC: http://localhost:8754/media/%40attachments/thumbnails/2025/04/19/thumb_clipboard_de6a6022e5f7409b9d1af549c74ea5d4.png
+ShotDetails.vue:117 Comment Attachment SRC: http://localhost:8754/media/%40attachments/thumbnails/2025/04/19/thumb_clipboard_fb39d6fe6783481c8e5ab786769b1d4d.jpg
+error.ts:14  ElementPlusError: [props] [API] type.text is about to be deprecated in version 3.0.0, please use link instead.
+For more detail, please visit: https://element-plus.org/en-US/component/button.html#button-attributes
+
+    at debugWarn (error.ts:13:37)
+    at watch.immediate (index.ts:6:7)
+    at callWithErrorHandling (runtime-core.esm-bundler.js:199:19)
+    at callWithAsyncErrorHandling (runtime-core.esm-bundler.js:206:17)
+    at baseWatchOptions.call (runtime-core.esm-bundler.js:6193:47)
+    at job (reactivity.esm-bundler.js:1813:18)
+    at watch (reactivity.esm-bundler.js:1849:7)
+    at doWatch (runtime-core.esm-bundler.js:6221:23)
+    at watch2 (runtime-core.esm-bundler.js:6154:10)
+    at useDeprecated (index.ts:4:3)
+debugWarn @ error.ts:14
+watch.immediate @ index.ts:6
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+baseWatchOptions.call @ runtime-core.esm-bundler.js:6193
+job @ reactivity.esm-bundler.js:1813
+watch @ reactivity.esm-bundler.js:1849
+doWatch @ runtime-core.esm-bundler.js:6221
+watch2 @ runtime-core.esm-bundler.js:6154
+useDeprecated @ index.ts:4
+useButton @ use-button.ts:11
+setup @ button.vue:47
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+setupStatefulComponent @ runtime-core.esm-bundler.js:7907
+setupComponent @ runtime-core.esm-bundler.js:7868
+mountComponent @ runtime-core.esm-bundler.js:5216
+processComponent @ runtime-core.esm-bundler.js:5182
+patch @ runtime-core.esm-bundler.js:4700
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+mountChildren @ runtime-core.esm-bundler.js:4932
+processFragment @ runtime-core.esm-bundler.js:5112
+patch @ runtime-core.esm-bundler.js:4674
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+patchBlockChildren @ runtime-core.esm-bundler.js:5054
+processFragment @ runtime-core.esm-bundler.js:5130
+patch @ runtime-core.esm-bundler.js:4674
+patchBlockChildren @ runtime-core.esm-bundler.js:5054
+patchElement @ runtime-core.esm-bundler.js:4972
+processElement @ runtime-core.esm-bundler.js:4831
+patch @ runtime-core.esm-bundler.js:4688
+componentUpdateFn @ runtime-core.esm-bundler.js:5406
+run @ reactivity.esm-bundler.js:225
+runIfDirty @ reactivity.esm-bundler.js:263
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+flushJobs @ runtime-core.esm-bundler.js:408
+Promise.then
+queueFlush @ runtime-core.esm-bundler.js:322
+queueJob @ runtime-core.esm-bundler.js:317
+effect2.scheduler @ runtime-core.esm-bundler.js:5448
+trigger @ reactivity.esm-bundler.js:253
+endBatch @ reactivity.esm-bundler.js:311
+notify @ reactivity.esm-bundler.js:597
+trigger @ reactivity.esm-bundler.js:571
+set value @ reactivity.esm-bundler.js:1448
+loadComments @ ShotDetails.vue:630
+await in loadComments
+submitComment @ ShotDetails.vue:690
+await in submitComment
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+emit @ runtime-core.esm-bundler.js:6386
+(匿名) @ runtime-core.esm-bundler.js:8099
+handleClick @ use-button.ts:61
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+invoker @ runtime-dom.esm-bundler.js:729
+thumb_clipboard_de6a6022e5f7409b9d1af549c74ea5d4.png:1 
+            
+            
+            GET http://localhost:8754/media/%40attachments/thumbnails/2025/04/19/thumb_clipboard_de6a6022e5f7409b9d1af549c74ea5d4.png 404 (Not Found)
+Image
+patchDOMProp @ runtime-dom.esm-bundler.js:667
+patchProp @ runtime-dom.esm-bundler.js:778
+mountElement @ runtime-core.esm-bundler.js:4873
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+mountChildren @ runtime-core.esm-bundler.js:4932
+processFragment @ runtime-core.esm-bundler.js:5112
+patch @ runtime-core.esm-bundler.js:4674
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+mountChildren @ runtime-core.esm-bundler.js:4932
+processFragment @ runtime-core.esm-bundler.js:5112
+patch @ runtime-core.esm-bundler.js:4674
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+patchBlockChildren @ runtime-core.esm-bundler.js:5054
+processFragment @ runtime-core.esm-bundler.js:5130
+patch @ runtime-core.esm-bundler.js:4674
+patchBlockChildren @ runtime-core.esm-bundler.js:5054
+patchElement @ runtime-core.esm-bundler.js:4972
+processElement @ runtime-core.esm-bundler.js:4831
+patch @ runtime-core.esm-bundler.js:4688
+componentUpdateFn @ runtime-core.esm-bundler.js:5406
+run @ reactivity.esm-bundler.js:225
+runIfDirty @ reactivity.esm-bundler.js:263
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+flushJobs @ runtime-core.esm-bundler.js:408
+Promise.then
+queueFlush @ runtime-core.esm-bundler.js:322
+queueJob @ runtime-core.esm-bundler.js:317
+effect2.scheduler @ runtime-core.esm-bundler.js:5448
+trigger @ reactivity.esm-bundler.js:253
+endBatch @ reactivity.esm-bundler.js:311
+notify @ reactivity.esm-bundler.js:597
+trigger @ reactivity.esm-bundler.js:571
+set value @ reactivity.esm-bundler.js:1448
+loadComments @ ShotDetails.vue:630
+await in loadComments
+submitComment @ ShotDetails.vue:690
+await in submitComment
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+emit @ runtime-core.esm-bundler.js:6386
+(匿名) @ runtime-core.esm-bundler.js:8099
+handleClick @ use-button.ts:61
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+invoker @ runtime-dom.esm-bundler.js:729
+thumb_clipboard_fb39d6fe6783481c8e5ab786769b1d4d.jpg:1 
+            
+            
+            GET http://localhost:8754/media/%40attachments/thumbnails/2025/04/19/thumb_clipboard_fb39d6fe6783481c8e5ab786769b1d4d.jpg 404 (Not Found)
+Image
+patchDOMProp @ runtime-dom.esm-bundler.js:667
+patchProp @ runtime-dom.esm-bundler.js:778
+mountElement @ runtime-core.esm-bundler.js:4873
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+mountChildren @ runtime-core.esm-bundler.js:4932
+processFragment @ runtime-core.esm-bundler.js:5112
+patch @ runtime-core.esm-bundler.js:4674
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+mountChildren @ runtime-core.esm-bundler.js:4932
+processFragment @ runtime-core.esm-bundler.js:5112
+patch @ runtime-core.esm-bundler.js:4674
+mountChildren @ runtime-core.esm-bundler.js:4932
+mountElement @ runtime-core.esm-bundler.js:4855
+processElement @ runtime-core.esm-bundler.js:4820
+patch @ runtime-core.esm-bundler.js:4688
+patchBlockChildren @ runtime-core.esm-bundler.js:5054
+processFragment @ runtime-core.esm-bundler.js:5130
+patch @ runtime-core.esm-bundler.js:4674
+patchBlockChildren @ runtime-core.esm-bundler.js:5054
+patchElement @ runtime-core.esm-bundler.js:4972
+processElement @ runtime-core.esm-bundler.js:4831
+patch @ runtime-core.esm-bundler.js:4688
+componentUpdateFn @ runtime-core.esm-bundler.js:5406
+run @ reactivity.esm-bundler.js:225
+runIfDirty @ reactivity.esm-bundler.js:263
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+flushJobs @ runtime-core.esm-bundler.js:408
+Promise.then
+queueFlush @ runtime-core.esm-bundler.js:322
+queueJob @ runtime-core.esm-bundler.js:317
+effect2.scheduler @ runtime-core.esm-bundler.js:5448
+trigger @ reactivity.esm-bundler.js:253
+endBatch @ reactivity.esm-bundler.js:311
+notify @ reactivity.esm-bundler.js:597
+trigger @ reactivity.esm-bundler.js:571
+set value @ reactivity.esm-bundler.js:1448
+loadComments @ ShotDetails.vue:630
+await in loadComments
+submitComment @ ShotDetails.vue:690
+await in submitComment
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+emit @ runtime-core.esm-bundler.js:6386
+(匿名) @ runtime-core.esm-bundler.js:8099
+handleClick @ use-button.ts:61
+callWithErrorHandling @ runtime-core.esm-bundler.js:199
+callWithAsyncErrorHandling @ runtime-core.esm-bundler.js:206
+invoker @ runtime-dom.esm-bundler.js:729
